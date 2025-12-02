@@ -7,13 +7,13 @@ const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
 export const generateAccessToken = (userId: number, email: string) => {
   return jwt.sign({ id: userId, email }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
+    expiresIn: JWT_EXPIRES_IN as string,
   });
 };
 
 export const generateRefreshToken = (userId: number) => {
   return jwt.sign({ id: userId }, JWT_REFRESH_SECRET, {
-    expiresIn: JWT_REFRESH_EXPIRES_IN,
+    expiresIn: JWT_REFRESH_EXPIRES_IN as string,
   });
 };
 
