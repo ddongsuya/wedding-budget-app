@@ -1,4 +1,6 @@
 import { pool } from './database';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const migrations = `
 -- Users 테이블
@@ -112,6 +114,94 @@ CREATE INDEX IF NOT EXISTS idx_expenses_couple ON expenses(couple_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
 CREATE INDEX IF NOT EXISTS idx_budget_categories_couple ON budget_categories(couple_id);
+
+-- 체크리스트 카테고리 테이블
+CREATE TABLE IF NOT EXISTS checklist_categories (
+  id SERIAL PRIMARY KEY,
+  couple_id INTEGER NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  icon VARCHAR(50),
+  color VARCHAR(20),
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 체크리스트 아이템 테이블
+CREATE TABLE IF NOT EXISTS checklist_items (
+  id SERIAL PRIMARY KEY,
+  couple_id INTEGER NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+  category_id INTEGER REFERENCES checklist_categories(id) ON DELETE SET NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  due_date DATE,
+  due_period VARCHAR(20),
+  is_completed BOOLEAN DEFAULT FALSE,
+  completed_at TIMESTAMP,
+  completed_by INTEGER REFERENCES users(id),
+  assigned_to VARCHAR(20) DEFAULT 'both',
+  priority VARCHAR(20) DEFAULT 'medium',
+  linked_expense_id INTEGER REFERENCES expenses(id),
+  linked_venue_id INTEGER REFERENCES venues(id),
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 이벤트/일정 테이블
+CREATE TABLE IF NOT EXISTS events (
+  id SERIAL PRIMARY KEY,
+  couple_id INTEGER NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  
+  -- 날짜/시간
+  start_date DATE NOT NULL,
+  start_time TIME,
+  end_date DATE,
+  end_time TIME,
+  is_all_day BOOLEAN DEFAULT FALSE,
+  
+  -- 카테고리 및 스타일
+  category VARCHAR(50),
+  color VARCHAR(20) DEFAULT '#FDA4AF',
+  icon VARCHAR(50),
+  
+  -- 위치
+  location VARCHAR(300),
+  location_url VARCHAR(500),
+  
+  -- 알림
+  reminder_minutes INTEGER,
+  
+  -- 연결
+  linked_venue_id INTEGER REFERENCES venues(id) ON DELETE SET NULL,
+  linked_checklist_id INTEGER REFERENCES checklist_items(id) ON DELETE SET NULL,
+  linked_expense_id INTEGER REFERENCES expenses(id) ON DELETE SET NULL,
+  
+  -- 담당자
+  assigned_to VARCHAR(20) DEFAULT 'both',
+  
+  -- 반복 (선택적)
+  is_recurring BOOLEAN DEFAULT FALSE,
+  recurrence_rule VARCHAR(100),
+  
+  -- 메타
+  created_by INTEGER REFERENCES users(id),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 체크리스트 인덱스
+CREATE INDEX IF NOT EXISTS idx_checklist_items_couple ON checklist_items(couple_id);
+CREATE INDEX IF NOT EXISTS idx_checklist_items_category ON checklist_items(category_id);
+CREATE INDEX IF NOT EXISTS idx_checklist_items_due_date ON checklist_items(due_date);
+CREATE INDEX IF NOT EXISTS idx_checklist_categories_couple ON checklist_categories(couple_id);
+
+-- 이벤트 인덱스
+CREATE INDEX IF NOT EXISTS idx_events_couple ON events(couple_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(start_date);
+CREATE INDEX IF NOT EXISTS idx_events_category ON events(category);
 `;
 
 async function runMigrations() {
