@@ -9,8 +9,10 @@ import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { Plus, Search, Filter, Edit2, Trash2, CheckCircle2, CircleDashed, CreditCard, Banknote, Landmark } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useToast } from '../src/hooks/useToast';
 
 export const Expenses: React.FC = () => {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<BudgetCategory[]>([]);
@@ -36,20 +38,31 @@ export const Expenses: React.FC = () => {
   };
 
   const handleSave = (expense: Expense) => {
-    if (editingExpense) {
-      StorageService.updateExpense(expense);
-    } else {
-      StorageService.addExpense(expense);
+    try {
+      if (editingExpense) {
+        StorageService.updateExpense(expense);
+        toast.success('지출 내역이 수정되었습니다');
+      } else {
+        StorageService.addExpense(expense);
+        toast.success('지출 내역이 추가되었습니다');
+      }
+      setExpenses(StorageService.getExpenses());
+      setIsFormOpen(false);
+      setEditingExpense(null);
+    } catch (error) {
+      toast.error('저장에 실패했습니다. 다시 시도해주세요');
     }
-    setExpenses(StorageService.getExpenses()); // Update local state immediately
-    setIsFormOpen(false);
-    setEditingExpense(null);
   };
 
   const handleDelete = (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      StorageService.deleteExpense(id);
-      setExpenses(prev => prev.filter(e => e.id !== id));
+      try {
+        StorageService.deleteExpense(id);
+        setExpenses(prev => prev.filter(e => e.id !== id));
+        toast.success('지출 내역이 삭제되었습니다');
+      } catch (error) {
+        toast.error('삭제에 실패했습니다');
+      }
     }
   };
 

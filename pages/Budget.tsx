@@ -7,8 +7,10 @@ import { BudgetSettingModal } from '../components/budget/BudgetSettingModal';
 import { CategoryModal } from '../components/budget/CategoryModal';
 import { Plus, ChevronRight, AlertCircle, Settings, Wallet, Heart } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { useToast } from '../src/hooks/useToast';
 
 export const Budget: React.FC = () => {
+  const { toast } = useToast();
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -33,25 +35,41 @@ export const Budget: React.FC = () => {
   const brideAmount = budget.totalBudget * (budget.brideRatio / 100);
 
   const handleUpdateSettings = (newSettings: Partial<BudgetSettings>) => {
-    const updated = StorageService.updateBudgetSettings(newSettings);
-    setBudget(updated);
+    try {
+      const updated = StorageService.updateBudgetSettings(newSettings);
+      setBudget(updated);
+      toast.success('예산 설정이 저장되었습니다');
+    } catch (error) {
+      toast.error('설정 저장에 실패했습니다');
+    }
   };
 
   const handleSaveCategory = (category: BudgetCategory) => {
-    let updated;
-    if (editingCategory) {
-      updated = StorageService.updateCategory(category);
-    } else {
-      updated = StorageService.addCategory(category);
+    try {
+      let updated;
+      if (editingCategory) {
+        updated = StorageService.updateCategory(category);
+        toast.success('카테고리가 수정되었습니다');
+      } else {
+        updated = StorageService.addCategory(category);
+        toast.success('카테고리가 추가되었습니다');
+      }
+      setBudget(updated);
+      setEditingCategory(null);
+    } catch (error) {
+      toast.error('저장에 실패했습니다');
     }
-    setBudget(updated);
-    setEditingCategory(null);
   };
 
   const handleDeleteCategory = (id: string) => {
     if (confirm('이 카테고리를 삭제하시겠습니까? 관련 지출 내역은 유지되지만 예산 정보는 사라집니다.')) {
-      const updated = StorageService.deleteCategory(id);
-      setBudget(updated);
+      try {
+        const updated = StorageService.deleteCategory(id);
+        setBudget(updated);
+        toast.success('카테고리가 삭제되었습니다');
+      } catch (error) {
+        toast.error('삭제에 실패했습니다');
+      }
     }
   };
 

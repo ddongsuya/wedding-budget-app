@@ -10,6 +10,7 @@ import { BottomSheet } from '../components/ui/BottomSheet';
 import { GalleryViewer } from '../components/ui/GalleryViewer';
 import { Plus, MapPin, Star, Car, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, Square, X, Image as ImageIcon, Check, Minus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import { useToast } from '../src/hooks/useToast';
 
 type SortKey = 'rating' | 'price' | 'createdAt' | 'minGuests';
 type FilterStatus = 'all' | 'visited' | 'pending' | 'contracted';
@@ -20,6 +21,7 @@ interface VenueCalculated extends Venue {
 }
 
 export const Venues: React.FC = () => {
+  const { toast } = useToast();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -88,15 +90,21 @@ export const Venues: React.FC = () => {
   };
 
   const handleSaveVenue = (venue: Venue) => {
-    if (editingVenue) {
-      const updated = StorageService.updateVenue(venue);
-      setVenues(updated);
-    } else {
-      const updated = StorageService.addVenue(venue);
-      setVenues(updated);
+    try {
+      if (editingVenue) {
+        const updated = StorageService.updateVenue(venue);
+        setVenues(updated);
+        toast.success('식장 정보가 수정되었습니다');
+      } else {
+        const updated = StorageService.addVenue(venue);
+        setVenues(updated);
+        toast.success('식장이 추가되었습니다');
+      }
+      setIsFormOpen(false);
+      setEditingVenue(null);
+    } catch (error) {
+      toast.error('저장에 실패했습니다');
     }
-    setIsFormOpen(false);
-    setEditingVenue(null);
   };
 
   const handleEdit = (venue: Venue) => {
@@ -106,13 +114,18 @@ export const Venues: React.FC = () => {
 
   const handleDelete = (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
-      const updated = StorageService.deleteVenue(id);
-      setVenues(updated);
-      // Remove from selection if exists
-      if (selectedIds.has(id)) {
-        const newSet = new Set(selectedIds);
-        newSet.delete(id);
-        setSelectedIds(newSet);
+      try {
+        const updated = StorageService.deleteVenue(id);
+        setVenues(updated);
+        // Remove from selection if exists
+        if (selectedIds.has(id)) {
+          const newSet = new Set(selectedIds);
+          newSet.delete(id);
+          setSelectedIds(newSet);
+        }
+        toast.success('식장이 삭제되었습니다');
+      } catch (error) {
+        toast.error('삭제에 실패했습니다');
       }
     }
   };
