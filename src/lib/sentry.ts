@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/react';
 
 export const initSentry = () => {
-  // 프로덕션 환경에서만 활성화
-  if (import.meta.env.PROD) {
+  // 프로덕션 환경에서만 활성화 (DSN이 있을 때만)
+  if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       
