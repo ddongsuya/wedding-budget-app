@@ -23,6 +23,8 @@ const Settings = lazy(() => import('./pages/Settings'));
 const ChangePassword = lazy(() => import('./src/pages/ChangePassword'));
 const ForgotPassword = lazy(() => import('./src/pages/ForgotPassword'));
 const CoupleConnect = lazy(() => import('./src/pages/CoupleConnect'));
+const AdminDashboard = lazy(() => import('./src/pages/AdminDashboard'));
+const Announcements = lazy(() => import('./src/pages/Announcements'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -117,6 +119,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <CoupleConnect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/announcements"
+            element={
+              <ProtectedRoute>
+                <Announcements />
               </ProtectedRoute>
             }
           />

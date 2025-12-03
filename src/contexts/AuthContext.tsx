@@ -9,6 +9,7 @@ interface User {
   coupleId?: number;
   couple_id?: string | null;
   role?: string | null;
+  is_admin?: boolean;
 }
 
 interface AuthContextType {

@@ -232,6 +232,99 @@ const SettingsNew: React.FC = () => {
       <div className="animate-fade-in">
         {activeTab === 'profile' && (
           <div className="space-y-6">
+            {/* 프로필 이미지 섹션 */}
+            <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">
+                <Camera size={20} className="text-rose-500" />
+                프로필 사진
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* 신랑 사진 */}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32 mb-3">
+                    {profile.groom_image ? (
+                      <img
+                        src={profile.groom_image}
+                        alt="신랑"
+                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-lg">
+                        <User size={48} className="text-blue-400" />
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
+                      <Camera size={16} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, 'groom')}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">신랑 사진</p>
+                </div>
+
+                {/* 커플 사진 */}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32 mb-3">
+                    {profile.couple_photo ? (
+                      <img
+                        src={profile.couple_photo}
+                        alt="커플"
+                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-rose-100 flex items-center justify-center border-4 border-white shadow-lg">
+                        <Heart size={48} className="text-rose-400" />
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
+                      <Camera size={16} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, 'couple')}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">커플 사진</p>
+                </div>
+
+                {/* 신부 사진 */}
+                <div className="flex flex-col items-center">
+                  <div className="relative w-32 h-32 mb-3">
+                    {profile.bride_image ? (
+                      <img
+                        src={profile.bride_image}
+                        alt="신부"
+                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-pink-100 flex items-center justify-center border-4 border-white shadow-lg">
+                        <User size={48} className="text-pink-400" />
+                      </div>
+                    )}
+                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
+                      <Camera size={16} />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, 'bride')}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-sm font-medium text-gray-700">신부 사진</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 text-center mt-4">
+                사진을 클릭하여 업로드하세요 (최대 10MB)
+              </p>
+            </div>
+
             <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-bold text-stone-800 mb-4">신랑 정보</h3>
               <div className="space-y-4">

@@ -5,7 +5,11 @@ export interface User {
   email: string;
   password: string;
   name: string;
+  couple_id?: number;
+  role?: string;
+  is_admin: boolean;
   created_at: Date;
+  updated_at: Date;
 }
 
 export interface Couple {
@@ -35,11 +39,26 @@ export interface CoupleProfile {
   updated_at: Date;
 }
 
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  type: 'new' | 'update' | 'notice' | 'maintenance';
+  priority: number;
+  is_active: boolean;
+  start_date: Date;
+  end_date: Date | null;
+  created_by: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface AuthRequest extends Request {
   user?: {
     id: number;
     email: string;
     coupleId?: number;
+    isAdmin?: boolean;
   };
   file?: Express.Multer.File;
 }

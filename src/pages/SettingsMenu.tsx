@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft } from 'lucide-react';
+import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const SettingsMenu = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
     if (confirm('로그아웃 하시겠습니까?')) {
@@ -29,9 +29,9 @@ const SettingsMenu = () => {
     },
     {
       icon: Bell,
-      label: '알림 설정',
-      path: '/settings/notifications',
-      color: 'text-green-600',
+      label: '공지사항',
+      path: '/announcements',
+      color: 'text-rose-600',
     },
   ];
 
@@ -51,6 +51,25 @@ const SettingsMenu = () => {
       </header>
 
       <div className="p-4 space-y-4">
+        {/* 관리자 메뉴 (관리자만 표시) */}
+        {user?.is_admin && (
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="px-4 py-3 bg-rose-50 border-b border-rose-100">
+              <h2 className="text-sm font-semibold text-rose-600">관리자</h2>
+            </div>
+            <Link
+              to="/admin"
+              className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <Shield size={20} className="text-rose-600" />
+                <span className="text-gray-800 font-medium">관리자 대시보드</span>
+              </div>
+              <ChevronRight size={20} className="text-gray-400" />
+            </Link>
+          </div>
+        )}
+
         {/* 계정 설정 */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-4 py-3 bg-gray-50 border-b">
