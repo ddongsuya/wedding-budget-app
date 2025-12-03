@@ -8,17 +8,48 @@ import { CategoryModal } from '../components/budget/CategoryModal';
 import { Plus, ChevronRight, AlertCircle, Settings, Wallet, Heart } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { useToast } from '../src/hooks/useToast';
+import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
+import { EmptyState } from '../src/components/common/EmptyState';
 
 export const Budget: React.FC = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
 
   useEffect(() => {
-    setBudget(StorageService.getBudget());
+    setTimeout(() => {
+      setBudget(StorageService.getBudget());
+      setLoading(false);
+    }, 500);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-20 md:pb-0">
+        <div className="flex justify-between items-center">
+          <div>
+            <Skeleton variant="text" width={150} height={28} className="mb-2" />
+            <Skeleton variant="text" width={250} height={16} />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton variant="rounded" width={80} height={36} />
+            <Skeleton variant="rounded" width={120} height={36} />
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl p-6 shadow-sm">
+          <Skeleton variant="rounded" width="100%" height={150} />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} variant="rounded" width="100%" height={80} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!budget) return <div>Loading...</div>;
 
@@ -144,8 +175,17 @@ export const Budget: React.FC = () => {
       </Card>
 
       {/* Categories List */}
-      <div className="grid grid-cols-1 gap-4">
-        {budget.categories.map((category) => (
+      {budget.categories.length === 0 ? (
+        <EmptyState
+          illustration="budget"
+          title="예산 카테고리를 추가해주세요"
+          description="식장, 스드메, 예복 등 항목별로 예산을 배분해보세요"
+          actionLabel="카테고리 추가하기"
+          onAction={() => { setEditingCategory(null); setIsCategoryModalOpen(true); }}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {budget.categories.map((category) => (
           <div 
             key={category.id} 
             className="bg-white rounded-xl border border-stone-100 p-4 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
@@ -187,8 +227,9 @@ export const Budget: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {isSettingModalOpen && (
         <BudgetSettingModal 

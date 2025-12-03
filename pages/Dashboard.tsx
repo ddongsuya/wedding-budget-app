@@ -5,22 +5,29 @@ import { BudgetSettings, Venue, Expense, CoupleProfile } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Wallet, Store, CreditCard, TrendingUp, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
+import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
 export const Dashboard: React.FC = () => {
+  const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
 
   useEffect(() => {
-    setBudget(StorageService.getBudget());
-    setVenues(StorageService.getVenues());
-    setExpenses(StorageService.getExpenses());
-    setProfile(StorageService.getCoupleProfile());
+    // Simulate loading delay
+    setTimeout(() => {
+      setBudget(StorageService.getBudget());
+      setVenues(StorageService.getVenues());
+      setExpenses(StorageService.getExpenses());
+      setProfile(StorageService.getCoupleProfile());
+      setLoading(false);
+    }, 800);
   }, []);
 
+  if (loading) return <DashboardSkeleton />;
   if (!budget || !profile) return <div className="p-8">Loading...</div>;
 
   // --- Calculations ---

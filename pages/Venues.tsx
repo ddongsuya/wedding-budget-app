@@ -11,6 +11,8 @@ import { GalleryViewer } from '../components/ui/GalleryViewer';
 import { Plus, MapPin, Star, Car, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, Square, X, Image as ImageIcon, Check, Minus } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '../src/hooks/useToast';
+import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
+import { EmptyState, NoSearchResults } from '../src/components/common/EmptyState';
 
 type SortKey = 'rating' | 'price' | 'createdAt' | 'minGuests';
 type FilterStatus = 'all' | 'visited' | 'pending' | 'contracted';
@@ -22,6 +24,7 @@ interface VenueCalculated extends Venue {
 
 export const Venues: React.FC = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -49,7 +52,10 @@ export const Venues: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    setVenues(StorageService.getVenues());
+    setTimeout(() => {
+      setVenues(StorageService.getVenues());
+      setLoading(false);
+    }, 600);
     
     const handleResize = () => {
       // If mobile, force card view. If desktop, use table as default but allow toggle
@@ -280,26 +286,88 @@ export const Venues: React.FC = () => {
 
       {/* Main Content Area */}
       
-      {/* Mobile Card Deck View */}
-      <div className="md:hidden">
-         <VenueCardDeck 
-            venues={processedVenues}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onOpenGallery={openGallery}
-            onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
-         />
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden md:block overflow-hidden">
-        {processedVenues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-stone-400 bg-white rounded-2xl border border-stone-200 border-dashed">
-             <LayoutGrid size={48} className="mb-4 opacity-20" />
-             <p className="text-lg font-medium">검색 결과가 없습니다</p>
-             <p className="text-sm">조건을 변경하거나 새로운 웨딩홀을 등록해주세요.</p>
+      {loading ? (
+        <>
+          {/* Mobile Skeleton */}
+          <div className="md:hidden space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-2">
+                    <Skeleton variant="text" width={180} height={24} />
+                    <Skeleton variant="text" width={120} height={14} />
+                  </div>
+                  <Skeleton variant="rounded" width={60} height={24} />
+                </div>
+                <Skeleton variant="rounded" width="100%" height={200} className="mb-4" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Skeleton variant="text" width="100%" height={16} />
+                  <Skeleton variant="text" width="100%" height={16} />
+                </div>
+              </div>
+            ))}
           </div>
-        ) : (
+
+          {/* Desktop Skeleton */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-stone-200 p-6">
+            <div className="space-y-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex items-center gap-4">
+                  <Skeleton variant="rounded" width={48} height={48} />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton variant="text" width="60%" height={16} />
+                    <Skeleton variant="text" width="40%" height={14} />
+                  </div>
+                  <Skeleton variant="text" width={100} height={20} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Mobile Card Deck View */}
+          <div className="md:hidden">
+            {venues.length === 0 ? (
+              <EmptyState
+                illustration="venue"
+                title="아직 등록된 식장이 없어요"
+                description="마음에 드는 웨딩홀을 등록하고 비교해보세요"
+                actionLabel="첫 식장 등록하기"
+                onAction={() => { setEditingVenue(null); setIsFormOpen(true); }}
+              />
+            ) : processedVenues.length === 0 ? (
+              <NoSearchResults
+                searchTerm={searchTerm}
+                onClear={() => setSearchTerm('')}
+              />
+            ) : (
+              <VenueCardDeck 
+                venues={processedVenues}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onOpenGallery={openGallery}
+                onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
+              />
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-hidden">
+            {venues.length === 0 ? (
+              <EmptyState
+                illustration="venue"
+                title="아직 등록된 식장이 없어요"
+                description="마음에 드는 웨딩홀을 등록하고 비교해보세요"
+                actionLabel="첫 식장 등록하기"
+                onAction={() => { setEditingVenue(null); setIsFormOpen(true); }}
+              />
+            ) : processedVenues.length === 0 ? (
+              <NoSearchResults
+                searchTerm={searchTerm}
+                onClear={() => setSearchTerm('')}
+              />
+            ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-x-auto">
             <table className="w-full text-sm text-left whitespace-nowrap">
               <thead className="bg-stone-50 text-stone-600 font-medium border-b border-stone-200">
@@ -394,7 +462,9 @@ export const Venues: React.FC = () => {
             </table>
           </div>
         )}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Floating Action Bar for Comparison (Desktop Only) */}
       {selectedIds.size > 0 && (

@@ -3,13 +3,14 @@ import { StorageService } from '../services/storage';
 import { Expense, BudgetCategory } from '../types';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
-import { Skeleton } from '../components/ui/Skeleton';
 import { SwipeableRow } from '../components/ui/SwipeableRow';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { Plus, Search, Filter, Edit2, Trash2, CheckCircle2, CircleDashed, CreditCard, Banknote, Landmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '../src/hooks/useToast';
+import { ExpensesSkeleton } from '../src/components/skeleton/ExpensesSkeleton';
+import { EmptyState, NoSearchResults } from '../src/components/common/EmptyState';
 
 export const Expenses: React.FC = () => {
   const { toast } = useToast();
@@ -151,32 +152,20 @@ export const Expenses: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="space-y-4">
-           {[1, 2, 3, 4].map(i => (
-             <div key={i} className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100">
-               <div className="flex justify-between mb-3">
-                 <div className="flex gap-3">
-                   <Skeleton className="w-10 h-10 rounded-full"/>
-                   <div className="space-y-2">
-                     <Skeleton className="w-32 h-4"/>
-                     <Skeleton className="w-20 h-3"/>
-                   </div>
-                 </div>
-                 <Skeleton className="w-12 h-5 rounded-full"/>
-               </div>
-               <div className="flex justify-between items-end mt-2">
-                 <Skeleton className="w-24 h-3"/>
-                 <Skeleton className="w-24 h-6"/>
-               </div>
-             </div>
-           ))}
-        </div>
+        <ExpensesSkeleton />
+      ) : expenses.length === 0 ? (
+        <EmptyState
+          illustration="expense"
+          title="아직 기록된 지출이 없어요"
+          description="결혼 준비 비용을 기록하고 예산을 관리해보세요"
+          actionLabel="첫 지출 기록하기"
+          onAction={() => { setEditingExpense(null); setIsFormOpen(true); }}
+        />
       ) : filteredExpenses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-stone-400 bg-white rounded-2xl border border-stone-200 border-dashed">
-          <Banknote size={48} className="mb-4 opacity-20" />
-          <p className="text-lg font-medium">지출 내역이 없습니다</p>
-          <p className="text-sm">새로운 지출을 기록해보세요.</p>
-        </div>
+        <NoSearchResults
+          searchTerm={searchTerm}
+          onClear={() => setSearchTerm('')}
+        />
       ) : (
         <>
           {/* Mobile Swipeable List */}
