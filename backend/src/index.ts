@@ -107,6 +107,28 @@ const runMigrations = async () => {
       ALTER TABLE couples ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     `);
     
+    // couple_profiles 테이블 생성 (없으면)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS couple_profiles (
+        id SERIAL PRIMARY KEY,
+        couple_id INTEGER UNIQUE REFERENCES couples(id) ON DELETE CASCADE,
+        groom_name VARCHAR(100),
+        groom_image TEXT,
+        groom_birth_date DATE,
+        groom_contact VARCHAR(50),
+        bride_name VARCHAR(100),
+        bride_image TEXT,
+        bride_birth_date DATE,
+        bride_contact VARCHAR(50),
+        couple_photo TEXT,
+        first_met_date DATE,
+        wedding_date DATE,
+        couple_nickname VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
     // couple_profiles 테이블에 updated_at 컬럼 추가 (없으면)
     await pool.query(`
       ALTER TABLE couple_profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
