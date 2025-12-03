@@ -580,5 +580,5 @@ const Venues: React.FC = () => {
     </div>
   );
 };
-e
-xport default Venues;
+
+export default Venues;
