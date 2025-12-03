@@ -221,6 +221,10 @@ CREATE TABLE IF NOT EXISTS announcements (
 -- users 테이블에 is_admin 컬럼 추가
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 
+-- users 테이블에 couple_id 컬럼 추가
+ALTER TABLE users ADD COLUMN IF NOT EXISTS couple_id INTEGER REFERENCES couples(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_users_couple_id ON users(couple_id);
+
 -- 알림 테이블
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
