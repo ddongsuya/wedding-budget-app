@@ -107,6 +107,22 @@ const runMigrations = async () => {
       ALTER TABLE couples ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     `);
     
+    // couple_profiles 테이블에 updated_at 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE couple_profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `);
+    
+    // couple_profiles 이미지 컬럼을 TEXT로 변경 (Base64 저장용)
+    await pool.query(`
+      ALTER TABLE couple_profiles ALTER COLUMN groom_image TYPE TEXT
+    `).catch(() => {});
+    await pool.query(`
+      ALTER TABLE couple_profiles ALTER COLUMN bride_image TYPE TEXT
+    `).catch(() => {});
+    await pool.query(`
+      ALTER TABLE couple_profiles ALTER COLUMN couple_photo TYPE TEXT
+    `).catch(() => {});
+    
     // notifications 테이블 생성
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notifications (
