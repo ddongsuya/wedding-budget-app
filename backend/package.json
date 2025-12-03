@@ -33,6 +33,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/web-push": "^3.6.4",
     "ts-node-dev": "^2.0.0"
   }
 }

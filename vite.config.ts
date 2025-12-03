@@ -14,7 +14,8 @@ export default defineConfig(({ mode }) => {
         react(),
         VitePWA({
           registerType: 'autoUpdate',
-          includeAssets: ['favicon.ico', 'icons/*.png', 'splash/*.png'],
+          includeAssets: ['favicon.ico', 'icons/*.png', 'splash/*.png', 'custom-sw.js'],
+          injectRegister: 'auto',
           manifest: {
             name: '우리의 결혼 준비',
             short_name: '웨딩플래너',
@@ -67,6 +68,7 @@ export default defineConfig(({ mode }) => {
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
             maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB로 증가
+            importScripts: ['custom-sw.js'],
             runtimeCaching: [
               {
                 urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/.*/i,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, Calendar, ListChecks, DollarSign, Heart, Megaphone, Clock, BellRing } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useToastContext } from '../contexts/ToastContext';
+import { subscribeToPush, unsubscribeFromPush } from '../api/push';
 
 const NotificationSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -47,11 +48,37 @@ const NotificationSettings: React.FC = () => {
       const permission = await Notification.requestPermission();
       setPushPermission(permission);
       if (permission === 'granted') {
-        showToast('success', '푸시 알림이 활성화되었습니다');
-        await updatePreferences({ push_enabled: true });
+        // 푸시 구독 등록
+        const subscribed = await subscribeToPush();
+        if (subscribed) {
+          showToast('success', '푸시 알림이 활성화되었습니다');
+          await updatePreferences({ push_enabled: true });
+        } else {
+          showToast('error', '푸시 알림 등록에 실패했습니다');
+        }
       } else if (permission === 'denied') {
         showToast('error', '푸시 알림이 차단되었습니다. 브라우저 설정에서 허용해주세요.');
       }
+    }
+  };
+
+  const handlePushToggle = async (enabled: boolean) => {
+    try {
+      if (enabled) {
+        const subscribed = await subscribeToPush();
+        if (subscribed) {
+          await updatePreferences({ push_enabled: true });
+          showToast('success', '푸시 알림이 활성화되었습니다');
+        } else {
+          showToast('error', '푸시 알림 등록에 실패했습니다');
+        }
+      } else {
+        await unsubscribeFromPush();
+        await updatePreferences({ push_enabled: false });
+        showToast('success', '푸시 알림이 비활성화되었습니다');
+      }
+    } catch (error) {
+      showToast('error', '설정 변경에 실패했습니다');
     }
   };
 
@@ -146,7 +173,7 @@ const NotificationSettings: React.FC = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={preferences?.push_enabled ?? true}
-                    onChange={(e) => handleToggle('push_enabled', e.target.checked)}
+                    onChange={(e) => handlePushToggle(e.target.checked)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
                 </label>

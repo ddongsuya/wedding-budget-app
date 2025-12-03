@@ -1,5 +1,6 @@
 import { pool } from '../config/database';
 import { CreateNotificationInput, NotificationType } from '../types';
+import { sendPushNotification, PushPayload } from './pushService';
 
 // 알림 생성
 export const createNotification = async (input: CreateNotificationInput): Promise<any> => {
@@ -40,7 +41,23 @@ export const createNotification = async (input: CreateNotificationInput): Promis
     [user_id, type, title, message, JSON.stringify(data), link]
   );
 
-  return result.rows[0];
+  const notification = result.rows[0];
+
+  // 푸시 알림 전송 (푸시 설정이 켜져있는 경우)
+  if (preferences?.push_enabled !== false) {
+    try {
+      const pushPayload: PushPayload = {
+        title,
+        body: message,
+        data: { url: link || '/' },
+      };
+      await sendPushNotification(user_id, pushPayload);
+    } catch (error) {
+      console.error('Push notification error:', error);
+    }
+  }
+
+  return notification;
 };
 
 // 여러 사용자에게 알림 생성 (공지사항 등)

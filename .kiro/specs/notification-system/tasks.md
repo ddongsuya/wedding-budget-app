@@ -47,6 +47,7 @@
   - [ ] 3.2 Write property test for notification sorting
     - **Property 6: Notification Sorting**
 
+
     - **Validates: Requirements 6.1**
   - [ ] 3.3 Write property test for unread count accuracy
     - **Property 7: Unread Count Accuracy**
