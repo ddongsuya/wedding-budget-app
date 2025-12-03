@@ -20,6 +20,8 @@ const Budget = lazy(() => import('./pages/Budget'));
 const Checklist = lazy(() => import('./pages/Checklist'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Settings = lazy(() => import('./pages/Settings'));
+const ChangePassword = lazy(() => import('./src/pages/ChangePassword'));
+const ForgotPassword = lazy(() => import('./src/pages/ForgotPassword'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -38,6 +40,7 @@ function App() {
           {/* 공개 라우트 */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* 보호된 라우트 */}
           <Route
@@ -97,6 +100,14 @@ function App() {
                 <Layout>
                   <Settings />
                 </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/password"
+            element={
+              <ProtectedRoute>
+                <ChangePassword />
               </ProtectedRoute>
             }
           />
