@@ -7,6 +7,8 @@ interface User {
   email: string;
   name: string;
   coupleId?: number;
+  couple_id?: string | null;
+  role?: string | null;
 }
 
 interface AuthContextType {
@@ -16,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
+  refreshUser?: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -83,6 +86,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearSentryUser();
   };
 
+  // 사용자 정보 새로고침
+  const refreshUser = async () => {
+    try {
+      const response = await authAPI.me();
+      setUser(response.data.user);
+    } catch (error) {
+      console.error('Failed to refresh user');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -92,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         register,
         logout,
+        refreshUser,
       }}
     >
       {children}

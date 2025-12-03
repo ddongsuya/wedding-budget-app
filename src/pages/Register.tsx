@@ -37,7 +37,8 @@ export default function Register() {
     try {
       await register(email, password, name);
       toast.success('회원가입이 완료되었습니다! 🎉');
-      navigate('/');
+      // 커플 연결 페이지로 이동
+      navigate('/couple/connect');
     } catch (err: any) {
       const errorMessage = err.response?.data?.error || '회원가입에 실패했습니다';
       setError(errorMessage);

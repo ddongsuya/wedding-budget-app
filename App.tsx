@@ -22,6 +22,7 @@ const Schedule = lazy(() => import('./pages/Schedule'));
 const Settings = lazy(() => import('./pages/Settings'));
 const ChangePassword = lazy(() => import('./src/pages/ChangePassword'));
 const ForgotPassword = lazy(() => import('./src/pages/ForgotPassword'));
+const CoupleConnect = lazy(() => import('./src/pages/CoupleConnect'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -108,6 +109,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChangePassword />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/couple/connect"
+            element={
+              <ProtectedRoute>
+                <CoupleConnect />
               </ProtectedRoute>
             }
           />
