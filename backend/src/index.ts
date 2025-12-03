@@ -13,6 +13,7 @@ import statsRoutes from './routes/stats';
 import checklistRoutes from './routes/checklist';
 import eventRoutes from './routes/events';
 import adminRoutes from './routes/admin';
+import notificationRoutes from './routes/notifications';
 import { initSentry, sentryErrorHandler } from './lib/sentry';
 
 dotenv.config();
@@ -53,6 +54,7 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/checklist', checklistRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

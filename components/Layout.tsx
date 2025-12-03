@@ -1,6 +1,7 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, X, Calendar, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, X, Calendar, FileText, LogOut, Bell } from 'lucide-react';
+import { NotificationBadge } from '../src/components/common/NotificationBadge';
 import { ExpenseForm } from './expense/ExpenseForm';
 import { VenueForm } from './venue/VenueForm'; // Assuming VenueForm is needed for Venue quick add
 import { StorageService } from '../services/storage';
@@ -194,6 +195,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       </div>
                     </div>
                 )}
+                
+                {/* 알림 배지 */}
+                <NotificationBadge iconSize={20} />
                 
                 {/* 모바일 사용자 메뉴 */}
                 <div className="relative">

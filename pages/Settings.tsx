@@ -594,7 +594,27 @@ const SettingsNew: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-stone-800 mb-4">공지사항</h3>
+              <h3 className="text-lg font-bold text-stone-800 mb-4">알림</h3>
+              <button
+                onClick={() => navigate('/notifications')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-100"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell size={20} className="text-blue-500" />
+                  <span className="text-gray-800">알림 센터</span>
+                </div>
+                <span className="text-gray-400">→</span>
+              </button>
+              <button
+                onClick={() => navigate('/notifications/settings')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-100"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell size={20} className="text-gray-500" />
+                  <span className="text-gray-800">알림 설정</span>
+                </div>
+                <span className="text-gray-400">→</span>
+              </button>
               <button
                 onClick={() => navigate('/announcements')}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors"

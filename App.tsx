@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
+import { NotificationProvider } from './src/contexts/NotificationContext';
 import { ToastContainer } from './src/components/common/Toast';
 import { InstallPrompt } from './src/components/common/InstallPrompt';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
@@ -25,6 +26,8 @@ const ForgotPassword = lazy(() => import('./src/pages/ForgotPassword'));
 const CoupleConnect = lazy(() => import('./src/pages/CoupleConnect'));
 const AdminDashboard = lazy(() => import('./src/pages/AdminDashboard'));
 const Announcements = lazy(() => import('./src/pages/Announcements'));
+const NotificationCenter = lazy(() => import('./src/pages/NotificationCenter'));
+const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -37,6 +40,7 @@ function App() {
     <ErrorBoundary>
       <ToastProvider>
         <AuthProvider>
+          <NotificationProvider>
         <Router>
         <Suspense fallback={<LoadingScreen />}>
         <Routes>
@@ -138,6 +142,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notifications/settings"
+            element={
+              <ProtectedRoute>
+                <NotificationSettings />
+              </ProtectedRoute>
+            }
+          />
 
           {/* 기본 리다이렉트 */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -146,6 +166,7 @@ function App() {
       </Router>
         <ToastContainer />
         <InstallPrompt />
+          </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
     </ErrorBoundary>
