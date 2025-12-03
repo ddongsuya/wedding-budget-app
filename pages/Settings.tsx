@@ -65,9 +65,28 @@ const SettingsNew: React.FC = () => {
           couple_photo: null,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load profile:', error);
-      showToast('error', '프로필을 불러오는데 실패했습니다');
+      // 401 에러는 인증 문제이므로 다른 메시지 표시
+      if (error.response?.status === 401) {
+        showToast('error', '로그인이 필요합니다. 다시 로그인해주세요.');
+      } else {
+        // 프로필 로드 실패해도 기본값으로 설정
+        setProfile({
+          groom_name: '',
+          groom_birth_date: '',
+          groom_contact: '',
+          groom_image: null,
+          bride_name: '',
+          bride_birth_date: '',
+          bride_contact: '',
+          bride_image: null,
+          first_met_date: '',
+          wedding_date: '',
+          couple_nickname: '',
+          couple_photo: null,
+        });
+      }
     } finally {
       setIsLoading(false);
     }

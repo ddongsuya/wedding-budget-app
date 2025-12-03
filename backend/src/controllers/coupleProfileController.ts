@@ -6,10 +6,14 @@ import path from 'path';
 
 export const getProfile = async (req: AuthRequest, res: Response) => {
   try {
-    const coupleId = req.user!.coupleId;
+    const coupleId = req.user?.coupleId;
 
+    // 커플이 연결되지 않은 경우 빈 프로필 반환
     if (!coupleId) {
-      return res.status(404).json({ error: 'No couple found' });
+      return res.json({ 
+        profile: null,
+        message: '커플이 연결되지 않았습니다. 설정에서 커플을 연결해주세요.'
+      });
     }
 
     const result = await pool.query(
