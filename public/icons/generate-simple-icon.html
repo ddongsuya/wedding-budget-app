@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>아이콘 생성기</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    canvas {
+      border: 1px solid #ddd;
+      margin: 10px;
+      border-radius: 10px;
+    }
+    button {
+      background: #f43f5e;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #e11d48;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💒 웨딩 플래너 아이콘 생성기</h1>
+    <p>아래 버튼을 클릭하여 각 크기의 아이콘을 다운로드하세요.</p>
+    
+    <div id="canvases"></div>
+    
+    <div style="margin-top: 20px;">
+      <button onclick="downloadAll()">모든 아이콘 다운로드</button>
+    </div>
+  </div>
+
+  <script>
+    const sizes = [16, 32, 72, 96, 128, 144, 152, 192, 384, 512];
+    const container = document.getElementById('canvases');
+
+    function createIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      // 배경 그라데이션
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#E8B4B8');
+      gradient.addColorStop(1, '#D4A574');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // 하트 그리기
+      ctx.fillStyle = 'white';
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const heartSize = size * 0.4;
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY + heartSize * 0.3);
+      ctx.bezierCurveTo(
+        centerX, centerY,
+        centerX - heartSize * 0.5, centerY - heartSize * 0.5,
+        centerX, centerY - heartSize * 0.2
+      );
+      ctx.bezierCurveTo(
+        centerX + heartSize * 0.5, centerY - heartSize * 0.5,
+        centerX, centerY,
+        centerX, centerY + heartSize * 0.3
+      );
+      ctx.fill();
+
+      return canvas;
+    }
+
+    function downloadCanvas(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function downloadAll() {
+      sizes.forEach(size => {
+        const canvas = createIcon(size);
+        downloadCanvas(canvas, `icon-${size}x${size}.png`);
+      });
+      
+      // favicon
+      const favicon32 = createIcon(32);
+      downloadCanvas(favicon32, 'favicon-32x32.png');
+      
+      const favicon16 = createIcon(16);
+      downloadCanvas(favicon16, 'favicon-16x16.png');
+      
+      alert('모든 아이콘이 다운로드되었습니다! public/icons/ 폴더에 저장하세요.');
+    }
+
+    // 미리보기 생성
+    sizes.forEach(size => {
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'inline-block';
+      wrapper.style.textAlign = 'center';
+      wrapper.style.margin = '10px';
+      
+      const canvas = createIcon(size);
+      canvas.style.width = '100px';
+      canvas.style.height = '100px';
+      
+      const label = document.createElement('div');
+      label.textContent = `${size}x${size}`;
+      label.style.marginTop = '5px';
+      label.style.fontSize = '12px';
+      
+      const btn = document.createElement('button');
+      btn.textContent = '다운로드';
+      btn.onclick = () => downloadCanvas(canvas, `icon-${size}x${size}.png`);
+      
+      wrapper.appendChild(canvas);
+      wrapper.appendChild(label);
+      wrapper.appendChild(btn);
+      container.appendChild(wrapper);
+    });
+  </script>
+</body>
+</html>
