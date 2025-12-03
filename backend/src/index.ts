@@ -92,6 +92,21 @@ const runMigrations = async () => {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_couple_id ON users(couple_id)`);
     
+    // users 테이블에 role 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20)
+    `);
+    
+    // users 테이블에 updated_at 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `);
+    
+    // couples 테이블에 updated_at 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE couples ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    `);
+    
     // notifications 테이블 생성
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notifications (
