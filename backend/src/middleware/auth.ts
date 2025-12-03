@@ -10,13 +10,20 @@ export const authenticate = async (
 ) => {
   try {
     const authHeader = req.headers.authorization;
+    console.log('[AUTH] Request URL:', req.originalUrl);
+    console.log('[AUTH] Auth header exists:', !!authHeader);
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('[AUTH] No token provided');
       return res.status(401).json({ error: 'No token provided' });
     }
 
     const token = authHeader.substring(7);
+    console.log('[AUTH] Token length:', token.length);
+    console.log('[AUTH] Token preview:', token.substring(0, 20) + '...');
+    
     const decoded = verifyAccessToken(token) as { id: number; email: string };
+    console.log('[AUTH] Decoded user ID:', decoded.id);
 
     // 사용자 정보 및 커플 ID 조회
     const userResult = await pool.query(
@@ -31,8 +38,12 @@ export const authenticate = async (
       isAdmin: userResult.rows[0]?.is_admin || false,
     };
 
+    console.log('[AUTH] Success for user:', decoded.email);
     next();
-  } catch (error) {
+  } catch (error: any) {
+    console.log('[AUTH] Error:', error.message);
+    console.log('[AUTH] JWT_SECRET exists:', !!process.env.JWT_SECRET);
+    console.log('[AUTH] JWT_SECRET length:', process.env.JWT_SECRET?.length || 0);
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
