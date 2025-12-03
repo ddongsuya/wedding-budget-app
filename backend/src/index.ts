@@ -86,6 +86,12 @@ const runMigrations = async () => {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE
     `);
     
+    // users 테이블에 couple_id 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS couple_id INTEGER REFERENCES couples(id) ON DELETE SET NULL
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_couple_id ON users(couple_id)`);
+    
     // notifications 테이블 생성
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notifications (
