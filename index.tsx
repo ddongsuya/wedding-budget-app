@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { initSentry } from './src/lib/sentry';
+import './src/index.css';
 
 // Sentry 초기화 (가장 먼저 실행)
 initSentry();

@@ -71,16 +71,6 @@ function App() {
             }
           />
           <Route
-            path="/expenses"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Expenses />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/checklist"
             element={
               <ProtectedRoute>
