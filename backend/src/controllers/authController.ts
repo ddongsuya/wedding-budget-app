@@ -61,6 +61,20 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // 커플이 없으면 자동 생성
+    const coupleCheck = await pool.query(
+      'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
+      [user.id]
+    );
+
+    if (coupleCheck.rows.length === 0) {
+      console.log('Creating couple for user:', user.id);
+      await pool.query(
+        'INSERT INTO couples (user1_id) VALUES ($1)',
+        [user.id]
+      );
+    }
+
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
 

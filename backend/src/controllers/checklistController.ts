@@ -4,7 +4,7 @@ import { pool } from '../config/database';
 // 카테고리 목록 조회
 export const getCategories = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       `SELECT * FROM checklist_categories 
@@ -26,7 +26,7 @@ export const getCategories = async (req: Request, res: Response) => {
 // 카테고리 생성
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { name, icon, color } = req.body;
 
     const result = await pool.query(
@@ -50,7 +50,7 @@ export const createCategory = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { name, icon, color } = req.body;
 
     const result = await pool.query(
@@ -79,7 +79,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       'DELETE FROM checklist_categories WHERE id = $1 AND couple_id = $2 RETURNING *',
@@ -103,7 +103,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
 // 아이템 목록 조회
 export const getItems = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { category_id, is_completed, due_period, assigned_to } = req.query;
 
     let query = `
@@ -184,7 +184,7 @@ export const getItem = async (req: Request, res: Response) => {
 // 아이템 생성
 export const createItem = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const {
       category_id,
       title,
@@ -217,7 +217,7 @@ export const createItem = async (req: Request, res: Response) => {
 export const updateItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const {
       category_id,
       title,
@@ -255,7 +255,7 @@ export const updateItem = async (req: Request, res: Response) => {
 export const deleteItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       'DELETE FROM checklist_items WHERE id = $1 AND couple_id = $2 RETURNING *',
@@ -280,7 +280,7 @@ export const deleteItem = async (req: Request, res: Response) => {
 export const toggleComplete = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const userId = (req as any).user.id;
 
     // 현재 상태 확인
@@ -318,7 +318,7 @@ export const toggleComplete = async (req: Request, res: Response) => {
 // 통계
 export const getStats = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       `SELECT 
@@ -354,7 +354,18 @@ export const getStats = async (req: Request, res: Response) => {
 // 기본 체크리스트 템플릿 초기화
 export const initDefaultItems = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    console.log('=== Init Default Items Called ===');
+    console.log('User:', (req as any).user);
+    const coupleId = (req as any).user.coupleId;
+    console.log('Couple ID:', coupleId);
+    
+    if (!coupleId) {
+      console.log('ERROR: No couple ID found');
+      return res.status(400).json({
+        success: false,
+        message: '커플 정보를 찾을 수 없습니다'
+      });
+    }
 
     // 이미 아이템이 있는지 확인
     const existing = await pool.query(

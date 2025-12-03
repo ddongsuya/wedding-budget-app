@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Plus, Calendar, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Circle, Plus, Calendar, AlertCircle, Edit2, Trash2, X } from 'lucide-react';
 import { checklistAPI } from '../src/api/checklist';
 import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '../src/types/checklist';
 import { useToast } from '../src/hooks/useToast';
@@ -27,6 +27,8 @@ export const Checklist: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const { toast } = useToast();
 
   // 데이터 로드
@@ -87,6 +89,40 @@ export const Checklist: React.FC = () => {
       loadData();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '생성에 실패했습니다');
+    }
+  };
+
+  // 아이템 수정
+  const handleEdit = (item: ChecklistItem) => {
+    setEditingItem(item);
+    setShowEditModal(true);
+  };
+
+  // 아이템 삭제
+  const handleDelete = async (id: string) => {
+    if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+
+    try {
+      await checklistAPI.deleteItem(id);
+      toast.success('삭제되었습니다');
+      loadData();
+    } catch (error) {
+      toast.error('삭제에 실패했습니다');
+    }
+  };
+
+  // 아이템 저장
+  const handleSave = async (data: Partial<ChecklistItem>) => {
+    try {
+      if (editingItem) {
+        await checklistAPI.updateItem(editingItem.id, data);
+        toast.success('수정되었습니다');
+      }
+      setShowEditModal(false);
+      setEditingItem(null);
+      loadData();
+    } catch (error) {
+      toast.error('저장에 실패했습니다');
     }
   };
 
@@ -218,6 +254,24 @@ export const Checklist: React.FC = () => {
                             {item.category_name}
                           </p>
                         )}
+                      </div>
+
+                      {/* 액션 버튼 */}
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+                          title="수정"
+                        >
+                          <Edit2 size={16} className="text-stone-500" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="삭제"
+                        >
+                          <Trash2 size={16} className="text-red-500" />
+                        </button>
                       </div>
 
                       {/* 우선순위 */}
