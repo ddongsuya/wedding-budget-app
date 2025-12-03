@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import {
   getNotifications,
   getUnreadCount,
@@ -14,7 +14,7 @@ import {
 const router = Router();
 
 // 모든 라우트에 인증 필요
-router.use(authenticateToken);
+router.use(authenticate);
 
 // 알림 목록 조회
 router.get('/', getNotifications);

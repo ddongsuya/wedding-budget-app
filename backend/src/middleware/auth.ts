@@ -18,16 +18,17 @@ export const authenticate = async (
     const token = authHeader.substring(7);
     const decoded = verifyAccessToken(token) as { id: number; email: string };
 
-    // 커플 ID 조회
-    const coupleResult = await pool.query(
-      'SELECT id FROM couples WHERE user1_id = $1 OR user2_id = $1',
+    // 사용자 정보 및 커플 ID 조회
+    const userResult = await pool.query(
+      'SELECT couple_id, is_admin FROM users WHERE id = $1',
       [decoded.id]
     );
 
     req.user = {
       id: decoded.id,
       email: decoded.email,
-      coupleId: coupleResult.rows[0]?.id,
+      coupleId: userResult.rows[0]?.couple_id,
+      isAdmin: userResult.rows[0]?.is_admin || false,
     };
 
     next();
