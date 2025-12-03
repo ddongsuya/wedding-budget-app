@@ -1,204 +1,654 @@
-import React, { useEffect, useState } from 'react';
-import { StorageService } from '../services/storage';
-import { ScheduleItem } from '../types';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { DatePicker } from '../components/ui/DatePicker';
-import { Plus, MapPin, Clock, CalendarDays, Trash2 } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X } from 'lucide-react';
+import { eventAPI } from '../src/api/events';
+import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '../src/types/event';
+import { useToast } from '../src/hooks/useToast';
+import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 export const Schedule: React.FC = () => {
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
-  
-  // Form State
-  const [title, setTitle] = useState('');
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [locationState, setLocationState] = useState('');
-  const [type, setType] = useState<ScheduleItem['type']>('meeting');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const { toast } = useToast();
 
-  const location = useLocation();
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth() + 1;
 
+  // 월별 이벤트 로드
   useEffect(() => {
-    const loaded = StorageService.getSchedule();
-    // Sort by date
-    setSchedules(loaded.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-  }, []);
+    loadEvents();
+  }, [year, month]);
 
-  // Handle opening form from FAB (via router state)
-  useEffect(() => {
-    if (location.state && (location.state as any).openAdd) {
-       setIsAdding(true);
-       window.history.replaceState({}, document.title);
-    }
-  }, [location]);
-
-  const handleDelete = (id: string) => {
-    if (confirm('일정을 삭제하시겠습니까?')) {
-      const updated = StorageService.deleteScheduleItem(id);
-      setSchedules(updated.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+  const loadEvents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await eventAPI.getEventsByMonth(year, month);
+      setEvents(response.data.data);
+    } catch (error) {
+      toast.error('일정을 불러오는데 실패했습니다');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !date) return;
-
-    const newItem: ScheduleItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      title,
-      date,
-      time,
-      location: locationState,
-      type
-    };
-
-    const updated = StorageService.addScheduleItem(newItem);
-    setSchedules(updated.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
-    
-    // Reset
-    setTitle('');
-    setDate('');
-    setTime('');
-    setLocationState('');
-    setIsAdding(false);
+  // 이전/다음 월 이동
+  const goToPrevMonth = () => {
+    setCurrentDate(new Date(year, month - 2, 1));
   };
 
-  const getTypeLabel = (type: string) => {
-    switch(type) {
-      case 'meeting': return '미팅/상담';
-      case 'fitting': return '드레스 가봉';
-      case 'payment': return '결제일';
-      default: return '기타';
+  const goToNextMonth = () => {
+    setCurrentDate(new Date(year, month, 1));
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
+  };
+
+  // 일정 추가 모달 열기
+  const openAddEventModal = (date?: Date) => {
+    setEditingEvent(null);
+    if (date) setSelectedDate(date);
+    setShowEventModal(true);
+  };
+
+  // 일정 수정 모달 열기
+  const openEditEventModal = (event: CalendarEvent) => {
+    setEditingEvent(event);
+    setShowEventModal(true);
+  };
+
+  // 일정 삭제
+  const handleDeleteEvent = async (eventId: number) => {
+    if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+
+    try {
+      await eventAPI.deleteEvent(eventId.toString());
+      toast.success('일정이 삭제되었습니다');
+      loadEvents();
+    } catch (error) {
+      toast.error('삭제에 실패했습니다');
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch(type) {
-      case 'meeting': return 'bg-blue-100 text-blue-700';
-      case 'fitting': return 'bg-rose-100 text-rose-700';
-      case 'payment': return 'bg-amber-100 text-amber-700';
-      default: return 'bg-stone-100 text-stone-600';
+  // 일정 저장 (추가/수정)
+  const handleSaveEvent = async (eventData: any) => {
+    try {
+      if (editingEvent) {
+        await eventAPI.updateEvent(editingEvent.id.toString(), eventData);
+        toast.success('일정이 수정되었습니다');
+      } else {
+        await eventAPI.createEvent(eventData as EventFormData);
+        toast.success('일정이 추가되었습니다');
+      }
+      setShowEventModal(false);
+      setEditingEvent(null);
+      loadEvents();
+    } catch (error) {
+      toast.error(editingEvent ? '수정에 실패했습니다' : '추가에 실패했습니다');
     }
   };
 
-  // Group by Month
-  const groupedSchedules = schedules.reduce((acc, item) => {
-    const month = item.date.substring(0, 7); // YYYY-MM
-    if (!acc[month]) acc[month] = [];
-    acc[month].push(item);
-    return acc;
-  }, {} as Record<string, ScheduleItem[]>);
+  // 캘린더 날짜 배열 생성
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(currentDate);
+    const end = endOfMonth(currentDate);
+    const days = eachDayOfInterval({ start, end });
 
-  const sortedMonths = Object.keys(groupedSchedules).sort();
+    // 시작 요일 맞추기 (일요일 = 0)
+    const startDay = start.getDay();
+    const prefixDays = Array(startDay).fill(null);
+
+    return [...prefixDays, ...days];
+  }, [currentDate]);
+
+  // 날짜별 이벤트 매핑
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, CalendarEvent[]> = {};
+    events.forEach(event => {
+      const dateKey = event.start_date;
+      if (!map[dateKey]) map[dateKey] = [];
+      map[dateKey].push(event);
+    });
+    return map;
+  }, [events]);
+
+  // 선택된 날짜의 이벤트
+  const selectedDateEvents = selectedDate
+    ? eventsByDate[format(selectedDate, 'yyyy-MM-dd')] || []
+    : [];
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-stone-800">일정 관리</h2>
-          <p className="text-stone-500 text-sm">주요 웨딩 일정을 관리하세요.</p>
+    <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
+      {/* 헤더 */}
+      <div className="bg-white px-4 py-4 shadow-sm sticky top-[60px] md:top-0 z-10">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={goToPrevMonth}
+            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+          >
+            <ChevronLeft size={24} className="text-stone-600" />
+          </button>
+          
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-stone-800">
+              {format(currentDate, 'yyyy년 M월', { locale: ko })}
+            </h1>
+            <button
+              onClick={goToToday}
+              className="text-sm text-rose-500 font-medium hover:text-rose-600"
+            >
+              오늘
+            </button>
+          </div>
+          
+          <button
+            onClick={goToNextMonth}
+            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+          >
+            <ChevronRight size={24} className="text-stone-600" />
+          </button>
         </div>
-        <Button icon={<Plus size={18} />} onClick={() => setIsAdding(true)}>
+
+        {/* 일정 추가 버튼 */}
+        <button
+          onClick={() => openAddEventModal()}
+          className="w-full bg-rose-500 text-white py-2.5 rounded-xl font-medium hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus size={20} />
           일정 추가
-        </Button>
+        </button>
+
+        {/* 요일 헤더 */}
+        <div className="grid grid-cols-7 text-center text-sm">
+          {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+            <div
+              key={day}
+              className={`py-2 font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-stone-500'}`}
+            >
+              {day}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {isAdding && (
-        <Card className="p-6 animate-fade-in border-rose-200 ring-4 ring-rose-50">
-          <h3 className="text-lg font-bold text-stone-800 mb-4">새 일정 추가</h3>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-stone-500">일정명</label>
-                <input required type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 border rounded-lg outline-none focus:border-rose-500" placeholder="예: 드레스 투어" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-stone-500">유형</label>
-                <select value={type} onChange={(e) => setType(e.target.value as any)} className="w-full px-3 py-2 border rounded-lg outline-none focus:border-rose-500 bg-white">
-                  <option value="meeting">미팅/상담</option>
-                  <option value="fitting">드레스 가봉</option>
-                  <option value="payment">결제일</option>
-                  <option value="other">기타</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <DatePicker 
-                  label="날짜"
-                  value={date} 
-                  onChange={(d) => setDate(d)} 
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-stone-500">시간</label>
-                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full px-3 py-2 border rounded-lg outline-none focus:border-rose-500" />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-semibold text-stone-500">장소 (선택)</label>
-                <input type="text" value={locationState} onChange={(e) => setLocationState(e.target.value)} className="w-full px-3 py-2 border rounded-lg outline-none focus:border-rose-500" placeholder="예: 청담동 OO샵" />
-              </div>
-            </div>
-            <div className="flex gap-2 justify-end pt-2">
-               <Button type="button" variant="secondary" onClick={() => setIsAdding(false)}>취소</Button>
-               <Button type="submit">저장</Button>
-            </div>
-          </form>
-        </Card>
-      )}
+      {/* 캘린더 그리드 */}
+      <div className="bg-white mx-4 mt-4 rounded-2xl shadow-sm overflow-hidden">
+        <div className="grid grid-cols-7">
+          {calendarDays.map((day, index) => {
+            if (!day) {
+              return <div key={`empty-${index}`} className="h-20 border-b border-r border-stone-100" />;
+            }
 
-      {/* Timeline View */}
-      <div className="space-y-8">
-        {sortedMonths.length > 0 ? (
-          sortedMonths.map(month => (
-            <div key={month}>
-              <h3 className="text-lg font-bold text-stone-600 mb-4 sticky top-16 bg-stone-50 py-2 z-10 flex items-center gap-2">
-                <CalendarDays size={20} className="text-rose-500"/>
-                {month.replace('-', '. ')}
-              </h3>
-              <div className="space-y-3 pl-2 md:pl-4 border-l-2 border-stone-200 ml-2 md:ml-3">
-                {groupedSchedules[month].map(item => (
-                  <div key={item.id} className="relative pl-6">
-                    {/* Timeline Dot */}
-                    <div className="absolute -left-[9px] top-4 w-4 h-4 rounded-full bg-white border-4 border-rose-300"></div>
-                    
-                    <div className="bg-white rounded-xl p-4 shadow-sm border border-stone-100 hover:shadow-md transition-shadow group">
-                      <div className="flex justify-between items-start">
-                        <div>
-                           <div className="flex items-center gap-2 mb-1">
-                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${getTypeColor(item.type)}`}>
-                               {getTypeLabel(item.type)}
-                             </span>
-                             <span className="text-stone-400 text-xs font-medium">{item.date} {item.time}</span>
-                           </div>
-                           <h4 className="font-bold text-stone-800 text-lg">{item.title}</h4>
-                           {item.location && (
-                             <div className="flex items-center gap-1 text-stone-500 text-sm mt-1">
-                               <MapPin size={14} /> {item.location}
-                             </div>
-                           )}
-                        </div>
-                        <button 
-                          onClick={() => handleDelete(item.id)}
-                          className="text-stone-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+            const dateKey = format(day, 'yyyy-MM-dd');
+            const dayEvents = eventsByDate[dateKey] || [];
+            const isCurrentMonth = isSameMonth(day, currentDate);
+            const isSelected = selectedDate && isSameDay(day, selectedDate);
+            const isTodayDate = isToday(day);
+            const dayOfWeek = day.getDay();
+
+            return (
+              <button
+                key={dateKey}
+                onClick={() => setSelectedDate(day)}
+                className={`h-20 p-1 border-b border-r border-stone-100 flex flex-col items-center transition-colors
+                  ${!isCurrentMonth ? 'opacity-30' : ''}
+                  ${isSelected ? 'bg-rose-50' : 'hover:bg-stone-50'}
+                `}
+              >
+                {/* 날짜 숫자 */}
+                <span className={`
+                  w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium
+                  ${isTodayDate ? 'bg-rose-500 text-white' : ''}
+                  ${dayOfWeek === 0 ? 'text-red-400' : dayOfWeek === 6 ? 'text-blue-400' : 'text-stone-700'}
+                `}>
+                  {format(day, 'd')}
+                </span>
+
+                {/* 이벤트 도트 */}
+                <div className="flex flex-wrap justify-center gap-0.5 mt-1">
+                  {dayEvents.slice(0, 3).map((event) => (
+                    <div
+                      key={event.id}
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ backgroundColor: event.color }}
+                      title={event.title}
+                    />
+                  ))}
+                  {dayEvents.length > 3 && (
+                    <span className="text-[10px] text-stone-400">+{dayEvents.length - 3}</span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 선택된 날짜의 이벤트 목록 */}
+      {selectedDate && (
+        <div className="mx-4 mt-4">
+          <h2 className="text-lg font-bold text-stone-800 mb-3">
+            {format(selectedDate, 'M월 d일 (EEEE)', { locale: ko })}
+          </h2>
+
+          {selectedDateEvents.length === 0 ? (
+            <div className="bg-white rounded-xl p-6 text-center text-stone-500">
+              <p className="mb-3">이 날의 일정이 없어요</p>
+              <button
+                onClick={() => openAddEventModal(selectedDate)}
+                className="text-rose-500 font-medium hover:text-rose-600"
+              >
+                + 일정 추가하기
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {selectedDateEvents.map((event) => {
+                const categoryInfo = event.category ? EVENT_CATEGORIES[event.category] : null;
+
+                return (
+                  <div
+                    key={event.id}
+                    className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"
+                  >
+                    {/* 카테고리 아이콘 */}
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: event.color + '20' }}
+                    >
+                      <span className="text-lg">{categoryInfo?.icon || '📅'}</span>
+                    </div>
+
+                    {/* 내용 */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-stone-800 truncate">{event.title}</h3>
+
+                      <div className="flex flex-wrap gap-2 mt-1 text-sm text-stone-500">
+                        {/* 시간 */}
+                        {event.start_time && (
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} />
+                            {event.start_time.slice(0, 5)}
+                            {event.end_time && ` - ${event.end_time.slice(0, 5)}`}
+                          </span>
+                        )}
+
+                        {/* 위치 */}
+                        {event.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin size={12} />
+                            <span className="truncate max-w-[150px]">{event.location}</span>
+                          </span>
+                        )}
                       </div>
+
+                      {/* 카테고리 태그 */}
+                      {categoryInfo && (
+                        <span
+                          className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: event.color + '20',
+                            color: event.color
+                          }}
+                        >
+                          {categoryInfo.label}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* 액션 버튼 */}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => openEditEventModal(event)}
+                        className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+                      >
+                        <Edit2 size={16} className="text-stone-500" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} className="text-red-500" />
+                      </button>
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 다가오는 일정 (날짜 미선택 시) */}
+      {!selectedDate && events.length === 0 && (
+        <div className="mx-4 mt-4">
+          <EmptyState
+            illustration="calendar"
+            title="등록된 일정이 없어요"
+            description="식장 방문, 피팅 등 일정을 추가해보세요"
+            actionLabel="일정 추가하기"
+            onAction={() => openAddEventModal()}
+          />
+        </div>
+      )}
+
+      {!selectedDate && events.length > 0 && (
+        <UpcomingEvents events={events} />
+      )}
+
+      {/* 일정 추가/수정 모달 */}
+      {showEventModal && (
+        <EventModal
+          event={editingEvent}
+          selectedDate={selectedDate}
+          onClose={() => {
+            setShowEventModal(false);
+            setEditingEvent(null);
+          }}
+          onSave={handleSaveEvent}
+        />
+      )}
+    </div>
+  );
+};
+
+// 다가오는 일정 컴포넌트
+const UpcomingEvents: React.FC<{ events: CalendarEvent[] }> = ({ events }) => {
+  const today = new Date();
+  const upcomingEvents = events
+    .filter(e => new Date(e.start_date) >= today)
+    .slice(0, 5);
+
+  if (upcomingEvents.length === 0) return null;
+
+  return (
+    <div className="mx-4 mt-4">
+      <h2 className="text-lg font-bold text-stone-800 mb-3">다가오는 일정</h2>
+      <div className="space-y-2">
+        {upcomingEvents.map((event) => {
+          const categoryInfo = event.category ? EVENT_CATEGORIES[event.category] : null;
+
+          return (
+            <div
+              key={event.id}
+              className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3"
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: event.color + '20' }}
+              >
+                <span>{categoryInfo?.icon || '📅'}</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-stone-800">{event.title}</h3>
+                <p className="text-sm text-stone-500">
+                  {format(new Date(event.start_date), 'M월 d일 (EEE)', { locale: ko })}
+                  {event.start_time && ` ${event.start_time.slice(0, 5)}`}
+                </p>
               </div>
             </div>
-          ))
-        ) : (
-           <div className="text-center py-20 bg-white rounded-2xl border border-stone-100">
-             <CalendarDays size={48} className="mx-auto text-stone-300 mb-4" />
-             <p className="text-stone-500 font-medium">등록된 일정이 없습니다.</p>
-             <p className="text-stone-400 text-sm">결혼 준비 일정을 등록해보세요.</p>
-           </div>
-        )}
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// 일정 추가/수정 모달
+interface EventModalProps {
+  event: CalendarEvent | null;
+  selectedDate: Date | null;
+  onClose: () => void;
+  onSave: (data: Partial<CalendarEvent>) => void;
+}
+
+const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: event?.title || '',
+    description: event?.description || '',
+    start_date: event?.start_date || (selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')),
+    start_time: event?.start_time || '',
+    end_date: event?.end_date || '',
+    end_time: event?.end_time || '',
+    is_all_day: event?.is_all_day || false,
+    category: event?.category || 'venue_visit' as EventCategory,
+    location: event?.location || '',
+    location_url: event?.location_url || '',
+    reminder_minutes: event?.reminder_minutes || 30,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      alert('제목을 입력해주세요');
+      return;
+    }
+
+    const categoryInfo = EVENT_CATEGORIES[formData.category];
+    
+    onSave({
+      ...formData,
+      color: categoryInfo.color,
+      icon: categoryInfo.icon,
+    });
+  };
+
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        {/* 헤더 */}
+        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-stone-800">
+            {event ? '일정 수정' : '일정 추가'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+          >
+            <X size={24} className="text-stone-600" />
+          </button>
+        </div>
+
+        {/* 폼 */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* 제목 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              제목 *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="예: 웨딩홀 방문"
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* 카테고리 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              카테고리
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleChange('category', key)}
+                  className={`p-3 rounded-xl border-2 transition-all flex items-center gap-2 ${
+                    formData.category === key
+                      ? 'border-rose-500 bg-rose-50'
+                      : 'border-stone-200 hover:border-stone-300'
+                  }`}
+                >
+                  <span className="text-xl">{cat.icon}</span>
+                  <span className="text-sm font-medium">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 날짜 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                시작 날짜 *
+              </label>
+              <input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => handleChange('start_date', e.target.value)}
+                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                종료 날짜
+              </label>
+              <input
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => handleChange('end_date', e.target.value)}
+                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          {/* 종일 체크박스 */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="is_all_day"
+              checked={formData.is_all_day}
+              onChange={(e) => handleChange('is_all_day', e.target.checked)}
+              className="w-4 h-4 text-rose-500 rounded focus:ring-rose-500"
+            />
+            <label htmlFor="is_all_day" className="text-sm text-stone-700">
+              종일
+            </label>
+          </div>
+
+          {/* 시간 (종일이 아닐 때만) */}
+          {!formData.is_all_day && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  시작 시간
+                </label>
+                <input
+                  type="time"
+                  value={formData.start_time}
+                  onChange={(e) => handleChange('start_time', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-2">
+                  종료 시간
+                </label>
+                <input
+                  type="time"
+                  value={formData.end_time}
+                  onChange={(e) => handleChange('end_time', e.target.value)}
+                  className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 위치 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              위치
+            </label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => handleChange('location', e.target.value)}
+              placeholder="예: 서울 강남구 테헤란로 123"
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* 위치 URL */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              위치 링크 (지도)
+            </label>
+            <input
+              type="url"
+              value={formData.location_url}
+              onChange={(e) => handleChange('location_url', e.target.value)}
+              placeholder="https://map.naver.com/..."
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* 메모 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              메모
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="일정에 대한 메모를 입력하세요"
+              rows={3}
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
+            />
+          </div>
+
+          {/* 알림 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              알림
+            </label>
+            <select
+              value={formData.reminder_minutes}
+              onChange={(e) => handleChange('reminder_minutes', parseInt(e.target.value))}
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            >
+              <option value={0}>알림 없음</option>
+              <option value={10}>10분 전</option>
+              <option value={30}>30분 전</option>
+              <option value={60}>1시간 전</option>
+              <option value={1440}>1일 전</option>
+              <option value={2880}>2일 전</option>
+              <option value={10080}>1주일 전</option>
+            </select>
+          </div>
+
+          {/* 버튼 */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
+            >
+              {event ? '수정' : '추가'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
