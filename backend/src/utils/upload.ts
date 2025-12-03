@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'uploads';
-const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '5242880'); // 5MB
+const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '10485760'); // 10MB
 
 // 업로드 디렉토리 생성
 if (!fs.existsSync(UPLOAD_DIR)) {

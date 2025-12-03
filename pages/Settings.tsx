@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card';
 import { DatePicker } from '../components/ui/DatePicker';
 import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, DollarSign, Camera, Heart, Download, RotateCcw, ChevronDown, Check } from 'lucide-react';
 import { useToast } from '../src/hooks/useToast';
+import { compressImage, formatFileSize } from '../src/utils/imageCompression';
 
 type Tab = 'profile' | 'app' | 'info' | 'data';
 
@@ -72,21 +73,34 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'groom' | 'bride' | 'couple') => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: 'groom' | 'bride' | 'couple') => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check size (3MB limit)
-      if (file.size > 3 * 1024 * 1024) {
-         toast.error('이미지 용량이 너무 큽니다. 3MB 이하의 이미지를 선택해주세요');
-         return;
-      }
+    if (!file) return;
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('이미지 파일만 업로드 가능합니다');
-        return;
-      }
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('이미지 파일만 업로드 가능합니다');
+      return;
+    }
 
+    try {
+      // 원본 파일 크기 표시
+      const originalSize = formatFileSize(file.size);
+      console.log(`원본 이미지: ${originalSize}`);
+
+      // 이미지 압축 (최대 2MB, 품질 80%)
+      toast.info('이미지 압축 중...');
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1920,
+        maxHeight: 1920,
+        quality: 0.8,
+        maxSizeMB: 2,
+      });
+
+      const compressedSize = formatFileSize(compressedFile.size);
+      console.log(`압축 후: ${compressedSize}`);
+
+      // 압축된 이미지를 base64로 변환
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
@@ -95,12 +109,15 @@ export const Settings: React.FC = () => {
         } else {
           handleProfileChange('avatarUrl', base64, target);
         }
-        toast.success('이미지가 업로드되었습니다');
+        toast.success(`이미지 업로드 완료 (${originalSize} → ${compressedSize})`);
       };
       reader.onerror = () => {
         toast.error('이미지 업로드에 실패했습니다');
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('Image compression error:', error);
+      toast.error('이미지 처리 중 오류가 발생했습니다');
     }
   };
 
