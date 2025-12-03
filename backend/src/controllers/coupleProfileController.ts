@@ -38,17 +38,18 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'No couple found' });
     }
 
-    const {
-      groom_name,
-      groom_birth_date,
-      groom_contact,
-      bride_name,
-      bride_birth_date,
-      bride_contact,
-      first_met_date,
-      wedding_date,
-      couple_nickname,
-    } = req.body;
+    // 빈 문자열을 null로 변환 (날짜 필드용)
+    const toNullIfEmpty = (val: any) => (val === '' || val === undefined ? null : val);
+
+    const groom_name = toNullIfEmpty(req.body.groom_name);
+    const groom_birth_date = toNullIfEmpty(req.body.groom_birth_date);
+    const groom_contact = toNullIfEmpty(req.body.groom_contact);
+    const bride_name = toNullIfEmpty(req.body.bride_name);
+    const bride_birth_date = toNullIfEmpty(req.body.bride_birth_date);
+    const bride_contact = toNullIfEmpty(req.body.bride_contact);
+    const first_met_date = toNullIfEmpty(req.body.first_met_date);
+    const wedding_date = toNullIfEmpty(req.body.wedding_date);
+    const couple_nickname = toNullIfEmpty(req.body.couple_nickname);
 
     // 프로필이 존재하는지 확인
     const existing = await pool.query(
