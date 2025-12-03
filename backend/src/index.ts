@@ -10,6 +10,7 @@ import venueRoutes from './routes/venues';
 import budgetRoutes from './routes/budget';
 import expenseRoutes from './routes/expenses';
 import statsRoutes from './routes/stats';
+import checklistRoutes from './routes/checklist';
 import { initSentry, sentryErrorHandler } from './lib/sentry';
 
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/budget', budgetRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/checklist', checklistRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

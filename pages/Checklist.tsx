@@ -1,147 +1,237 @@
-import React, { useEffect, useState } from 'react';
-import { StorageService } from '../services/storage';
-import { ChecklistItem } from '../types';
-import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
-import { Plus, CheckSquare, Trash2, CalendarClock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, Circle, Plus, Calendar, AlertCircle } from 'lucide-react';
+import { checklistAPI } from '../src/api/checklist';
+import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '../src/types/checklist';
+import { useToast } from '../src/hooks/useToast';
+import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
+import { ChecklistSkeleton } from '../src/components/skeleton/ChecklistSkeleton';
 
-const PERIODS = ['D-180', 'D-100', 'D-60', 'D-30', 'D-7', 'D-Day'] as const;
+const DUE_PERIODS: { value: DuePeriod; label: string }[] = [
+  { value: 'D-180', label: 'D-180 (6개월 전)' },
+  { value: 'D-150', label: 'D-150 (5개월 전)' },
+  { value: 'D-120', label: 'D-120 (4개월 전)' },
+  { value: 'D-90', label: 'D-90 (3개월 전)' },
+  { value: 'D-60', label: 'D-60 (2개월 전)' },
+  { value: 'D-30', label: 'D-30 (1개월 전)' },
+  { value: 'D-14', label: 'D-14 (2주 전)' },
+  { value: 'D-7', label: 'D-7 (1주 전)' },
+  { value: 'D-1', label: 'D-1 (하루 전)' },
+  { value: 'D-DAY', label: 'D-DAY' },
+  { value: 'AFTER', label: '결혼 후' },
+];
 
 export const Checklist: React.FC = () => {
   const [items, setItems] = useState<ChecklistItem[]>([]);
-  const [isAdding, setIsAdding] = useState(false);
-  const [newItemTitle, setNewItemTitle] = useState('');
-  const [newItemPeriod, setNewItemPeriod] = useState<typeof PERIODS[number]>('D-180');
+  const [categories, setCategories] = useState<ChecklistCategory[]>([]);
+  const [stats, setStats] = useState<ChecklistStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showCompleted, setShowCompleted] = useState(true);
+  const { toast } = useToast();
 
+  // 데이터 로드
   useEffect(() => {
-    setItems(StorageService.getChecklist());
-  }, []);
+    loadData();
+  }, [selectedCategory, showCompleted]);
 
-  const handleToggle = (id: string) => {
-    const updated = StorageService.toggleChecklistItem(id);
-    setItems(updated);
-  };
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      
+      const [itemsRes, categoriesRes, statsRes] = await Promise.all([
+        checklistAPI.getItems({
+          category_id: selectedCategory || undefined,
+          is_completed: showCompleted ? undefined : false,
+        }),
+        checklistAPI.getCategories(),
+        checklistAPI.getStats(),
+      ]);
 
-  const handleDelete = (id: string) => {
-    if (confirm('삭제하시겠습니까?')) {
-      const updated = StorageService.deleteChecklistItem(id);
-      setItems(updated);
+      setItems(itemsRes.data.data);
+      setCategories(categoriesRes.data.data);
+      setStats(statsRes.data.data);
+    } catch (error) {
+      toast.error('데이터를 불러오는데 실패했습니다');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newItemTitle.trim()) return;
+  // 완료 토글
+  const handleToggle = async (id: string) => {
+    try {
+      await checklistAPI.toggleComplete(id);
+      
+      setItems(prev => prev.map(item =>
+        item.id === id
+          ? { ...item, is_completed: !item.is_completed, completed_at: !item.is_completed ? new Date().toISOString() : null }
+          : item
+      ));
 
-    const newItem: ChecklistItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newItemTitle,
-      period: newItemPeriod,
-      isCompleted: false
-    };
+      // 통계 새로고침
+      const statsRes = await checklistAPI.getStats();
+      setStats(statsRes.data.data);
 
-    const updated = StorageService.addChecklistItem(newItem);
-    setItems(updated);
-    setNewItemTitle('');
-    setIsAdding(false);
+      const item = items.find(i => i.id === id);
+      toast.success(item?.is_completed ? '완료 취소' : '완료! 🎉');
+    } catch (error) {
+      toast.error('업데이트에 실패했습니다');
+    }
   };
 
-  const calculateProgress = (periodItems: ChecklistItem[]) => {
-    if (periodItems.length === 0) return 0;
-    const completed = periodItems.filter(i => i.isCompleted).length;
-    return Math.round((completed / periodItems.length) * 100);
+  // 기본 템플릿 불러오기
+  const handleInitDefaults = async () => {
+    try {
+      await checklistAPI.initDefaults();
+      toast.success('기본 체크리스트가 생성되었습니다!');
+      loadData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '생성에 실패했습니다');
+    }
   };
+
+  // D-day 기준 그룹핑
+  const groupedItems = items.reduce((acc, item) => {
+    const period = item.due_period || 'NONE';
+    if (!acc[period]) acc[period] = [];
+    acc[period].push(item);
+    return acc;
+  }, {} as Record<string, ChecklistItem[]>);
+
+  if (isLoading) return <ChecklistSkeleton />;
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-stone-800">체크리스트</h2>
-          <p className="text-stone-500 text-sm">시기별로 준비해야 할 항목들을 점검하세요.</p>
+    <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
+      {/* 헤더 */}
+      <div className="bg-white px-4 py-6 shadow-sm sticky top-[60px] md:top-0 z-10">
+        <h1 className="text-2xl font-bold text-stone-800 mb-4">체크리스트</h1>
+        
+        {/* 진행률 */}
+        {stats && (
+          <div className="mb-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-stone-600">진행률</span>
+              <span className="font-bold text-rose-500">{stats.completionRate}%</span>
+            </div>
+            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-500"
+                style={{ width: `${stats.completionRate}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-stone-500 mt-1">
+              <span>{stats.completed}개 완료</span>
+              <span>{stats.pending}개 남음</span>
+            </div>
+          </div>
+        )}
+
+        {/* 필터 */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+              !selectedCategory
+                ? 'bg-rose-500 text-white'
+                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+            }`}
+          >
+            전체
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors flex items-center gap-1 ${
+                selectedCategory === cat.id
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.name}</span>
+            </button>
+          ))}
         </div>
-        <Button icon={<Plus size={18} />} onClick={() => setIsAdding(true)}>
-          항목 추가
-        </Button>
       </div>
 
-      {isAdding && (
-        <Card className="p-4 animate-fade-in mb-6 border-rose-200 ring-4 ring-rose-50">
-          <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-3">
-             <select 
-               value={newItemPeriod}
-               onChange={(e) => setNewItemPeriod(e.target.value as any)}
-               className="px-4 py-2 rounded-xl border border-stone-200 outline-none focus:border-rose-500 min-w-[120px]"
-             >
-               {PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
-             </select>
-             <input 
-               autoFocus
-               type="text" 
-               placeholder="할 일을 입력하세요" 
-               value={newItemTitle}
-               onChange={(e) => setNewItemTitle(e.target.value)}
-               className="flex-1 px-4 py-2 rounded-xl border border-stone-200 outline-none focus:border-rose-500"
-             />
-             <div className="flex gap-2">
-               <Button type="submit">추가</Button>
-               <Button type="button" variant="secondary" onClick={() => setIsAdding(false)}>취소</Button>
-             </div>
-          </form>
-        </Card>
+      {/* 빈 상태 */}
+      {items.length === 0 ? (
+        <EmptyState
+          illustration="checklist"
+          title="체크리스트가 비어있어요"
+          description="기본 결혼 준비 체크리스트를 불러오거나 직접 추가해보세요"
+          actionLabel="기본 템플릿 불러오기"
+          onAction={handleInitDefaults}
+        />
+      ) : (
+        <div className="p-4 space-y-6">
+          {/* D-day 그룹별 표시 */}
+          {DUE_PERIODS.map(period => {
+            const periodItems = groupedItems[period.value];
+            if (!periodItems || periodItems.length === 0) return null;
+
+            const completedCount = periodItems.filter(i => i.is_completed).length;
+
+            return (
+              <div key={period.value} className="space-y-2 animate-fade-in">
+                {/* 그룹 헤더 */}
+                <div className="flex items-center justify-between">
+                  <h2 className="font-bold text-stone-800 flex items-center gap-2">
+                    <Calendar size={16} className="text-rose-400" />
+                    {period.label}
+                  </h2>
+                  <span className="text-sm text-stone-500">
+                    {completedCount}/{periodItems.length}
+                  </span>
+                </div>
+
+                {/* 아이템 목록 */}
+                <div className="space-y-2">
+                  {periodItems.map(item => (
+                    <div
+                      key={item.id}
+                      className={`bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 transition-all hover:shadow-md ${
+                        item.is_completed ? 'opacity-60' : ''
+                      }`}
+                    >
+                      {/* 체크박스 */}
+                      <button
+                        onClick={() => handleToggle(item.id)}
+                        className="flex-shrink-0 transition-transform hover:scale-110"
+                      >
+                        {item.is_completed ? (
+                          <CheckCircle2 size={24} className="text-green-500" />
+                        ) : (
+                          <Circle size={24} className="text-stone-300 hover:text-stone-400" />
+                        )}
+                      </button>
+
+                      {/* 내용 */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium ${item.is_completed ? 'line-through text-stone-400' : 'text-stone-800'}`}>
+                          {item.title}
+                        </p>
+                        {item.category_name && (
+                          <p className="text-xs text-stone-500 flex items-center gap-1 mt-1">
+                            <span>{item.category_icon}</span>
+                            {item.category_name}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 우선순위 */}
+                      {item.priority === 'high' && !item.is_completed && (
+                        <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {PERIODS.map(period => {
-          const periodItems = items.filter(i => i.period === period);
-          const progress = calculateProgress(periodItems);
-          
-          return (
-            <Card key={period} className="overflow-hidden">
-               <div className="px-5 py-4 bg-stone-50 border-b border-stone-100 flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                     <div className="bg-white p-1.5 rounded-lg shadow-sm text-rose-500">
-                        <CalendarClock size={16} />
-                     </div>
-                     <h3 className="font-bold text-stone-800">{period}</h3>
-                  </div>
-                  <span className="text-xs font-medium text-stone-500">{progress}% 완료</span>
-               </div>
-               
-               {/* Progress Bar */}
-               <div className="h-1 w-full bg-stone-100">
-                  <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${progress}%` }}></div>
-               </div>
-
-               <div className="p-2">
-                 {periodItems.length > 0 ? (
-                   <div className="space-y-1">
-                     {periodItems.map(item => (
-                       <div key={item.id} className="group flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors">
-                          <label className="flex items-center gap-3 cursor-pointer flex-1">
-                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${item.isCompleted ? 'bg-rose-500 border-rose-500' : 'bg-white border-stone-300'}`}>
-                                {item.isCompleted && <CheckSquare size={14} className="text-white" />}
-                             </div>
-                             <input type="checkbox" className="hidden" checked={item.isCompleted} onChange={() => handleToggle(item.id)} />
-                             <span className={`text-sm ${item.isCompleted ? 'text-stone-400 line-through' : 'text-stone-700'}`}>
-                               {item.title}
-                             </span>
-                          </label>
-                          <button onClick={() => handleDelete(item.id)} className="text-stone-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                             <Trash2 size={16} />
-                          </button>
-                       </div>
-                     ))}
-                   </div>
-                 ) : (
-                   <div className="py-8 text-center text-stone-400 text-sm">
-                     등록된 항목이 없습니다.
-                   </div>
-                 )}
-               </div>
-            </Card>
-          );
-        })}
-      </div>
     </div>
   );
 };
