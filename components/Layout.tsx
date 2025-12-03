@@ -7,6 +7,7 @@ import { StorageService } from '../services/storage';
 import { CoupleProfile } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../src/contexts/AuthContext';
+import { useToast } from '../src/hooks/useToast';
 
 interface LayoutProps {
   children: ReactNode;
@@ -24,6 +25,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
   
   // Modals
@@ -40,6 +42,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
+    toast.info('로그아웃되었습니다');
     navigate('/login');
   };
 

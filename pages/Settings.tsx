@@ -6,10 +6,12 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { DatePicker } from '../components/ui/DatePicker';
 import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, DollarSign, Camera, Heart, Download, RotateCcw, ChevronDown, Check } from 'lucide-react';
+import { useToast } from '../src/hooks/useToast';
 
 type Tab = 'profile' | 'app' | 'info' | 'data';
 
 export const Settings: React.FC = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -60,13 +62,13 @@ export const Settings: React.FC = () => {
       StorageService.saveCoupleProfile(profile);
       
       // 3. Success Feedback
-      alert('프로필이 성공적으로 저장되었습니다!');
+      toast.success('프로필이 저장되었습니다! 💕');
       
       // 4. Force Reload to update global UI (Header, Sidebar)
-      window.location.reload(); 
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error('Profile save error:', error);
-      alert('저장 중 오류가 발생했습니다. 이미지 용량이 너무 클 수 있습니다 (3MB 제한).');
+      toast.error('저장 중 오류가 발생했습니다. 이미지 용량이 너무 클 수 있습니다 (3MB 제한)');
     }
   };
 
@@ -75,8 +77,14 @@ export const Settings: React.FC = () => {
     if (file) {
       // Check size (3MB limit)
       if (file.size > 3 * 1024 * 1024) {
-         alert('이미지 용량이 너무 큽니다. 3MB 이하의 이미지를 선택해주세요.');
+         toast.error('이미지 용량이 너무 큽니다. 3MB 이하의 이미지를 선택해주세요');
          return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('이미지 파일만 업로드 가능합니다');
+        return;
       }
 
       const reader = new FileReader();
@@ -87,26 +95,41 @@ export const Settings: React.FC = () => {
         } else {
           handleProfileChange('avatarUrl', base64, target);
         }
+        toast.success('이미지가 업로드되었습니다');
+      };
+      reader.onerror = () => {
+        toast.error('이미지 업로드에 실패했습니다');
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleExport = () => {
-    const data = StorageService.exportData();
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `wedding_planner_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const data = StorageService.exportData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `wedding_planner_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('데이터가 내보내기되었습니다');
+    } catch (error) {
+      toast.error('데이터 내보내기에 실패했습니다');
+    }
   };
 
   const handleReset = () => {
     if (confirm('정말로 모든 데이터를 삭제하고 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-      StorageService.clearAllData();
+      try {
+        StorageService.clearAllData();
+        toast.info('모든 데이터가 초기화되었습니다');
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        toast.error('초기화에 실패했습니다');
+      }
     }
   };
 
