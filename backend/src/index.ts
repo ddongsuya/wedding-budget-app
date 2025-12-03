@@ -16,13 +16,19 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware - CORS 설정
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: true, // 모든 origin 허용 (개발용)
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With'],
+  maxAge: 86400 // 24시간
 }));
+
+// Preflight 요청 처리
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
