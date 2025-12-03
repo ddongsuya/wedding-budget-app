@@ -46,6 +46,7 @@
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
   - [ ] 3.2 Write property test for notification sorting
     - **Property 6: Notification Sorting**
+
     - **Validates: Requirements 6.1**
   - [ ] 3.3 Write property test for unread count accuracy
     - **Property 7: Unread Count Accuracy**
@@ -59,14 +60,19 @@
     - _Requirements: 6.1, 6.2, 6.4_
 
 - [ ] 4. Implement notification preferences controller
-  - [ ] 4.1 Create preferencesController.ts
+  - [-] 4.1 Create preferencesController.ts
+
+
     - Implement getPreferences
+
     - Implement updatePreferences
     - Create default preferences on first access
     - _Requirements: 5.1, 5.2, 5.3_
   - [ ] 4.2 Write property test for preference-respecting notifications
     - **Property 3: Preference-Respecting Notifications**
     - **Validates: Requirements 1.3, 5.2**
+
+
 
 - [ ] 5. Checkpoint - Ensure all tests pass
   - Ensure all tests pass, ask the user if questions arise.
@@ -79,6 +85,8 @@
     - Implement createBulkNotifications for announcements
     - Implement notification filtering by preferences
     - _Requirements: 1.2, 4.1, 4.2, 7.1, 8.1_
+
+
   - [ ] 6.2 Write property test for read status update
     - **Property 8: Read Status Update**
     - **Validates: Requirements 6.2**
@@ -89,7 +97,9 @@
     - Implement milestone detection (D-100, D-30, D-7, D-1, D-Day)
     - Implement daily D-day notification generation
     - _Requirements: 1.1, 1.2, 1.3_
-  - [ ] 7.2 Write property test for D-day calculation
+  - [x] 7.2 Write property test for D-day calculation
+
+
     - **Property 1: D-day Calculation Accuracy**
     - **Validates: Requirements 1.1**
   - [ ] 7.3 Write property test for milestone triggering
@@ -199,6 +209,8 @@
 
   - [ ] 16.1 Implement NotificationBadge.tsx
     - Display unread count
+
+
     - Animate on new notifications
     - Integrate with header/navigation
     - _Requirements: 6.3_

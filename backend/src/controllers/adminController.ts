@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
+import { sendAnnouncementToAllUsers } from '../services/notificationService';
 
 // 관리자 권한 확인 미들웨어
 export const checkAdminPermission = async (req: AuthRequest, res: Response, next: any) => {
@@ -225,9 +226,25 @@ export const createAnnouncement = async (req: AuthRequest, res: Response) => {
       [title, content, type || 'notice', priority || 0, startDate || new Date(), endDate, userId]
     );
 
+    const announcement = result.rows[0];
+
+    // 모든 사용자에게 알림 전송 (priority가 높으면 중요 공지)
+    const isImportant = (priority || 0) >= 5;
+    try {
+      await sendAnnouncementToAllUsers(
+        announcement.id,
+        title,
+        content,
+        isImportant
+      );
+    } catch (notifError) {
+      console.error('Failed to send announcement notifications:', notifError);
+      // 알림 전송 실패해도 공지사항 생성은 성공으로 처리
+    }
+
     res.status(201).json({
       success: true,
-      data: result.rows[0],
+      data: announcement,
       message: '공지사항이 생성되었습니다',
     });
   } catch (error) {
