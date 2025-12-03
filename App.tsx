@@ -3,8 +3,11 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { ToastContainer } from './src/components/common/Toast';
+import { InstallPrompt } from './src/components/common/InstallPrompt';
 import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { Layout } from './components/Layout';
+import { useOnlineStatus } from './src/hooks/useOnlineStatus';
+import { OfflinePage } from './src/pages/Offline';
 import Login from './src/pages/Login';
 import Register from './src/pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -16,6 +19,12 @@ import { Schedule } from './pages/Schedule';
 import { Settings } from './pages/Settings';
 
 function App() {
+  const isOnline = useOnlineStatus();
+
+  if (!isOnline) {
+    return <OfflinePage />;
+  }
+
   return (
     <ToastProvider>
       <AuthProvider>
@@ -102,6 +111,7 @@ function App() {
         </Routes>
       </Router>
       <ToastContainer />
+      <InstallPrompt />
     </AuthProvider>
   </ToastProvider>
   );
