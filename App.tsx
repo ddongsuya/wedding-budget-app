@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
@@ -11,6 +11,7 @@ import { Layout } from './components/Layout';
 import { useOnlineStatus } from './src/hooks/useOnlineStatus';
 import { OfflinePage } from './src/pages/Offline';
 import { LoadingScreen } from './src/components/common/LoadingScreen/LoadingScreen';
+import { SplashScreen } from './src/components/common/SplashScreen';
 
 // 페이지 지연 로딩 (Lazy Loading)
 const Login = lazy(() => import('./src/pages/Login'));
@@ -31,9 +32,23 @@ const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings
 
 function App() {
   const isOnline = useOnlineStatus();
+  const [showSplash, setShowSplash] = useState(() => {
+    // 세션당 한 번만 스플래시 표시
+    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
+    return !hasSeenSplash;
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('hasSeenSplash', 'true');
+    setShowSplash(false);
+  };
 
   if (!isOnline) {
     return <OfflinePage />;
+  }
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} duration={2500} />;
   }
 
   return (
