@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import { pool } from './config/database';
 
 import authRoutes from './routes/auth';
 import coupleRoutes from './routes/couple';
@@ -75,7 +76,79 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-app.listen(PORT, () => {
+// 서버 시작 시 마이그레이션 실행
+const runMigrations = async () => {
+  try {
+    console.log('Running migrations...');
+    
+    // users 테이블에 is_admin 컬럼 추가 (없으면)
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE
+    `);
+    
+    // notifications 테이블 생성
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        data JSONB DEFAULT '{}',
+        link VARCHAR(255),
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        read_at TIMESTAMP WITH TIME ZONE
+      )
+    `);
+    
+    // notification_preferences 테이블 생성
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notification_preferences (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        dday_enabled BOOLEAN DEFAULT TRUE,
+        dday_daily BOOLEAN DEFAULT FALSE,
+        schedule_enabled BOOLEAN DEFAULT TRUE,
+        checklist_enabled BOOLEAN DEFAULT TRUE,
+        budget_enabled BOOLEAN DEFAULT TRUE,
+        couple_enabled BOOLEAN DEFAULT TRUE,
+        announcement_enabled BOOLEAN DEFAULT TRUE,
+        push_enabled BOOLEAN DEFAULT TRUE,
+        preferred_time TIME DEFAULT '09:00:00',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    
+    // push_subscriptions 테이블 생성
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        endpoint TEXT NOT NULL,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        user_agent TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, endpoint)
+      )
+    `);
+    
+    // 인덱스 생성
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)`);
+    
+    console.log('Migrations completed successfully!');
+  } catch (error) {
+    console.error('Migration error:', error);
+  }
+};
+
+app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // 마이그레이션 실행
+  await runMigrations();
 });
