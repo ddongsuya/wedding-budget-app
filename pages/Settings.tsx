@@ -4,6 +4,7 @@ import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, Doll
 import { useToastContext } from '../src/contexts/ToastContext';
 import { coupleAPI } from '../src/api/couple';
 import { useAuth } from '../src/contexts/AuthContext';
+import DatePicker from '../src/components/common/DatePicker/DatePicker';
 
 type Tab = 'profile' | 'app' | 'account' | 'info';
 
@@ -361,11 +362,12 @@ const SettingsNew: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={profile.groom_birth_date}
-                    onChange={(e) => handleProfileChange('groom_birth_date', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    onChange={(date) => handleProfileChange('groom_birth_date', date)}
+                    placeholder="생년월일 선택"
+                    minYear={1950}
+                    maxYear={new Date().getFullYear()}
                   />
                 </div>
                 <div>
@@ -398,11 +400,12 @@ const SettingsNew: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={profile.bride_birth_date}
-                    onChange={(e) => handleProfileChange('bride_birth_date', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    onChange={(date) => handleProfileChange('bride_birth_date', date)}
+                    placeholder="생년월일 선택"
+                    minYear={1950}
+                    maxYear={new Date().getFullYear()}
                   />
                 </div>
                 <div>
@@ -433,20 +436,22 @@ const SettingsNew: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">처음 만난 날</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={profile.first_met_date}
-                    onChange={(e) => handleProfileChange('first_met_date', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    onChange={(date) => handleProfileChange('first_met_date', date)}
+                    placeholder="처음 만난 날 선택"
+                    minYear={2000}
+                    maxYear={new Date().getFullYear()}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">결혼 예정일</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={profile.wedding_date}
-                    onChange={(e) => handleProfileChange('wedding_date', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    onChange={(date) => handleProfileChange('wedding_date', date)}
+                    placeholder="결혼 예정일 선택"
+                    minYear={new Date().getFullYear()}
+                    maxYear={new Date().getFullYear() + 5}
                   />
                 </div>
               </div>
