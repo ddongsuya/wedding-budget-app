@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { captureError } from '../lib/sentry';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -28,6 +29,17 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // 401 제외하고 Sentry에 에러 캡처
+    if (error.response?.status !== 401) {
+      captureError(error, {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+      });
+    }
 
     // 401 에러 처리
     if (error.response?.status === 401 && !originalRequest._retry) {

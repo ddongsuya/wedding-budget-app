@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../api/auth';
+import { setSentryUser, clearSentryUser } from '../lib/sentry';
 
 interface User {
   id: number;
@@ -48,6 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
+    
+    // Sentry에 사용자 정보 설정
+    setSentryUser({
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+    });
   };
 
   const register = async (email: string, password: string, name: string) => {
@@ -57,12 +65,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     setUser(userData);
+    
+    // Sentry에 사용자 정보 설정
+    setSentryUser({
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+    });
   };
 
   const logout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     setUser(null);
+    
+    // Sentry 사용자 정보 제거
+    clearSentryUser();
   };
 
   return (

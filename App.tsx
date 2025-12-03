@@ -4,6 +4,7 @@ import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { ToastContainer } from './src/components/common/Toast';
 import { InstallPrompt } from './src/components/common/InstallPrompt';
+import { ErrorBoundary } from './src/components/common/ErrorBoundary';
 import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { useOnlineStatus } from './src/hooks/useOnlineStatus';
@@ -26,8 +27,9 @@ function App() {
   }
 
   return (
-    <ToastProvider>
-      <AuthProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
         <Router>
         <Routes>
           {/* 공개 라우트 */}
@@ -110,10 +112,11 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-      <ToastContainer />
-      <InstallPrompt />
-    </AuthProvider>
-  </ToastProvider>
+        <ToastContainer />
+        <InstallPrompt />
+      </AuthProvider>
+    </ToastProvider>
+    </ErrorBoundary>
   );
 }
 

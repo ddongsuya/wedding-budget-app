@@ -10,8 +10,12 @@ import venueRoutes from './routes/venues';
 import budgetRoutes from './routes/budget';
 import expenseRoutes from './routes/expenses';
 import statsRoutes from './routes/stats';
+import { initSentry, sentryErrorHandler } from './lib/sentry';
 
 dotenv.config();
+
+// Sentry 초기화 (가장 먼저)
+initSentry();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -52,6 +56,10 @@ app.get('/health', (req, res) => {
 // Error handling
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);
+  
+  // Sentry에 에러 전송
+  sentryErrorHandler()(err, req, res, () => {});
+  
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
   });
