@@ -104,7 +104,7 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
 
   return (
-    <div className="relative w-full h-[calc(100vh-220px)] min-h-[550px] flex flex-col items-center justify-start overflow-hidden">
+    <div className="relative w-full h-[calc(100vh-200px)] min-h-[520px] max-h-[700px] flex flex-col items-center justify-start overflow-hidden">
       
       {/* Top Indicators */}
       <div className="w-full flex justify-between items-center px-4 mb-4 z-10">
@@ -153,9 +153,9 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                 />
               )}
 
-              {/* Top Image Section (40%) */}
+              {/* Top Image Section (35%) */}
               <div 
-                className="h-[40%] bg-stone-200 relative shrink-0 cursor-pointer group"
+                className="h-[35%] min-h-[140px] max-h-[200px] bg-stone-200 relative shrink-0 cursor-pointer group"
                 onClick={() => {
                   if (!isMenuOpen) onOpenGallery(currentVenue);
                 }}
@@ -224,50 +224,50 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
               </div>
 
               {/* Info Section */}
-              <div className="flex-1 p-5 flex flex-col justify-between">
+              <div className="flex-1 p-4 flex flex-col justify-between overflow-y-auto">
                 <div>
                    <div className="flex justify-between items-start mb-1">
-                      <h2 className="text-2xl font-bold text-stone-800 leading-tight">{currentVenue.name}</h2>
-                      <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg">
-                        <Star size={14} className="fill-yellow-400 text-yellow-400"/>
-                        <span className="text-sm font-bold text-yellow-700">{currentVenue.rating}</span>
+                      <h2 className="text-xl font-bold text-stone-800 leading-tight line-clamp-1">{currentVenue.name}</h2>
+                      <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-lg shrink-0 ml-2">
+                        <Star size={12} className="fill-yellow-400 text-yellow-400"/>
+                        <span className="text-xs font-bold text-yellow-700">{currentVenue.rating}</span>
                       </div>
                    </div>
-                   <div className="flex items-center gap-1 text-stone-500 text-sm mb-4">
-                      <MapPin size={14} />
-                      {currentVenue.location}
+                   <div className="flex items-center gap-1 text-stone-500 text-xs mb-3">
+                      <MapPin size={12} />
+                      <span className="line-clamp-1">{currentVenue.location}</span>
                    </div>
 
                    {/* Key Metrics Grid */}
-                   <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="bg-stone-50 p-3 rounded-xl">
-                         <span className="text-xs text-stone-400 block mb-0.5">대관료</span>
-                         <span className="text-sm font-bold text-stone-700">{formatMoney(currentVenue.rentalFee)}</span>
+                   <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-stone-50 p-2.5 rounded-xl">
+                         <span className="text-[10px] text-stone-400 block mb-0.5">대관료</span>
+                         <span className="text-xs font-bold text-stone-700">{formatMoney(currentVenue.rentalFee)}</span>
                       </div>
-                      <div className="bg-stone-50 p-3 rounded-xl">
-                         <span className="text-xs text-stone-400 block mb-0.5">1인 식대</span>
-                         <span className="text-sm font-bold text-stone-700">{formatMoney(currentVenue.mealCostPerPerson)}</span>
+                      <div className="bg-stone-50 p-2.5 rounded-xl">
+                         <span className="text-[10px] text-stone-400 block mb-0.5">1인 식대</span>
+                         <span className="text-xs font-bold text-stone-700">{formatMoney(currentVenue.mealCostPerPerson)}</span>
                       </div>
-                      <div className="bg-stone-50 p-3 rounded-xl">
-                         <span className="text-xs text-stone-400 block mb-0.5">스드메</span>
-                         <span className={`text-sm font-bold flex items-center gap-1 ${currentVenue.sdmIncluded ? 'text-green-600' : 'text-stone-500'}`}>
-                           {currentVenue.sdmIncluded ? <><Check size={14}/> 포함</> : <><Minus size={14}/> 별도</>}
+                      <div className="bg-stone-50 p-2.5 rounded-xl">
+                         <span className="text-[10px] text-stone-400 block mb-0.5">스드메</span>
+                         <span className={`text-xs font-bold flex items-center gap-1 ${currentVenue.sdmIncluded ? 'text-green-600' : 'text-stone-500'}`}>
+                           {currentVenue.sdmIncluded ? <><Check size={12}/> 포함</> : <><Minus size={12}/> 별도</>}
                          </span>
                       </div>
-                      <div className="bg-stone-50 p-3 rounded-xl">
-                         <span className="text-xs text-stone-400 block mb-0.5">보증인원</span>
-                         <span className="text-sm font-bold text-stone-700">{currentVenue.minimumGuests}명</span>
+                      <div className="bg-stone-50 p-2.5 rounded-xl">
+                         <span className="text-[10px] text-stone-400 block mb-0.5">보증인원</span>
+                         <span className="text-xs font-bold text-stone-700">{currentVenue.minimumGuests}명</span>
                       </div>
                    </div>
                 </div>
 
                 {/* Bottom Highlight - Total Cost */}
-                <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 flex justify-between items-center shadow-[0_4px_12px_-4px_rgba(244,63,94,0.2)]">
+                <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex justify-between items-center shadow-[0_4px_12px_-4px_rgba(244,63,94,0.2)] mt-auto">
                   <div>
-                      <p className="text-xs font-bold text-rose-400 uppercase tracking-wide">예상 총비용</p>
-                      <p className="text-[10px] text-rose-300 mt-0.5">({currentVenue.minimumGuests}명 기준)</p>
+                      <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wide">예상 총비용</p>
+                      <p className="text-[9px] text-rose-300 mt-0.5">({currentVenue.minimumGuests}명 기준)</p>
                   </div>
-                  <p className="text-2xl font-bold text-rose-600">{formatMoney(currentVenue.totalEstimate)}</p>
+                  <p className="text-xl font-bold text-rose-600">{formatMoney(currentVenue.totalEstimate)}</p>
                 </div>
               </div>
 

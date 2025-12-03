@@ -58,16 +58,18 @@ const Venues: React.FC = () => {
     }, 600);
     
     const handleResize = () => {
-      // If mobile, force card view. If desktop, use table as default but allow toggle
+      // If mobile, force card view. If desktop, keep current view mode (don't override user choice)
       if (window.innerWidth < 1024) {
         setViewMode('card');
-      } else {
-        setViewMode('table');
       }
+      // Desktop: don't change viewMode, let user toggle between table/card
     };
     
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initial check
+    // Initial check - only set card for mobile on first load
+    if (window.innerWidth < 1024) {
+      setViewMode('card');
+    }
     
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -269,6 +271,26 @@ const Venues: React.FC = () => {
               별점순
               {sortBy === 'rating' && <ArrowUpDown size={14} />}
             </button>
+
+            <div className="h-6 w-px bg-stone-200 mx-1"></div>
+
+            {/* View Mode Toggle for Desktop */}
+            <div className="flex bg-stone-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
+                title="테이블 뷰"
+              >
+                <List size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('card')}
+                className={`p-2 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
+                title="카드 뷰"
+              >
+                <LayoutGrid size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Mobile Filter Trigger */}
@@ -352,7 +374,7 @@ const Venues: React.FC = () => {
             )}
           </div>
 
-          {/* Desktop Table View */}
+          {/* Desktop View */}
           <div className="hidden md:block overflow-hidden">
             {venues.length === 0 ? (
               <EmptyState
@@ -366,6 +388,15 @@ const Venues: React.FC = () => {
               <NoSearchResults
                 searchTerm={searchTerm}
                 onClear={() => setSearchTerm('')}
+              />
+            ) : viewMode === 'card' ? (
+              /* Desktop Card View */
+              <VenueCardDeck 
+                venues={processedVenues}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onOpenGallery={openGallery}
+                onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
               />
             ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-x-auto">
