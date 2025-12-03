@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock } from 'lucide-react';
+import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield } from 'lucide-react';
 import { useToastContext } from '../src/contexts/ToastContext';
 import { coupleAPI } from '../src/api/couple';
 import { useAuth } from '../src/contexts/AuthContext';
@@ -592,6 +592,36 @@ const SettingsNew: React.FC = () => {
                 <span className="text-gray-400">→</span>
               </button>
             </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-stone-800 mb-4">공지사항</h3>
+              <button
+                onClick={() => navigate('/announcements')}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Megaphone size={20} className="text-rose-500" />
+                  <span className="text-gray-800">공지사항 보기</span>
+                </div>
+                <span className="text-gray-400">→</span>
+              </button>
+            </div>
+
+            {user?.is_admin && (
+              <div className="bg-rose-50 rounded-xl p-6 shadow-sm border border-rose-100">
+                <h3 className="text-lg font-bold text-rose-600 mb-4">관리자</h3>
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="w-full flex items-center justify-between p-4 hover:bg-rose-100 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Shield size={20} className="text-rose-600" />
+                    <span className="text-rose-700 font-medium">관리자 대시보드</span>
+                  </div>
+                  <span className="text-rose-400">→</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 
