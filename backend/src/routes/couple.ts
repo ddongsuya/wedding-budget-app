@@ -18,9 +18,6 @@ router.post('/join', coupleController.joinCouple);
 // 초대 코드 재생성
 router.post('/regenerate-code', coupleController.regenerateInviteCode);
 
-// 커플 정보 수정
-router.put('/profile', coupleController.updateCoupleProfile);
-
 // 커플 연결 해제
 router.post('/leave', coupleController.leaveCouple);
 
