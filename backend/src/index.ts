@@ -107,6 +107,12 @@ const runMigrations = async () => {
       ALTER TABLE couples ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     `);
     
+    // couples 테이블에 groom_name, bride_name 등 컬럼 추가 (없으면)
+    await pool.query(`ALTER TABLE couples ADD COLUMN IF NOT EXISTS groom_name VARCHAR(100)`);
+    await pool.query(`ALTER TABLE couples ADD COLUMN IF NOT EXISTS bride_name VARCHAR(100)`);
+    await pool.query(`ALTER TABLE couples ADD COLUMN IF NOT EXISTS wedding_date DATE`);
+    await pool.query(`ALTER TABLE couples ADD COLUMN IF NOT EXISTS total_budget DECIMAL(15, 2) DEFAULT 0`);
+    
     // couple_profiles 테이블 생성 (없으면)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS couple_profiles (
