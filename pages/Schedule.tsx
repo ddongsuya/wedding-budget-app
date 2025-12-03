@@ -7,7 +7,7 @@ import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-export const Schedule: React.FC = () => {
+const Schedule: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -653,3 +653,5 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
     </div>
   );
 };
+
+export default Schedule;

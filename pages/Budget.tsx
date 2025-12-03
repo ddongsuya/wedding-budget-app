@@ -11,7 +11,7 @@ import { useToast } from '../src/hooks/useToast';
 import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
 import { EmptyState } from '../src/components/common/EmptyState';
 
-export const Budget: React.FC = () => {
+const Budget: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
@@ -250,3 +250,5 @@ export const Budget: React.FC = () => {
     </div>
   );
 };
+
+export default Budget;

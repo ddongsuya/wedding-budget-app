@@ -11,7 +11,7 @@ import { compressImage, formatFileSize } from '../src/utils/imageCompression';
 
 type Tab = 'profile' | 'app' | 'info' | 'data';
 
-export const Settings: React.FC = () => {
+const Settings: React.FC = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
@@ -595,3 +595,5 @@ export const Settings: React.FC = () => {
     </div>
   );
 };
+
+export default Settings;

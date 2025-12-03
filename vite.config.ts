@@ -105,6 +105,41 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        // 청크 분할 설정
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              // React 관련
+              'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+              
+              // UI 라이브러리
+              'vendor-ui': ['lucide-react'],
+              
+              // 차트 라이브러리 (무거움)
+              'vendor-charts': ['recharts'],
+              
+              // 날짜 라이브러리
+              'vendor-date': ['date-fns'],
+              
+              // HTTP 클라이언트
+              'vendor-http': ['axios'],
+            },
+          },
+        },
+        // 청크 크기 경고 한도
+        chunkSizeWarningLimit: 500,
+        
+        // 소스맵 (프로덕션에서는 끄기)
+        sourcemap: false,
+        
+        // 압축
+        minify: 'esbuild',
+      },
+      // 의존성 최적화
+      optimizeDeps: {
+        include: ['react', 'react-dom', 'react-router-dom', 'axios'],
+      },
     };
 });

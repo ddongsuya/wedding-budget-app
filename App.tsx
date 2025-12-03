@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
@@ -9,15 +9,17 @@ import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { useOnlineStatus } from './src/hooks/useOnlineStatus';
 import { OfflinePage } from './src/pages/Offline';
-import Login from './src/pages/Login';
-import Register from './src/pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { Venues } from './pages/Venues';
-import { Budget } from './pages/Budget';
-import { Expenses } from './pages/Expenses';
-import { Checklist } from './pages/Checklist';
-import { Schedule } from './pages/Schedule';
-import { Settings } from './pages/Settings';
+import { LoadingScreen } from './src/components/common/LoadingScreen/LoadingScreen';
+
+// 페이지 지연 로딩 (Lazy Loading)
+const Login = lazy(() => import('./src/pages/Login'));
+const Register = lazy(() => import('./src/pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Venues = lazy(() => import('./pages/Venues'));
+const Budget = lazy(() => import('./pages/Budget'));
+const Checklist = lazy(() => import('./pages/Checklist'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -31,6 +33,7 @@ function App() {
       <ToastProvider>
         <AuthProvider>
         <Router>
+        <Suspense fallback={<LoadingScreen />}>
         <Routes>
           {/* 공개 라우트 */}
           <Route path="/login" element={<Login />} />
@@ -111,6 +114,7 @@ function App() {
           {/* 기본 리다이렉트 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </Router>
         <ToastContainer />
         <InstallPrompt />

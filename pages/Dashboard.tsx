@@ -9,7 +9,7 @@ import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton'
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
-export const Dashboard: React.FC = () => {
+const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -319,3 +319,5 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+
+export default Dashboard;

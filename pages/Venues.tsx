@@ -22,7 +22,7 @@ interface VenueCalculated extends Venue {
   totalEstimate: number;
 }
 
-export const Venues: React.FC = () => {
+const Venues: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -580,3 +580,5 @@ export const Venues: React.FC = () => {
     </div>
   );
 };
+e
+xport default Venues;

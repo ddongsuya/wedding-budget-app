@@ -20,7 +20,7 @@ const DUE_PERIODS: { value: DuePeriod; label: string }[] = [
   { value: 'AFTER', label: '결혼 후' },
 ];
 
-export const Checklist: React.FC = () => {
+const Checklist: React.FC = () => {
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [categories, setCategories] = useState<ChecklistCategory[]>([]);
   const [stats, setStats] = useState<ChecklistStats | null>(null);
@@ -289,3 +289,5 @@ export const Checklist: React.FC = () => {
     </div>
   );
 };
+
+export default Checklist;
