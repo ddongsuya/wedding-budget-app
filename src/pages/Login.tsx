@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/useToast';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,9 +19,12 @@ export default function Login() {
 
     try {
       await login(email, password);
+      toast.success('로그인되었습니다! 💕');
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || '로그인에 실패했습니다');
+      const errorMessage = err.response?.data?.error || '로그인에 실패했습니다';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../hooks/useToast';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -10,6 +11,7 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,12 +19,16 @@ export default function Register() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다');
+      const errorMsg = '비밀번호가 일치하지 않습니다';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
 
     if (password.length < 6) {
-      setError('비밀번호는 최소 6자 이상이어야 합니다');
+      const errorMsg = '비밀번호는 최소 6자 이상이어야 합니다';
+      setError(errorMsg);
+      toast.warning(errorMsg);
       return;
     }
 
@@ -30,9 +36,12 @@ export default function Register() {
 
     try {
       await register(email, password, name);
+      toast.success('회원가입이 완료되었습니다! 🎉');
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || '회원가입에 실패했습니다');
+      const errorMessage = err.response?.data?.error || '회원가입에 실패했습니다';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

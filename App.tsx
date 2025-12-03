@@ -1,6 +1,8 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/contexts/AuthContext';
+import { ToastProvider } from './src/contexts/ToastContext';
+import { ToastContainer } from './src/components/common/Toast';
 import { ProtectedRoute } from './src/components/ProtectedRoute';
 import { Layout } from './components/Layout';
 import Login from './src/pages/Login';
@@ -15,8 +17,9 @@ import { Settings } from './pages/Settings';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
         <Routes>
           {/* 공개 라우트 */}
           <Route path="/login" element={<Login />} />
@@ -98,7 +101,9 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
+      <ToastContainer />
     </AuthProvider>
+  </ToastProvider>
   );
 }
 
