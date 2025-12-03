@@ -81,18 +81,18 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
         ]
       );
     } else {
-      // 업데이트
+      // 업데이트 - 값을 직접 설정
       result = await pool.query(
         `UPDATE couple_profiles SET
-          groom_name = COALESCE($2, groom_name),
-          groom_birth_date = COALESCE($3, groom_birth_date),
-          groom_contact = COALESCE($4, groom_contact),
-          bride_name = COALESCE($5, bride_name),
-          bride_birth_date = COALESCE($6, bride_birth_date),
-          bride_contact = COALESCE($7, bride_contact),
-          first_met_date = COALESCE($8, first_met_date),
-          wedding_date = COALESCE($9, wedding_date),
-          couple_nickname = COALESCE($10, couple_nickname),
+          groom_name = $2,
+          groom_birth_date = $3,
+          groom_contact = $4,
+          bride_name = $5,
+          bride_birth_date = $6,
+          bride_contact = $7,
+          first_met_date = $8,
+          wedding_date = $9,
+          couple_nickname = $10,
           updated_at = CURRENT_TIMESTAMP
         WHERE couple_id = $1
         RETURNING *`,
@@ -112,9 +112,11 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
     }
 
     res.json({ profile: result.rows[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error message:', error.message);
+    console.error('Error detail:', error.detail);
+    res.status(500).json({ error: 'Internal server error', detail: error.message });
   }
 };
 
