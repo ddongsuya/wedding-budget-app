@@ -6,6 +6,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { Wallet, Store, CreditCard, TrendingUp, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
+import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
@@ -14,21 +15,41 @@ const Dashboard: React.FC = () => {
   const [budget, setBudget] = useState<BudgetSettings | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [profile, setProfile] = useState<CoupleProfile | null>(null);
+  const { profile: apiProfile, loading: profileLoading } = useCoupleProfile();
+  
+  // API 프로필을 대시보드에서 사용하는 형식으로 변환
+  const profile = apiProfile ? {
+    groom: {
+      name: apiProfile.groom_name || '신랑',
+      avatarUrl: apiProfile.groom_image || null,
+    },
+    bride: {
+      name: apiProfile.bride_name || '신부',
+      avatarUrl: apiProfile.bride_image || null,
+    },
+    weddingDate: apiProfile.wedding_date || '',
+    meetingDate: apiProfile.first_met_date || '',
+    nickname: apiProfile.couple_nickname || '',
+    couplePhotoUrl: apiProfile.couple_photo || null,
+  } : {
+    groom: { name: '신랑', avatarUrl: null },
+    bride: { name: '신부', avatarUrl: null },
+    weddingDate: '',
+    meetingDate: '',
+    nickname: '',
+    couplePhotoUrl: null,
+  };
 
   useEffect(() => {
-    // Simulate loading delay
-    setTimeout(() => {
-      setBudget(StorageService.getBudget());
-      setVenues(StorageService.getVenues());
-      setExpenses(StorageService.getExpenses());
-      setProfile(StorageService.getCoupleProfile());
-      setLoading(false);
-    }, 800);
+    // 로컬 스토리지에서 예산/지출 데이터 로드
+    setBudget(StorageService.getBudget());
+    setVenues(StorageService.getVenues());
+    setExpenses(StorageService.getExpenses());
+    setLoading(false);
   }, []);
 
-  if (loading) return <DashboardSkeleton />;
-  if (!budget || !profile) return <div className="p-8">Loading...</div>;
+  if (loading || profileLoading) return <DashboardSkeleton />;
+  if (!budget) return <div className="p-8">Loading...</div>;
 
   // --- Calculations ---
 
