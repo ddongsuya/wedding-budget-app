@@ -1,9 +1,9 @@
-
 import React, { useState, useRef } from 'react';
 import { Venue, VenueImage } from '../../types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
 import { X, Calculator, Camera, Star, Trash2, GripVertical, Check, Image as ImageIcon } from 'lucide-react';
+import { compressImage } from '../../src/utils/imageCompression';
 
 interface VenueFormProps {
   initialData?: Venue | null;
@@ -92,30 +92,45 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
 
   // --- Image Handling ---
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newImage: VenueImage = {
-          id: Math.random().toString(36).substr(2, 9),
-          url: reader.result as string,
-          caption: '',
-          order: (formData.images?.length || 0),
-          createdAt: new Date().toISOString()
-        };
-        
-        setFormData(prev => {
-          const updatedImages = [...(prev.images || []), newImage];
-          // Set first image as thumbnail if none exists
-          const thumbnail = prev.thumbnailImage || newImage.id;
-          return { ...prev, images: updatedImages, thumbnailImage: thumbnail };
+    const fileArray = Array.from(files) as File[];
+    for (const file of fileArray) {
+      try {
+        // 이미지 압축 (최대 1MB, 1200px)
+        const compressedFile = await compressImage(file, {
+          maxWidth: 1200,
+          maxHeight: 1200,
+          quality: 0.8,
+          maxSizeMB: 1,
         });
-      };
-      reader.readAsDataURL(file as File);
-    });
+        
+        console.log(`원본: ${(file.size / 1024 / 1024).toFixed(2)}MB → 압축: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const newImage: VenueImage = {
+            id: Math.random().toString(36).substr(2, 9),
+            url: reader.result as string,
+            caption: '',
+            order: (formData.images?.length || 0),
+            createdAt: new Date().toISOString()
+          };
+          
+          setFormData(prev => {
+            const updatedImages = [...(prev.images || []), newImage];
+            // Set first image as thumbnail if none exists
+            const thumbnail = prev.thumbnailImage || newImage.id;
+            return { ...prev, images: updatedImages, thumbnailImage: thumbnail };
+          });
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Image compression failed:', error);
+      }
+    }
   };
 
   const handleDeleteImage = (id: string) => {

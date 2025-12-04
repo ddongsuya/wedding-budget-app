@@ -5,6 +5,7 @@ import { useToastContext } from '../src/contexts/ToastContext';
 import { coupleAPI } from '../src/api/couple';
 import { useAuth } from '../src/contexts/AuthContext';
 import DatePicker from '../src/components/common/DatePicker/DatePicker';
+import { compressImage } from '../src/utils/imageCompression';
 
 type Tab = 'profile' | 'app' | 'account' | 'info';
 
@@ -148,15 +149,22 @@ const SettingsNew: React.FC = () => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      showToast('error', '이미지 크기는 10MB 이하여야 합니다');
-      return;
-    }
-
     try {
+      showToast('info', '이미지 압축 중...');
+      
+      // 이미지 압축 (최대 1MB, 1200px)
+      const compressedFile = await compressImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.8,
+        maxSizeMB: 1,
+      });
+      
+      console.log(`원본: ${(file.size / 1024 / 1024).toFixed(2)}MB → 압축: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+      
       showToast('info', '이미지 업로드 중...');
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', compressedFile);
 
       let response;
       if (target === 'groom') {
