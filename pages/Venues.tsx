@@ -146,6 +146,11 @@ const Venues: React.FC = () => {
     if (!venue.sdmIncluded) total += (venue.studioFee + venue.dressFee + venue.makeupFee);
     if (!venue.bouquetIncluded) total += venue.bouquetFee;
     if (!venue.rehearsalMakeupIncluded) total += venue.rehearsalMakeupFee;
+    // 새로운 추가 옵션들
+    total += (venue.extraFittingFee || 0);
+    total += (venue.weddingRobeFee || 0);
+    total += (venue.outdoorVenueFee || 0);
+    total += (venue.freshFlowerFee || 0);
     return total;
   };
 
