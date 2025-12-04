@@ -9,6 +9,7 @@ import { CoupleProfile } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useToast } from '../src/hooks/useToast';
+import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
 
 interface LayoutProps {
   children: ReactNode;
@@ -28,7 +29,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<CoupleProfile | null>(null);
+  const { profile: apiProfile } = useCoupleProfile();
+  
+  // API 프로필을 Layout에서 사용하는 형식으로 변환
+  const profile: CoupleProfile | null = apiProfile ? {
+    groom: {
+      name: apiProfile.groom_name || '신랑',
+      avatarUrl: apiProfile.groom_image || null,
+      birthday: apiProfile.groom_birth_date || '',
+      contact: apiProfile.groom_contact || '',
+    },
+    bride: {
+      name: apiProfile.bride_name || '신부',
+      avatarUrl: apiProfile.bride_image || null,
+      birthday: apiProfile.bride_birth_date || '',
+      contact: apiProfile.bride_contact || '',
+    },
+    weddingDate: apiProfile.wedding_date || '',
+    meetingDate: apiProfile.first_met_date || '',
+    nickname: apiProfile.couple_nickname || '',
+    couplePhotoUrl: apiProfile.couple_photo || null,
+  } : null;
   
   // Modals
   const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
@@ -49,7 +70,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    setProfile(StorageService.getCoupleProfile());
     setIsFabOpen(false); // Close FAB on route change
   }, [location]);
 
@@ -151,7 +171,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                      <Heart size={10} className="fill-rose-600"/> Wedding Day
                   </p>
                   <p className="text-sm font-bold text-stone-800">{profile.weddingDate}</p>
-                  <p className="text-2xl font-bold text-rose-500 mt-1">D-{dDay}</p>
+                  <p className="text-2xl font-bold text-rose-500 mt-1">
+                    {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
+                  </p>
                 </div>
                 <Heart className="absolute -bottom-4 -right-4 text-rose-100 w-24 h-24 rotate-12 group-hover:scale-110 transition-transform"/>
              </div>

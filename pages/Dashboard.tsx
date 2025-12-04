@@ -133,16 +133,17 @@ const Dashboard: React.FC = () => {
   };
 
   // Date Diff Calcs
-  const calculateDays = (targetDate: string, isFuture: boolean = true) => {
+  const calculateDays = (targetDate: string) => {
+    if (!targetDate) return 0;
     const start = new Date(today.toISOString().split('T')[0]).getTime();
     const target = new Date(targetDate).getTime();
     const diff = target - start;
     const days = Math.ceil(diff / (1000 * 3600 * 24));
-    return isFuture ? days : Math.abs(days) + 1; // +1 to include today
+    return days;
   };
 
   const dDay = calculateDays(profile.weddingDate);
-  const dPlusDay = calculateDays(profile.meetingDate, false);
+  const dPlusDay = profile.meetingDate ? Math.abs(calculateDays(profile.meetingDate)) + 1 : 0;
 
   return (
     <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
@@ -178,7 +179,9 @@ const Dashboard: React.FC = () => {
                <div className="w-px bg-stone-200"></div>
                <div>
                   <p className="text-xs text-stone-500 font-bold uppercase tracking-wide">결혼까지</p>
-                  <p className="text-xl md:text-2xl font-bold text-rose-500">D-{dDay}</p>
+                  <p className="text-xl md:text-2xl font-bold text-rose-500">
+                    {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
+                  </p>
                </div>
             </div>
          </div>

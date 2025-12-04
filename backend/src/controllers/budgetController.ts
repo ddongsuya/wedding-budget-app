@@ -19,7 +19,15 @@ export const getBudgetSettings = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Budget settings not found' });
     }
 
-    res.json({ budget: result.rows[0] });
+    // 숫자 타입 보장
+    const budget = {
+      ...result.rows[0],
+      total_budget: Number(result.rows[0].total_budget) || 0,
+      groom_ratio: Number(result.rows[0].groom_ratio) || 50,
+      bride_ratio: Number(result.rows[0].bride_ratio) || 50,
+    };
+
+    res.json({ budget });
   } catch (error) {
     console.error('Get budget settings error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -75,7 +83,7 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
 
     const result = await pool.query(
       `SELECT c.*, 
-        COALESCE(SUM(e.amount), 0) as spent_amount
+        COALESCE(SUM(e.amount), 0)::numeric as spent_amount
        FROM budget_categories c
        LEFT JOIN expenses e ON c.id = e.category_id
        WHERE c.couple_id = $1
@@ -84,7 +92,14 @@ export const getCategories = async (req: AuthRequest, res: Response) => {
       [coupleId]
     );
 
-    res.json({ categories: result.rows });
+    // 숫자 타입 보장
+    const categories = result.rows.map(row => ({
+      ...row,
+      budget_amount: Number(row.budget_amount) || 0,
+      spent_amount: Number(row.spent_amount) || 0,
+    }));
+
+    res.json({ categories });
   } catch (error) {
     console.error('Get categories error:', error);
     res.status(500).json({ error: 'Internal server error' });
