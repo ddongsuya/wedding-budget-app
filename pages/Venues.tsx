@@ -77,8 +77,15 @@ const Venues: React.FC = () => {
         rating: Number(v.rating) || 0,
         visitDate: v.visit_date || null,
         status: v.status || 'pending',
-        images: v.images || [],
-        thumbnailImage: null,
+        // API에서 images는 URL 문자열 배열로 저장됨 - 프론트엔드 형식으로 변환
+        images: (v.images || []).map((url: string, index: number) => ({
+          id: `img-${v.id}-${index}`,
+          url: url,
+          caption: '',
+          order: index,
+          createdAt: v.created_at || new Date().toISOString()
+        })),
+        thumbnailImage: v.images && v.images.length > 0 ? `img-${v.id}-0` : null,
         createdAt: v.created_at || new Date().toISOString(),
         updatedAt: v.updated_at || new Date().toISOString(),
       }));
