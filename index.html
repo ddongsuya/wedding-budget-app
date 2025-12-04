@@ -54,7 +54,14 @@
       }
       
       .safe-area-pt {
-        padding-top: max(0.5rem, env(safe-area-inset-top));
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+      
+      /* PWA standalone 모드에서 추가 패딩 */
+      @media all and (display-mode: standalone) {
+        .safe-area-pt {
+          padding-top: max(12px, env(safe-area-inset-top));
+        }
       }
       
       /* 스크롤바 숨기기 (모바일) */
