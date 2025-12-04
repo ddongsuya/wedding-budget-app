@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Card, SummaryCard } from '../components/ui/Card';
-import { StorageService } from '../services/storage';
 import { BudgetSettings, Venue, Expense, CoupleProfile } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Wallet, Store, CreditCard, TrendingUp, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
+import { useBudget } from '../src/hooks/useBudget';
+import { useExpenses } from '../src/hooks/useExpenses';
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
 const Dashboard: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [budget, setBudget] = useState<BudgetSettings | null>(null);
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
   const { profile: apiProfile, loading: profileLoading } = useCoupleProfile();
+  const { settings: budgetSettings, categories, loading: budgetLoading } = useBudget();
+  const { expenses: apiExpenses, loading: expensesLoading } = useExpenses();
   
   // API 프로필을 대시보드에서 사용하는 형식으로 변환
   const profile = apiProfile ? {
@@ -40,16 +39,48 @@ const Dashboard: React.FC = () => {
     couplePhotoUrl: null,
   };
 
-  useEffect(() => {
-    // 로컬 스토리지에서 예산/지출 데이터 로드
-    setBudget(StorageService.getBudget());
-    setVenues(StorageService.getVenues());
-    setExpenses(StorageService.getExpenses());
-    setLoading(false);
-  }, []);
+  // API 데이터를 기존 형식으로 변환
+  const budget: BudgetSettings | null = budgetSettings ? {
+    totalBudget: budgetSettings.total_budget || 0,
+    groomRatio: budgetSettings.groom_ratio || 50,
+    brideRatio: budgetSettings.bride_ratio || 50,
+    weddingDate: profile.weddingDate || '',
+    categories: categories.map(c => ({
+      id: String(c.id),
+      name: c.name,
+      icon: c.icon || 'Circle',
+      budgetAmount: c.budget_amount || 0,
+      spentAmount: c.spent_amount || 0,
+      color: c.color || '#f43f5e',
+    })),
+  } : {
+    totalBudget: 0,
+    groomRatio: 50,
+    brideRatio: 50,
+    weddingDate: '',
+    categories: [],
+  };
 
-  if (loading || profileLoading) return <DashboardSkeleton />;
-  if (!budget) return <div className="p-8">Loading...</div>;
+  // API 지출 데이터를 기존 형식으로 변환
+  const expenses: Expense[] = apiExpenses?.map((e: any) => ({
+    id: String(e.id),
+    categoryId: String(e.category_id || ''),
+    title: e.title,
+    amount: e.amount,
+    paymentDate: e.date,
+    paidBy: e.payer,
+    status: 'paid',
+    paymentMethod: e.payment_method,
+    vendor: e.vendor,
+    notes: e.notes,
+  })) || [];
+
+  const loading = profileLoading || budgetLoading || expensesLoading;
+  
+  // TODO: venues도 API로 변경 필요
+  const venues: Venue[] = [];
+
+  if (loading) return <DashboardSkeleton />;
 
   // --- Calculations ---
 

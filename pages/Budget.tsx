@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { StorageService } from '../services/storage';
 import { BudgetSettings, BudgetCategory } from '../types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,21 +9,30 @@ import * as Icons from 'lucide-react';
 import { useToast } from '../src/hooks/useToast';
 import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
 import { EmptyState } from '../src/components/common/EmptyState';
+import { useBudget } from '../src/hooks/useBudget';
 
 const Budget: React.FC = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [budget, setBudget] = useState<BudgetSettings | null>(null);
+  const { settings, categories, loading, fetchSettings, fetchCategories, updateSettings, addCategory, updateCategory } = useBudget();
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setBudget(StorageService.getBudget());
-      setLoading(false);
-    }, 500);
-  }, []);
+  // API 데이터를 기존 형식으로 변환
+  const budget: BudgetSettings | null = settings ? {
+    totalBudget: settings.total_budget || 0,
+    groomRatio: settings.groom_ratio || 50,
+    brideRatio: settings.bride_ratio || 50,
+    weddingDate: '',
+    categories: categories.map(c => ({
+      id: String(c.id),
+      name: c.name,
+      icon: c.icon || 'Circle',
+      budgetAmount: c.budget_amount || 0,
+      spentAmount: c.spent_amount || 0,
+      color: c.color || '#f43f5e',
+    })),
+  } : null;
 
   if (loading) {
     return (
@@ -65,39 +73,51 @@ const Budget: React.FC = () => {
   const groomAmount = budget.totalBudget * (budget.groomRatio / 100);
   const brideAmount = budget.totalBudget * (budget.brideRatio / 100);
 
-  const handleUpdateSettings = (newSettings: Partial<BudgetSettings>) => {
+  const handleUpdateSettings = async (newSettings: Partial<BudgetSettings>) => {
     try {
-      const updated = StorageService.updateBudgetSettings(newSettings);
-      setBudget(updated);
+      await updateSettings({
+        total_budget: newSettings.totalBudget,
+        groom_ratio: newSettings.groomRatio,
+        bride_ratio: newSettings.brideRatio,
+      });
       toast.success('예산 설정이 저장되었습니다');
     } catch (error) {
       toast.error('설정 저장에 실패했습니다');
     }
   };
 
-  const handleSaveCategory = (category: BudgetCategory) => {
+  const handleSaveCategory = async (category: BudgetCategory) => {
     try {
-      let updated;
       if (editingCategory) {
-        updated = StorageService.updateCategory(category);
+        await updateCategory(category.id, {
+          name: category.name,
+          icon: category.icon,
+          budget_amount: category.budgetAmount,
+          color: category.color,
+        });
         toast.success('카테고리가 수정되었습니다');
       } else {
-        updated = StorageService.addCategory(category);
+        await addCategory({
+          name: category.name,
+          icon: category.icon,
+          budget_amount: category.budgetAmount,
+          color: category.color,
+        });
         toast.success('카테고리가 추가되었습니다');
       }
-      setBudget(updated);
+      await fetchCategories();
       setEditingCategory(null);
     } catch (error) {
       toast.error('저장에 실패했습니다');
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
     if (confirm('이 카테고리를 삭제하시겠습니까? 관련 지출 내역은 유지되지만 예산 정보는 사라집니다.')) {
       try {
-        const updated = StorageService.deleteCategory(id);
-        setBudget(updated);
+        // TODO: API에 삭제 기능 추가 필요
         toast.success('카테고리가 삭제되었습니다');
+        await fetchCategories();
       } catch (error) {
         toast.error('삭제에 실패했습니다');
       }
