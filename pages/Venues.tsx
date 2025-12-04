@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StorageService } from '../services/storage';
 import { Venue, ViewMode } from '../types';
+import { venueAPI } from '../src/api/venues';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { VenueForm } from '../components/venue/VenueForm';
@@ -51,11 +51,48 @@ const Venues: React.FC = () => {
 
   const location = useLocation();
 
-  useEffect(() => {
-    setTimeout(() => {
-      setVenues(StorageService.getVenues());
+  const loadVenues = async () => {
+    try {
+      setLoading(true);
+      const response = await venueAPI.getList();
+      // API 응답을 프론트엔드 형식으로 변환
+      const venuesData = (response.data.venues || []).map((v: any) => ({
+        id: String(v.id),
+        name: v.name || '',
+        location: v.location || '',
+        rentalFee: Number(v.price) || 0,
+        sdmIncluded: false,
+        studioFee: 0,
+        dressFee: 0,
+        makeupFee: 0,
+        mealCostPerPerson: 0,
+        minimumGuests: Number(v.capacity) || 200,
+        bouquetIncluded: false,
+        bouquetFee: 0,
+        rehearsalMakeupIncluded: false,
+        rehearsalMakeupFee: 0,
+        parkingSpaces: 0,
+        additionalBenefits: v.pros || '',
+        memo: v.notes || '',
+        rating: Number(v.rating) || 0,
+        visitDate: v.visit_date || null,
+        status: v.status || 'pending',
+        images: v.images || [],
+        thumbnailImage: null,
+        createdAt: v.created_at || new Date().toISOString(),
+        updatedAt: v.updated_at || new Date().toISOString(),
+      }));
+      setVenues(venuesData);
+    } catch (error) {
+      console.error('Failed to load venues:', error);
+      toast.error('식장 목록을 불러오는데 실패했습니다');
+    } finally {
       setLoading(false);
-    }, 600);
+    }
+  };
+
+  useEffect(() => {
+    loadVenues();
     
     const handleResize = () => {
       // If mobile, force card view. If desktop, keep current view mode (don't override user choice)
@@ -97,20 +134,34 @@ const Venues: React.FC = () => {
     return total;
   };
 
-  const handleSaveVenue = (venue: Venue) => {
+  const handleSaveVenue = async (venue: Venue) => {
     try {
+      // 프론트엔드 형식을 API 형식으로 변환
+      const apiData = {
+        name: venue.name,
+        location: venue.location,
+        price: venue.rentalFee,
+        capacity: venue.minimumGuests,
+        visit_date: venue.visitDate || undefined,
+        rating: venue.rating,
+        pros: venue.additionalBenefits,
+        notes: venue.memo,
+        images: venue.images?.map(img => img.url) || [],
+        status: venue.status,
+      };
+
       if (editingVenue) {
-        const updated = StorageService.updateVenue(venue);
-        setVenues(updated);
+        await venueAPI.update(editingVenue.id, apiData);
         toast.success('식장 정보가 수정되었습니다');
       } else {
-        const updated = StorageService.addVenue(venue);
-        setVenues(updated);
+        await venueAPI.create(apiData);
         toast.success('식장이 추가되었습니다');
       }
       setIsFormOpen(false);
       setEditingVenue(null);
+      loadVenues(); // 목록 새로고침
     } catch (error) {
+      console.error('Save venue error:', error);
       toast.error('저장에 실패했습니다');
     }
   };
@@ -120,11 +171,10 @@ const Venues: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('정말 삭제하시겠습니까?')) {
       try {
-        const updated = StorageService.deleteVenue(id);
-        setVenues(updated);
+        await venueAPI.delete(id);
         // Remove from selection if exists
         if (selectedIds.has(id)) {
           const newSet = new Set(selectedIds);
@@ -132,7 +182,9 @@ const Venues: React.FC = () => {
           setSelectedIds(newSet);
         }
         toast.success('식장이 삭제되었습니다');
+        loadVenues(); // 목록 새로고침
       } catch (error) {
+        console.error('Delete venue error:', error);
         toast.error('삭제에 실패했습니다');
       }
     }
