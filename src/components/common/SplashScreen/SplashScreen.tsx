@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Heart, Sparkles } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -10,13 +10,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, duration = 2500
   const [phase, setPhase] = useState<'enter' | 'show' | 'exit'>('enter');
 
   useEffect(() => {
-    // 진입 애니메이션
     const enterTimer = setTimeout(() => setPhase('show'), 100);
-    
-    // 표시 후 퇴장
     const showTimer = setTimeout(() => setPhase('exit'), duration - 500);
-    
-    // 완료 콜백
     const completeTimer = setTimeout(onComplete, duration);
 
     return () => {
@@ -28,26 +23,26 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, duration = 2500
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gradient-to-br from-rose-400 via-pink-500 to-rose-600 transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${
         phase === 'exit' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* 배경 파티클 효과 */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => (
+      {/* 배경 하트 파티클 */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute animate-float"
+            className="absolute animate-float-up"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${3 + Math.random() * 2}s`,
+              left: `${10 + Math.random() * 80}%`,
+              bottom: '-20px',
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${4 + Math.random() * 3}s`,
             }}
           >
             <Heart
-              size={12 + Math.random() * 16}
-              className="text-white/20"
+              size={10 + Math.random() * 14}
+              className="text-rose-200"
               fill="currentColor"
             />
           </div>
@@ -57,83 +52,113 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, duration = 2500
       {/* 메인 콘텐츠 */}
       <div
         className={`relative flex flex-col items-center transition-all duration-700 ${
-          phase === 'enter' ? 'scale-50 opacity-0' : 'scale-100 opacity-100'
+          phase === 'enter' ? 'scale-90 opacity-0' : 'scale-100 opacity-100'
         }`}
       >
-        {/* 로고 아이콘 */}
-        <div className="relative mb-6">
-          <div className="absolute inset-0 animate-ping">
-            <Heart size={80} className="text-white/30" fill="currentColor" />
+        {/* 로고 - 두 개의 하트 */}
+        <div className="relative mb-8">
+          <div className="flex items-center gap-1">
+            <Heart
+              size={48}
+              className={`text-rose-400 transition-all duration-500 ${
+                phase === 'show' ? 'animate-heartbeat' : ''
+              }`}
+              fill="currentColor"
+            />
+            <Heart
+              size={48}
+              className={`text-rose-500 transition-all duration-500 delay-100 ${
+                phase === 'show' ? 'animate-heartbeat-delay' : ''
+              }`}
+              fill="currentColor"
+            />
           </div>
-          <div className="relative animate-pulse-slow">
-            <Heart size={80} className="text-white drop-shadow-lg" fill="currentColor" />
-          </div>
-          <Sparkles
-            size={24}
-            className="absolute -top-2 -right-2 text-yellow-300 animate-sparkle"
-          />
+          {/* 연결선 */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-0.5 bg-rose-300 rounded-full" />
         </div>
 
-        {/* 앱 이름 */}
+        {/* 앱 제목 */}
         <h1
-          className={`text-3xl font-bold text-white mb-2 tracking-wide transition-all duration-500 delay-200 ${
+          className={`text-4xl font-bold text-rose-500 mb-2 tracking-tight transition-all duration-500 delay-200 ${
             phase === 'enter' ? 'translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
           }`}
         >
-          우리의 결혼 준비
+          Needless
         </h1>
+        <h2
+          className={`text-3xl font-light text-rose-400 mb-4 tracking-widest transition-all duration-500 delay-300 ${
+            phase === 'enter' ? 'translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
+          }`}
+        >
+          Wedding
+        </h2>
 
         {/* 서브 텍스트 */}
         <p
-          className={`text-white/80 text-sm transition-all duration-500 delay-300 ${
+          className={`text-stone-400 text-sm transition-all duration-500 delay-400 ${
             phase === 'enter' ? 'translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
           }`}
         >
-          함께 만들어가는 특별한 순간 💕
+          우리만의 특별한 결혼 준비
         </p>
 
-        {/* 로딩 인디케이터 */}
+        {/* 로딩 바 */}
         <div
-          className={`mt-8 flex gap-2 transition-all duration-500 delay-500 ${
+          className={`mt-10 w-32 h-1 bg-rose-100 rounded-full overflow-hidden transition-all duration-500 delay-500 ${
             phase === 'enter' ? 'opacity-0' : 'opacity-100'
           }`}
         >
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-2 h-2 bg-white rounded-full animate-bounce"
-              style={{ animationDelay: `${i * 0.15}s` }}
-            />
-          ))}
+          <div className="h-full bg-gradient-to-r from-rose-400 to-rose-500 rounded-full animate-loading-bar" />
         </div>
       </div>
 
-      {/* 하단 텍스트 */}
+      {/* 하단 버전 */}
       <p
-        className={`absolute bottom-8 text-white/60 text-xs transition-all duration-500 delay-700 ${
+        className={`absolute bottom-8 text-stone-300 text-xs transition-all duration-500 delay-700 ${
           phase === 'enter' ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        Wedding Budget Planner
+        v1.0.0
       </p>
 
-      {/* 커스텀 애니메이션 스타일 */}
+      {/* 커스텀 애니메이션 */}
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-20px) rotate(10deg); }
+        @keyframes float-up {
+          0% { 
+            transform: translateY(0) rotate(0deg); 
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% { 
+            transform: translateY(-100vh) rotate(360deg); 
+            opacity: 0;
+          }
         }
-        @keyframes sparkle {
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-          50% { transform: scale(1.2) rotate(15deg); opacity: 0.8; }
-        }
-        @keyframes pulse-slow {
+        @keyframes heartbeat {
           0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+          25% { transform: scale(1.1); }
+          50% { transform: scale(1); }
+          75% { transform: scale(1.15); }
         }
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        .animate-sparkle { animation: sparkle 1.5s ease-in-out infinite; }
-        .animate-pulse-slow { animation: pulse-slow 2s ease-in-out infinite; }
+        @keyframes heartbeat-delay {
+          0%, 100% { transform: scale(1); }
+          25% { transform: scale(1.15); }
+          50% { transform: scale(1); }
+          75% { transform: scale(1.1); }
+        }
+        @keyframes loading-bar {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        .animate-float-up { animation: float-up 6s ease-in-out infinite; }
+        .animate-heartbeat { animation: heartbeat 1.2s ease-in-out infinite; }
+        .animate-heartbeat-delay { animation: heartbeat-delay 1.2s ease-in-out infinite 0.1s; }
+        .animate-loading-bar { animation: loading-bar 2s ease-out forwards; }
       `}</style>
     </div>
   );
