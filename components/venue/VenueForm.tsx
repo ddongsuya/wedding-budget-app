@@ -99,12 +99,12 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     const fileArray = Array.from(files) as File[];
     for (const file of fileArray) {
       try {
-        // 이미지 압축 (최대 1MB, 1200px)
+        // 이미지 압축 (최대 500KB, 1000px) - 여러 이미지 저장을 위해 더 강하게 압축
         const compressedFile = await compressImage(file, {
-          maxWidth: 1200,
-          maxHeight: 1200,
-          quality: 0.8,
-          maxSizeMB: 1,
+          maxWidth: 1000,
+          maxHeight: 1000,
+          quality: 0.7,
+          maxSizeMB: 0.5,
         });
         
         console.log(`원본: ${(file.size / 1024 / 1024).toFixed(2)}MB → 압축: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);

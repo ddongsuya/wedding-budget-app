@@ -70,9 +70,17 @@ export const compressImage = async (
             const sizeMB = blob.size / 1024 / 1024;
             console.log(`Original: ${(file.size / 1024 / 1024).toFixed(2)}MB → Compressed: ${sizeMB.toFixed(2)}MB`);
 
-            // 압축된 파일이 여전히 크면 품질을 더 낮춤
-            if (sizeMB > maxSizeMB && quality > 0.5) {
-              compressImage(file, { ...options, quality: quality - 0.1 })
+            // 압축된 파일이 여전히 크면 품질을 더 낮추고 크기도 줄임
+            if (sizeMB > maxSizeMB && quality > 0.3) {
+              const newQuality = quality - 0.1;
+              const newMaxWidth = Math.floor(maxWidth * 0.8);
+              const newMaxHeight = Math.floor(maxHeight * 0.8);
+              compressImage(file, { 
+                ...options, 
+                quality: newQuality,
+                maxWidth: newMaxWidth,
+                maxHeight: newMaxHeight
+              })
                 .then(resolve)
                 .catch(reject);
               return;
