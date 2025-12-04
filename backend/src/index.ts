@@ -47,8 +47,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/couple', coupleProfileRoutes);  // profile 라우트 먼저
 app.use('/api/couple', coupleRoutes);
-app.use('/api/couple', coupleProfileRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/budget', budgetRoutes);
 app.use('/api/expenses', expenseRoutes);
