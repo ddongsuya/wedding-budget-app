@@ -24,6 +24,11 @@ export interface Venue {
   rehearsalMakeupIncluded: boolean;
   rehearsalMakeupFee: number;
   parkingSpaces: number;
+  // 새로운 추가 옵션
+  extraFittingFee: number;       // 드레스 추가피팅비
+  weddingRobeFee: number;        // 예도 비용
+  outdoorVenueFee: number;       // 야외식장 대관비 (추가)
+  freshFlowerFee: number;        // 생화 추가
   additionalBenefits: string;
   memo: string;
   rating: number;

@@ -105,29 +105,34 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
       notes,
       images,
       status,
+      // 추가 비용 필드
+      meal_cost_per_person,
+      parking_spaces,
+      sdm_included,
+      studio_fee,
+      dress_fee,
+      makeup_fee,
+      bouquet_included,
+      bouquet_fee,
+      rehearsal_makeup_included,
+      rehearsal_makeup_fee,
+      extra_fitting_fee,
+      wedding_robe_fee,
+      outdoor_venue_fee,
+      fresh_flower_fee,
     } = req.body;
 
     // images 배열을 PostgreSQL 형식으로 변환
     const imagesArray = Array.isArray(images) ? images : [];
-    
-    console.log('Creating venue with data:', {
-      coupleId,
-      name,
-      type,
-      location,
-      price,
-      capacity,
-      visit_date,
-      rating,
-      imagesCount: imagesArray.length,
-      status
-    });
 
     const result = await pool.query(
       `INSERT INTO venues (
         couple_id, name, type, location, contact, price, capacity,
-        visit_date, rating, pros, cons, notes, images, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        visit_date, rating, pros, cons, notes, images, status,
+        meal_cost_per_person, parking_spaces, sdm_included, studio_fee, dress_fee, makeup_fee,
+        bouquet_included, bouquet_fee, rehearsal_makeup_included, rehearsal_makeup_fee,
+        extra_fitting_fee, wedding_robe_fee, outdoor_venue_fee, fresh_flower_fee
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
       RETURNING *`,
       [
         coupleId,
@@ -144,6 +149,20 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
         notes || null,
         imagesArray,
         status || 'considering',
+        meal_cost_per_person || 0,
+        parking_spaces || 0,
+        sdm_included || false,
+        studio_fee || 0,
+        dress_fee || 0,
+        makeup_fee || 0,
+        bouquet_included || false,
+        bouquet_fee || 0,
+        rehearsal_makeup_included || false,
+        rehearsal_makeup_fee || 0,
+        extra_fitting_fee || 0,
+        wedding_robe_fee || 0,
+        outdoor_venue_fee || 0,
+        fresh_flower_fee || 0,
       ]
     );
 
@@ -219,6 +238,20 @@ export const updateVenue = async (req: AuthRequest, res: Response) => {
       notes,
       images,
       status,
+      meal_cost_per_person,
+      parking_spaces,
+      sdm_included,
+      studio_fee,
+      dress_fee,
+      makeup_fee,
+      bouquet_included,
+      bouquet_fee,
+      rehearsal_makeup_included,
+      rehearsal_makeup_fee,
+      extra_fitting_fee,
+      wedding_robe_fee,
+      outdoor_venue_fee,
+      fresh_flower_fee,
     } = req.body;
 
     const result = await pool.query(
@@ -236,6 +269,20 @@ export const updateVenue = async (req: AuthRequest, res: Response) => {
         notes = COALESCE($13, notes),
         images = COALESCE($14, images),
         status = COALESCE($15, status),
+        meal_cost_per_person = COALESCE($16, meal_cost_per_person),
+        parking_spaces = COALESCE($17, parking_spaces),
+        sdm_included = COALESCE($18, sdm_included),
+        studio_fee = COALESCE($19, studio_fee),
+        dress_fee = COALESCE($20, dress_fee),
+        makeup_fee = COALESCE($21, makeup_fee),
+        bouquet_included = COALESCE($22, bouquet_included),
+        bouquet_fee = COALESCE($23, bouquet_fee),
+        rehearsal_makeup_included = COALESCE($24, rehearsal_makeup_included),
+        rehearsal_makeup_fee = COALESCE($25, rehearsal_makeup_fee),
+        extra_fitting_fee = COALESCE($26, extra_fitting_fee),
+        wedding_robe_fee = COALESCE($27, wedding_robe_fee),
+        outdoor_venue_fee = COALESCE($28, outdoor_venue_fee),
+        fresh_flower_fee = COALESCE($29, fresh_flower_fee),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND couple_id = $2
       RETURNING *`,
@@ -255,6 +302,20 @@ export const updateVenue = async (req: AuthRequest, res: Response) => {
         notes,
         images,
         status,
+        meal_cost_per_person,
+        parking_spaces,
+        sdm_included,
+        studio_fee,
+        dress_fee,
+        makeup_fee,
+        bouquet_included,
+        bouquet_fee,
+        rehearsal_makeup_included,
+        rehearsal_makeup_fee,
+        extra_fitting_fee,
+        wedding_robe_fee,
+        outdoor_venue_fee,
+        fresh_flower_fee,
       ]
     );
 

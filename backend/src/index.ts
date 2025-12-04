@@ -225,6 +225,22 @@ const runMigrations = async () => {
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_photo_references_couple ON photo_references(couple_id)`);
     
+    // venues 테이블에 추가 비용 컬럼 추가
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS meal_cost_per_person BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS parking_spaces INTEGER DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS sdm_included BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS studio_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS dress_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS makeup_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS bouquet_included BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS bouquet_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS rehearsal_makeup_included BOOLEAN DEFAULT FALSE`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS rehearsal_makeup_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS extra_fitting_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS wedding_robe_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS outdoor_venue_fee BIGINT DEFAULT 0`);
+    await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS fresh_flower_fee BIGINT DEFAULT 0`);
+    
     console.log('Migrations completed successfully!');
   } catch (error) {
     console.error('Migration error:', error);

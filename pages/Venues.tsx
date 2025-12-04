@@ -61,23 +61,31 @@ const Venues: React.FC = () => {
         name: v.name || '',
         location: v.location || '',
         rentalFee: Number(v.price) || 0,
-        sdmIncluded: false,
-        studioFee: 0,
-        dressFee: 0,
-        makeupFee: 0,
-        mealCostPerPerson: 0,
+        mealCostPerPerson: Number(v.meal_cost_per_person) || 0,
         minimumGuests: Number(v.capacity) || 200,
-        bouquetIncluded: false,
-        bouquetFee: 0,
-        rehearsalMakeupIncluded: false,
-        rehearsalMakeupFee: 0,
-        parkingSpaces: 0,
+        parkingSpaces: Number(v.parking_spaces) || 0,
+        // 스드메
+        sdmIncluded: v.sdm_included || false,
+        studioFee: Number(v.studio_fee) || 0,
+        dressFee: Number(v.dress_fee) || 0,
+        makeupFee: Number(v.makeup_fee) || 0,
+        // 부케/리허설
+        bouquetIncluded: v.bouquet_included || false,
+        bouquetFee: Number(v.bouquet_fee) || 0,
+        rehearsalMakeupIncluded: v.rehearsal_makeup_included || false,
+        rehearsalMakeupFee: Number(v.rehearsal_makeup_fee) || 0,
+        // 새로운 추가 옵션
+        extraFittingFee: Number(v.extra_fitting_fee) || 0,
+        weddingRobeFee: Number(v.wedding_robe_fee) || 0,
+        outdoorVenueFee: Number(v.outdoor_venue_fee) || 0,
+        freshFlowerFee: Number(v.fresh_flower_fee) || 0,
+        // 기타
         additionalBenefits: v.pros || '',
         memo: v.notes || '',
         rating: Number(v.rating) || 0,
-        visitDate: v.visit_date || null,
+        visitDate: v.visit_date ? v.visit_date.split('T')[0] : null, // 날짜만 표시
         status: v.status || 'pending',
-        // API에서 images는 URL 문자열 배열로 저장됨 - 프론트엔드 형식으로 변환
+        // 이미지
         images: (v.images || []).map((url: string, index: number) => ({
           id: `img-${v.id}-${index}`,
           url: url,
@@ -143,18 +151,34 @@ const Venues: React.FC = () => {
 
   const handleSaveVenue = async (venue: Venue) => {
     try {
-      // 프론트엔드 형식을 API 형식으로 변환
+      // 프론트엔드 형식을 API 형식으로 변환 - 모든 비용 정보 포함
       const apiData = {
         name: venue.name,
         location: venue.location,
         price: venue.rentalFee,
         capacity: venue.minimumGuests,
-        visit_date: venue.visitDate || undefined,
+        visit_date: venue.visitDate ? venue.visitDate.split('T')[0] : undefined, // 날짜만 저장
         rating: venue.rating,
         pros: venue.additionalBenefits,
         notes: venue.memo,
         images: venue.images?.map(img => img.url) || [],
         status: venue.status,
+        // 추가 비용 정보
+        meal_cost_per_person: venue.mealCostPerPerson,
+        parking_spaces: venue.parkingSpaces,
+        sdm_included: venue.sdmIncluded,
+        studio_fee: venue.studioFee,
+        dress_fee: venue.dressFee,
+        makeup_fee: venue.makeupFee,
+        bouquet_included: venue.bouquetIncluded,
+        bouquet_fee: venue.bouquetFee,
+        rehearsal_makeup_included: venue.rehearsalMakeupIncluded,
+        rehearsal_makeup_fee: venue.rehearsalMakeupFee,
+        // 새로운 추가 옵션
+        extra_fitting_fee: venue.extraFittingFee || 0,
+        wedding_robe_fee: venue.weddingRobeFee || 0,
+        outdoor_venue_fee: venue.outdoorVenueFee || 0,
+        fresh_flower_fee: venue.freshFlowerFee || 0,
       };
 
       if (editingVenue) {

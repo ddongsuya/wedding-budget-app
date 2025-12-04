@@ -27,6 +27,11 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     rehearsalMakeupIncluded: false,
     rehearsalMakeupFee: 0,
     parkingSpaces: 0,
+    // 새로운 추가 옵션
+    extraFittingFee: 0,
+    weddingRobeFee: 0,
+    outdoorVenueFee: 0,
+    freshFlowerFee: 0,
     additionalBenefits: '',
     memo: '',
     rating: 3,
@@ -47,8 +52,13 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     const sdm = (Number(formData.studioFee) || 0) + (Number(formData.dressFee) || 0) + (Number(formData.makeupFee) || 0);
     const bouquet = Number(formData.bouquetFee) || 0;
     const rehearsal = Number(formData.rehearsalMakeupFee) || 0;
+    // 새로운 추가 옵션
+    const extraFitting = Number(formData.extraFittingFee) || 0;
+    const weddingRobe = Number(formData.weddingRobeFee) || 0;
+    const outdoorVenue = Number(formData.outdoorVenueFee) || 0;
+    const freshFlower = Number(formData.freshFlowerFee) || 0;
     
-    return rental + meal + sdm + bouquet + rehearsal;
+    return rental + meal + sdm + bouquet + rehearsal + extraFitting + weddingRobe + outdoorVenue + freshFlower;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -208,10 +218,15 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
       rehearsalMakeupIncluded: !!formData.rehearsalMakeupIncluded,
       rehearsalMakeupFee: Number(formData.rehearsalMakeupFee),
       parkingSpaces: Number(formData.parkingSpaces),
+      // 새로운 추가 옵션
+      extraFittingFee: Number(formData.extraFittingFee) || 0,
+      weddingRobeFee: Number(formData.weddingRobeFee) || 0,
+      outdoorVenueFee: Number(formData.outdoorVenueFee) || 0,
+      freshFlowerFee: Number(formData.freshFlowerFee) || 0,
       additionalBenefits: formData.additionalBenefits || '',
       memo: formData.memo || '',
       rating: Number(formData.rating),
-      visitDate: formData.visitDate || null,
+      visitDate: formData.visitDate ? formData.visitDate.split('T')[0] : null, // 날짜만 저장
       status: formData.status as any,
       images: formData.images || [],
       thumbnailImage: formData.thumbnailImage || null,
@@ -516,6 +531,58 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
                             placeholder="비용 입력" 
                           />
                         )}
+                      </div>
+                    </div>
+
+                    {/* 새로운 추가 옵션들 */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 border border-stone-200 rounded-xl">
+                        <label className="text-xs text-stone-500 block mb-1">드레스 추가피팅비</label>
+                        <input 
+                          type="text"
+                          inputMode="numeric"
+                          name="extraFittingFee" 
+                          value={displayNum(formData.extraFittingFee)} 
+                          onChange={handleNumberChange} 
+                          className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm" 
+                          placeholder="0" 
+                        />
+                      </div>
+                      <div className="p-3 border border-stone-200 rounded-xl">
+                        <label className="text-xs text-stone-500 block mb-1">예도 비용</label>
+                        <input 
+                          type="text"
+                          inputMode="numeric"
+                          name="weddingRobeFee" 
+                          value={displayNum(formData.weddingRobeFee)} 
+                          onChange={handleNumberChange} 
+                          className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm" 
+                          placeholder="0" 
+                        />
+                      </div>
+                      <div className="p-3 border border-stone-200 rounded-xl">
+                        <label className="text-xs text-stone-500 block mb-1">야외식장 대관비 (추가)</label>
+                        <input 
+                          type="text"
+                          inputMode="numeric"
+                          name="outdoorVenueFee" 
+                          value={displayNum(formData.outdoorVenueFee)} 
+                          onChange={handleNumberChange} 
+                          className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm" 
+                          placeholder="0" 
+                        />
+                      </div>
+                      <div className="p-3 border border-stone-200 rounded-xl">
+                        <label className="text-xs text-stone-500 block mb-1">생화 추가</label>
+                        <input 
+                          type="text"
+                          inputMode="numeric"
+                          name="freshFlowerFee" 
+                          value={displayNum(formData.freshFlowerFee)} 
+                          onChange={handleNumberChange} 
+                          className="w-full px-3 py-2 rounded-lg border border-stone-200 text-sm" 
+                          placeholder="0" 
+                        />
                       </div>
                     </div>
                   </div>
