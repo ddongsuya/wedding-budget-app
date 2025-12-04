@@ -111,10 +111,13 @@ const Schedule: React.FC = () => {
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
     events.forEach(event => {
-      const dateKey = event.start_date;
+      // API에서 오는 날짜 형식을 yyyy-MM-dd로 정규화
+      const eventDate = new Date(event.start_date);
+      const dateKey = format(eventDate, 'yyyy-MM-dd');
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(event);
     });
+    console.log('Events by date:', map); // 디버깅용
     return map;
   }, [events]);
 
@@ -339,7 +342,12 @@ const Schedule: React.FC = () => {
       )}
 
       {!selectedDate && events.length > 0 && (
-        <UpcomingEvents events={events} />
+        <UpcomingEvents 
+          events={events} 
+          onEventClick={(event) => setSelectedDate(new Date(event.start_date))}
+          onEditEvent={openEditEventModal}
+          onDeleteEvent={handleDeleteEvent}
+        />
       )}
 
       {/* 일정 추가/수정 모달 */}
@@ -359,11 +367,23 @@ const Schedule: React.FC = () => {
 };
 
 // 다가오는 일정 컴포넌트
-const UpcomingEvents: React.FC<{ events: CalendarEvent[] }> = ({ events }) => {
+interface UpcomingEventsProps {
+  events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
+  onEditEvent: (event: CalendarEvent) => void;
+  onDeleteEvent: (eventId: number) => void;
+}
+
+const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
   const upcomingEvents = events
     .filter(e => new Date(e.start_date) >= today)
+    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
     .slice(0, 5);
+
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   if (upcomingEvents.length === 0) return null;
 
@@ -373,25 +393,111 @@ const UpcomingEvents: React.FC<{ events: CalendarEvent[] }> = ({ events }) => {
       <div className="space-y-2">
         {upcomingEvents.map((event) => {
           const categoryInfo = event.category ? EVENT_CATEGORIES[event.category] : null;
+          const isExpanded = expandedId === event.id;
 
           return (
             <div
               key={event.id}
-              className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3"
+              className="bg-white rounded-xl shadow-sm overflow-hidden transition-all"
             >
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: event.color + '20' }}
+              {/* 기본 정보 (클릭 가능) */}
+              <button
+                onClick={() => setExpandedId(isExpanded ? null : event.id)}
+                className="w-full p-4 flex items-center gap-3 hover:bg-stone-50 transition-colors text-left"
               >
-                <span>{categoryInfo?.icon || '📅'}</span>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium text-stone-800">{event.title}</h3>
-                <p className="text-sm text-stone-500">
-                  {format(new Date(event.start_date), 'M월 d일 (EEE)', { locale: ko })}
-                  {event.start_time && ` ${event.start_time.slice(0, 5)}`}
-                </p>
-              </div>
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: event.color + '20' }}
+                >
+                  <span>{categoryInfo?.icon || '📅'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-stone-800 truncate">{event.title}</h3>
+                  <p className="text-sm text-stone-500">
+                    {format(new Date(event.start_date), 'M월 d일 (EEE)', { locale: ko })}
+                    {event.start_time && ` ${event.start_time.slice(0, 5)}`}
+                  </p>
+                </div>
+                <ChevronRight 
+                  size={20} 
+                  className={`text-stone-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+                />
+              </button>
+
+              {/* 상세 정보 (펼쳐졌을 때) */}
+              {isExpanded && (
+                <div className="px-4 pb-4 pt-0 border-t border-stone-100 animate-fade-in">
+                  <div className="space-y-2 mt-3">
+                    {/* 시간 */}
+                    {event.start_time && (
+                      <div className="flex items-center gap-2 text-sm text-stone-600">
+                        <Clock size={14} className="text-stone-400" />
+                        <span>
+                          {event.start_time.slice(0, 5)}
+                          {event.end_time && ` - ${event.end_time.slice(0, 5)}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 위치 */}
+                    {event.location && (
+                      <div className="flex items-center gap-2 text-sm text-stone-600">
+                        <MapPin size={14} className="text-stone-400" />
+                        <span className="truncate">{event.location}</span>
+                        {event.location_url && (
+                          <a
+                            href={event.location_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-rose-500 hover:text-rose-600 text-xs"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            지도 보기
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 메모 */}
+                    {event.description && (
+                      <p className="text-sm text-stone-500 bg-stone-50 p-2 rounded-lg">
+                        {event.description}
+                      </p>
+                    )}
+
+                    {/* 카테고리 태그 */}
+                    {categoryInfo && (
+                      <span
+                        className="inline-block px-2 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: event.color + '20',
+                          color: event.color
+                        }}
+                      >
+                        {categoryInfo.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 액션 버튼 */}
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-stone-100">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onEditEvent(event); }}
+                      className="flex-1 py-2 px-3 bg-stone-100 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-200 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Edit2 size={14} />
+                      수정
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteEvent(event.id); }}
+                      className="py-2 px-3 bg-red-50 text-red-600 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Trash2 size={14} />
+                      삭제
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
