@@ -4,7 +4,7 @@ import { pool } from '../config/database';
 // 이벤트 목록 (필터 지원)
 export const getEvents = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { start_date, end_date, category, assigned_to } = req.query;
 
     let query = `
@@ -57,7 +57,7 @@ export const getEvents = async (req: Request, res: Response) => {
 export const getEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       `SELECT e.*, v.name as venue_name, ci.title as checklist_title
@@ -85,7 +85,7 @@ export const getEvent = async (req: Request, res: Response) => {
 // 월별 이벤트
 export const getEventsByMonth = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { year, month } = req.params;
 
     const startDate = `${year}-${month.padStart(2, '0')}-01`;
@@ -116,7 +116,7 @@ export const getEventsByMonth = async (req: Request, res: Response) => {
 // 다가오는 일정
 export const getUpcomingEvents = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const today = new Date().toISOString().split('T')[0];
     const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
@@ -145,8 +145,13 @@ export const getUpcomingEvents = async (req: Request, res: Response) => {
 // 이벤트 생성
 export const createEvent = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const userId = (req as any).user.id;
+
+    if (!coupleId) {
+      return res.status(400).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
+
     const {
       title,
       description,
@@ -192,7 +197,7 @@ export const createEvent = async (req: Request, res: Response) => {
 export const updateEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const updates = req.body;
 
     const fields = Object.keys(updates);
@@ -230,7 +235,7 @@ export const updateEvent = async (req: Request, res: Response) => {
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
 
     const result = await pool.query(
       'DELETE FROM events WHERE id = $1 AND couple_id = $2 RETURNING id',
@@ -254,7 +259,7 @@ export const deleteEvent = async (req: Request, res: Response) => {
 // 카테고리별 조회
 export const getEventsByCategory = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { category } = req.params;
 
     const result = await pool.query(
