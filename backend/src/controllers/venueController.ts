@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
+import { notifyVenueChange } from '../services/coupleNotificationService';
 
 export const getVenues = async (req: AuthRequest, res: Response) => {
   try {
@@ -130,6 +131,13 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
       ]
     );
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'add', name);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+    }
+
     res.status(201).json({ venue: result.rows[0] });
   } catch (error) {
     console.error('Create venue error:', error);
@@ -228,6 +236,13 @@ export const updateVenue = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Venue not found' });
     }
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'update', name || result.rows[0].name);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+    }
+
     res.json({ venue: result.rows[0] });
   } catch (error) {
     console.error('Update venue error:', error);
@@ -244,6 +259,12 @@ export const deleteVenue = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'No couple found' });
     }
 
+    // 삭제 전에 식장 정보 조회
+    const venueResult = await pool.query(
+      'SELECT name FROM venues WHERE id = $1 AND couple_id = $2',
+      [id, coupleId]
+    );
+
     const result = await pool.query(
       'DELETE FROM venues WHERE id = $1 AND couple_id = $2 RETURNING id',
       [id, coupleId]
@@ -251,6 +272,13 @@ export const deleteVenue = async (req: AuthRequest, res: Response) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Venue not found' });
+    }
+
+    // 파트너에게 알림 전송
+    try {
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'delete', venueResult.rows[0]?.name);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
     }
 
     res.json({ message: 'Venue deleted successfully' });

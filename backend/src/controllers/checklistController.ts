@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { pool } from '../config/database';
+import { notifyChecklistChange } from '../services/coupleNotificationService';
 
 // 카테고리 목록 조회
 export const getCategories = async (req: Request, res: Response) => {
@@ -185,6 +186,7 @@ export const getItem = async (req: Request, res: Response) => {
 export const createItem = async (req: Request, res: Response) => {
   try {
     const coupleId = (req as any).user.coupleId;
+    const userId = (req as any).user.id;
     const {
       category_id,
       title,
@@ -202,6 +204,13 @@ export const createItem = async (req: Request, res: Response) => {
        RETURNING *`,
       [coupleId, category_id, title, description, due_date, due_period, assigned_to || 'both', priority || 'medium']
     );
+
+    // 파트너에게 알림 전송
+    try {
+      await notifyChecklistChange(String(userId), String(coupleId), 'add', title);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+    }
 
     res.status(201).json({
       success: true,
@@ -285,7 +294,7 @@ export const toggleComplete = async (req: Request, res: Response) => {
 
     // 현재 상태 확인
     const current = await pool.query(
-      'SELECT is_completed FROM checklist_items WHERE id = $1 AND couple_id = $2',
+      'SELECT is_completed, title FROM checklist_items WHERE id = $1 AND couple_id = $2',
       [id, coupleId]
     );
 
@@ -304,6 +313,15 @@ export const toggleComplete = async (req: Request, res: Response) => {
         RETURNING *`,
       [newCompleted, newCompleted ? new Date() : null, newCompleted ? userId : null, id, coupleId]
     );
+
+    // 완료 시 파트너에게 알림 전송
+    if (newCompleted) {
+      try {
+        await notifyChecklistChange(String(userId), String(coupleId), 'update', current.rows[0].title);
+      } catch (notifyError) {
+        console.error('Notification error:', notifyError);
+      }
+    }
 
     res.json({
       success: true,

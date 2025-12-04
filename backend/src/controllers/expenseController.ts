@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
 import { optimizeImage } from '../utils/upload';
+import { notifyExpenseChange } from '../services/coupleNotificationService';
 
 export const getExpenses = async (req: AuthRequest, res: Response) => {
   try {
@@ -141,6 +142,13 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
       ]
     );
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'add', title);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+    }
+
     res.status(201).json({ expense: result.rows[0] });
   } catch (error) {
     console.error('Create expense error:', error);
@@ -227,6 +235,13 @@ export const updateExpense = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'update', title || result.rows[0].title);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
+    }
+
     res.json({ expense: result.rows[0] });
   } catch (error) {
     console.error('Update expense error:', error);
@@ -243,6 +258,12 @@ export const deleteExpense = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'No couple found' });
     }
 
+    // 삭제 전에 지출 정보 조회
+    const expenseResult = await pool.query(
+      'SELECT title FROM expenses WHERE id = $1 AND couple_id = $2',
+      [id, coupleId]
+    );
+
     const result = await pool.query(
       'DELETE FROM expenses WHERE id = $1 AND couple_id = $2 RETURNING id',
       [id, coupleId]
@@ -250,6 +271,13 @@ export const deleteExpense = async (req: AuthRequest, res: Response) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    // 파트너에게 알림 전송
+    try {
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'delete', expenseResult.rows[0]?.title);
+    } catch (notifyError) {
+      console.error('Notification error:', notifyError);
     }
 
     res.json({ message: 'Expense deleted successfully' });
