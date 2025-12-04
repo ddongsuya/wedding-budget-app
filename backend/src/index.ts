@@ -16,6 +16,7 @@ import eventRoutes from './routes/events';
 import adminRoutes from './routes/admin';
 import notificationRoutes from './routes/notifications';
 import pushRoutes from './routes/push';
+import photoReferenceRoutes from './routes/photoReferences';
 import { initSentry, sentryErrorHandler } from './lib/sentry';
 
 dotenv.config();
@@ -58,6 +59,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/photo-references', photoReferenceRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

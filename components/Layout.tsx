@@ -1,6 +1,6 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, X, Calendar, FileText, LogOut, Bell } from 'lucide-react';
+import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, X, Calendar, FileText, LogOut, Bell, Camera } from 'lucide-react';
 import { NotificationBadge } from '../src/components/common/NotificationBadge';
 import { ExpenseForm } from './expense/ExpenseForm';
 import { VenueForm } from './venue/VenueForm'; // Assuming VenueForm is needed for Venue quick add
@@ -18,9 +18,10 @@ interface LayoutProps {
 const NAV_ITEMS = [
   { path: '/', label: '홈', icon: LayoutDashboard },
   { path: '/budget', label: '예산', icon: Wallet },
-  { path: '/checklist', label: '체크리스트', icon: FileText },
+  { path: '/checklist', label: '체크', icon: FileText },
   { path: '/schedule', label: '일정', icon: Calendar },
   { path: '/venues', label: '식장', icon: Store },
+  { path: '/photo-references', label: '포토', icon: Camera },
   { path: '/settings', label: '설정', icon: Settings },
 ];
 

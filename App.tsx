@@ -29,6 +29,7 @@ const AdminDashboard = lazy(() => import('./src/pages/AdminDashboard'));
 const Announcements = lazy(() => import('./src/pages/Announcements'));
 const NotificationCenter = lazy(() => import('./src/pages/NotificationCenter'));
 const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings'));
+const PhotoReferences = lazy(() => import('./pages/PhotoReferences'));
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -170,6 +171,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/photo-references"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <PhotoReferences />
+                </Layout>
               </ProtectedRoute>
             }
           />
