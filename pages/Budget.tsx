@@ -19,10 +19,10 @@ const Budget: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
 
   // API 데이터를 기존 형식으로 변환
-  const budget: BudgetSettings | null = settings ? {
-    totalBudget: settings.total_budget || 0,
-    groomRatio: settings.groom_ratio || 50,
-    brideRatio: settings.bride_ratio || 50,
+  const budget: BudgetSettings = {
+    totalBudget: settings?.total_budget || 0,
+    groomRatio: settings?.groom_ratio || 50,
+    brideRatio: settings?.bride_ratio || 50,
     weddingDate: '',
     categories: categories.map(c => ({
       id: String(c.id),
@@ -32,7 +32,7 @@ const Budget: React.FC = () => {
       spentAmount: c.spent_amount || 0,
       color: c.color || '#f43f5e',
     })),
-  } : null;
+  };
 
   if (loading) {
     return (
@@ -58,8 +58,6 @@ const Budget: React.FC = () => {
       </div>
     );
   }
-
-  if (!budget) return <div>Loading...</div>;
 
   const formatMoney = (amount: number) => 
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
