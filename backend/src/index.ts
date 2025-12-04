@@ -206,6 +206,25 @@ const runMigrations = async () => {
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC)`);
     
+    // photo_references 테이블 생성 (스냅 촬영 레퍼런스)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS photo_references (
+        id SERIAL PRIMARY KEY,
+        couple_id INTEGER NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+        image_url TEXT NOT NULL,
+        category VARCHAR(50) DEFAULT 'etc',
+        title VARCHAR(200),
+        memo TEXT,
+        tags TEXT[],
+        source_url VARCHAR(500),
+        is_favorite BOOLEAN DEFAULT FALSE,
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_photo_references_couple ON photo_references(couple_id)`);
+    
     console.log('Migrations completed successfully!');
   } catch (error) {
     console.error('Migration error:', error);
