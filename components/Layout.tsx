@@ -209,7 +209,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="flex-1 flex flex-col min-w-0 mb-16 md:mb-0">
         
         {/* Mobile Header (Scroll Aware) */}
-        <div className={`md:hidden sticky top-0 z-40 transition-all duration-300 safe-area-pt ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2' : 'bg-white border-b border-stone-100 py-4'}`}>
+        <div 
+          className={`md:hidden sticky top-0 z-40 transition-all duration-300 ${isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-white border-b border-stone-100'}`}
+          style={{ 
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
+            paddingBottom: isScrolled ? '8px' : '16px'
+          }}
+        >
            <div className="px-4 flex items-center justify-between">
               <h1 className={`font-bold text-rose-500 transition-all duration-300 ${isScrolled ? 'text-lg' : 'text-xl'}`}>Wedding Planner</h1>
               <div className="flex items-center gap-2">

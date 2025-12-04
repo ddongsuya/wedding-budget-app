@@ -64,6 +64,24 @@
         }
       }
       
+      /* iOS Safari에서 상태바 영역 확보 */
+      @supports (padding-top: env(safe-area-inset-top)) {
+        body {
+          padding-top: env(safe-area-inset-top);
+        }
+      }
+      
+      /* iOS PWA 전체화면 모드 */
+      @media screen and (display-mode: standalone) {
+        html {
+          height: 100%;
+        }
+        body {
+          min-height: 100%;
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+      }
+      
       /* 스크롤바 숨기기 (모바일) */
       .scrollbar-hide::-webkit-scrollbar {
         display: none;
