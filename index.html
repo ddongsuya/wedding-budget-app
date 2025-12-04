@@ -2,7 +2,7 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     
     <!-- PWA 메타 태그 -->
     <meta name="theme-color" content="#f43f5e" />
@@ -20,6 +20,63 @@
     
     <title>Needless Wedding</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+      /* Safe Area 지원 */
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sar: env(safe-area-inset-right);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+      }
+      
+      /* 기본 반응형 스타일 */
+      html {
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      
+      /* 작은 화면에서 폰트 크기 조정 */
+      @media (max-width: 320px) {
+        html { font-size: 14px; }
+      }
+      
+      /* 텍스트 오버플로우 방지 */
+      body {
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+      
+      /* Safe area padding */
+      .safe-area-pb {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+      }
+      
+      .safe-area-pt {
+        padding-top: max(0.5rem, env(safe-area-inset-top));
+      }
+      
+      /* 스크롤바 숨기기 (모바일) */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      
+      /* 터치 영역 최소 크기 보장 */
+      button, a, input, select, textarea {
+        min-height: 44px;
+        min-width: 44px;
+      }
+      
+      /* 입력 필드 줌 방지 (iOS) */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

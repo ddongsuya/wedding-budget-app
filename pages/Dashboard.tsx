@@ -149,37 +149,37 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
       
       {/* Couple Header Section */}
-      <div className="relative rounded-3xl overflow-hidden bg-white border border-stone-200 shadow-sm p-6 md:p-8">
-         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-            <div className="flex items-center gap-6">
-               <div className="flex -space-x-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white shadow-md bg-stone-100 overflow-hidden">
-                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt="Groom" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={30}/></div>}
+      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-stone-200 shadow-sm p-4 sm:p-6 md:p-8">
+         <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 relative z-10">
+            <div className="flex items-center gap-3 sm:gap-6">
+               <div className="flex -space-x-3 sm:-space-x-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden">
+                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt="Groom" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={24}/></div>}
                   </div>
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-white shadow-md bg-stone-100 overflow-hidden z-10">
-                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt="Bride" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={30}/></div>}
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden z-10">
+                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt="Bride" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={24}/></div>}
                   </div>
                </div>
-               <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-stone-800 flex items-center gap-2">
-                     {profile.nickname || '우리 결혼해요'}
-                     <Heart className="text-rose-500 fill-rose-500 animate-pulse" size={24}/>
+               <div className="min-w-0 flex-1">
+                  <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-stone-800 flex items-center gap-2 truncate">
+                     <span className="truncate">{profile.nickname || '우리 결혼해요'}</span>
+                     <Heart className="text-rose-500 fill-rose-500 animate-pulse flex-shrink-0" size={20}/>
                   </h2>
-                  <p className="text-stone-500 font-medium mt-1">
+                  <p className="text-stone-500 font-medium mt-1 text-sm sm:text-base truncate">
                      {profile.groom.name} & {profile.bride.name}
                   </p>
                </div>
             </div>
 
-            <div className="flex gap-4 md:gap-8 text-center bg-stone-50/80 backdrop-blur-sm p-4 rounded-2xl">
+            <div className="flex gap-4 sm:gap-6 md:gap-8 text-center bg-stone-50/80 backdrop-blur-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl w-full md:w-auto justify-center">
                <div>
-                  <p className="text-xs text-stone-500 font-bold uppercase tracking-wide">만난 지</p>
-                  <p className="text-xl md:text-2xl font-bold text-rose-500">D+{dPlusDay}</p>
+                  <p className="text-[10px] sm:text-xs text-stone-500 font-bold uppercase tracking-wide">만난 지</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">D+{dPlusDay}</p>
                </div>
                <div className="w-px bg-stone-200"></div>
                <div>
-                  <p className="text-xs text-stone-500 font-bold uppercase tracking-wide">결혼까지</p>
-                  <p className="text-xl md:text-2xl font-bold text-rose-500">
+                  <p className="text-[10px] sm:text-xs text-stone-500 font-bold uppercase tracking-wide">결혼까지</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">
                     {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
                   </p>
                </div>

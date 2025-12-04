@@ -7,6 +7,14 @@ export default {
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'xs': '320px',    // 아주 작은 화면 (아이폰 SE 등)
+      'sm': '375px',    // 작은 모바일
+      'md': '768px',    // 태블릿
+      'lg': '1024px',   // 작은 데스크탑
+      'xl': '1280px',   // 데스크탑
+      '2xl': '1536px',  // 큰 데스크탑
+    },
     extend: {
       colors: {
         rose: {

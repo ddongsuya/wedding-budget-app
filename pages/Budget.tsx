@@ -147,18 +147,18 @@ const Budget: React.FC = () => {
       {/* Main Budget Status */}
       <Card className="bg-stone-800 text-white border-none relative overflow-hidden">
         <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8">
           <div>
-            <p className="text-stone-400 text-sm mb-1 flex items-center gap-2"><Wallet size={14}/> 총 결혼 예산</p>
-            <p className="text-3xl font-bold">{formatMoney(budget.totalBudget)}</p>
+            <p className="text-stone-400 text-xs sm:text-sm mb-1 flex items-center gap-2"><Wallet size={14}/> 총 결혼 예산</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold truncate">{formatMoney(budget.totalBudget)}</p>
           </div>
           <div>
-             <p className="text-stone-400 text-sm mb-1">배정된 예산</p>
-             <p className="text-2xl font-semibold text-rose-300">{formatMoney(totalAllocated)}</p>
+             <p className="text-stone-400 text-xs sm:text-sm mb-1">배정된 예산</p>
+             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-rose-300 truncate">{formatMoney(totalAllocated)}</p>
           </div>
           <div>
-             <p className="text-stone-400 text-sm mb-1">총 지출액</p>
-             <p className="text-2xl font-semibold text-stone-100">{formatMoney(totalSpent)}</p>
+             <p className="text-stone-400 text-xs sm:text-sm mb-1">총 지출액</p>
+             <p className="text-lg sm:text-xl md:text-2xl font-semibold text-stone-100 truncate">{formatMoney(totalSpent)}</p>
           </div>
         </div>
         
