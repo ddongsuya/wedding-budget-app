@@ -97,6 +97,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return days;
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+  };
+
   const dDay = profile ? calculateDDay(profile.weddingDate) : 0;
 
   const handleFabAction = (e: React.MouseEvent | React.TouchEvent, action: string) => {
@@ -170,7 +176,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <p className="text-xs text-rose-600 font-semibold mb-1 flex items-center gap-1">
                      <Heart size={10} className="fill-rose-600"/> Wedding Day
                   </p>
-                  <p className="text-sm font-bold text-stone-800">{profile.weddingDate}</p>
+                  <p className="text-sm font-bold text-stone-800">{formatDate(profile.weddingDate)}</p>
                   <p className="text-2xl font-bold text-rose-500 mt-1">
                     {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
                   </p>
