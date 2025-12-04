@@ -171,6 +171,9 @@ export const createEvent = async (req: Request, res: Response) => {
       assigned_to,
     } = req.body;
 
+    // 빈 문자열을 null로 변환
+    const toNullIfEmpty = (val: any) => (val === '' || val === undefined ? null : val);
+
     const result = await pool.query(
       `INSERT INTO events
         (couple_id, title, description, start_date, start_time, end_date, end_time,
@@ -178,9 +181,26 @@ export const createEvent = async (req: Request, res: Response) => {
         linked_venue_id, linked_checklist_id, assigned_to, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING *`,
-      [coupleId, title, description, start_date, start_time, end_date, end_time,
-       is_all_day || false, category, color || '#FDA4AF', icon, location, location_url,
-       reminder_minutes, linked_venue_id, linked_checklist_id, assigned_to || 'both', userId]
+      [
+        coupleId, 
+        title, 
+        toNullIfEmpty(description), 
+        start_date, 
+        toNullIfEmpty(start_time), 
+        toNullIfEmpty(end_date), 
+        toNullIfEmpty(end_time),
+        is_all_day || false, 
+        toNullIfEmpty(category), 
+        color || '#FDA4AF', 
+        toNullIfEmpty(icon), 
+        toNullIfEmpty(location), 
+        toNullIfEmpty(location_url),
+        toNullIfEmpty(reminder_minutes), 
+        toNullIfEmpty(linked_venue_id), 
+        toNullIfEmpty(linked_checklist_id), 
+        assigned_to || 'both', 
+        userId
+      ]
     );
 
     res.status(201).json({
