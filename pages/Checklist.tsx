@@ -163,10 +163,10 @@ const Checklist: React.FC = () => {
         )}
 
         {/* 필터 */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${
               !selectedCategory
                 ? 'bg-rose-500 text-white'
                 : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
@@ -178,14 +178,14 @@ const Checklist: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors flex items-center gap-1 ${
+              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-colors flex items-center gap-1 flex-shrink-0 ${
                 selectedCategory === cat.id
                   ? 'bg-rose-500 text-white'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
               <span>{cat.icon}</span>
-              <span>{cat.name}</span>
+              <span className="max-w-[60px] sm:max-w-none truncate">{cat.name}</span>
             </button>
           ))}
         </div>
