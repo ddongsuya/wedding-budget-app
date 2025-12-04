@@ -18,11 +18,11 @@ router.post(
   '/',
   authenticate,
   [
-    body('name').trim().notEmpty(),
+    body('name').trim().notEmpty().withMessage('식장 이름은 필수입니다'),
     body('type').optional().trim(),
-    body('price').optional().isInt({ min: 0 }),
-    body('capacity').optional().isInt({ min: 0 }),
-    body('rating').optional().isInt({ min: 1, max: 5 }),
+    body('price').optional().isInt({ min: 0 }).withMessage('가격은 0 이상이어야 합니다'),
+    body('capacity').optional().isInt({ min: 0 }).withMessage('수용인원은 0 이상이어야 합니다'),
+    body('rating').optional().isFloat({ min: 0, max: 5 }).withMessage('별점은 0-5 사이여야 합니다'),
     validate,
   ],
   createVenue

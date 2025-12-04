@@ -107,6 +107,22 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
       status,
     } = req.body;
 
+    // images 배열을 PostgreSQL 형식으로 변환
+    const imagesArray = Array.isArray(images) ? images : [];
+    
+    console.log('Creating venue with data:', {
+      coupleId,
+      name,
+      type,
+      location,
+      price,
+      capacity,
+      visit_date,
+      rating,
+      imagesCount: imagesArray.length,
+      status
+    });
+
     const result = await pool.query(
       `INSERT INTO venues (
         couple_id, name, type, location, contact, price, capacity,
@@ -116,17 +132,17 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
       [
         coupleId,
         name,
-        type,
-        location,
-        contact,
-        price,
-        capacity,
-        visit_date,
-        rating,
-        pros,
-        cons,
-        notes,
-        images || [],
+        type || null,
+        location || null,
+        contact || null,
+        price || 0,
+        capacity || 0,
+        visit_date || null,
+        rating ? Math.round(rating) : null,
+        pros || null,
+        cons || null,
+        notes || null,
+        imagesArray,
         status || 'considering',
       ]
     );
@@ -139,9 +155,19 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
     }
 
     res.status(201).json({ venue: result.rows[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create venue error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      hint: error.hint
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      detail: error.detail
+    });
   }
 };
 

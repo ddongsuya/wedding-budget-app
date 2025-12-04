@@ -160,9 +160,11 @@ const Venues: React.FC = () => {
       setIsFormOpen(false);
       setEditingVenue(null);
       loadVenues(); // 목록 새로고침
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save venue error:', error);
-      toast.error('저장에 실패했습니다');
+      console.error('Error response:', error.response?.data);
+      const errorMsg = error.response?.data?.message || error.response?.data?.error || '저장에 실패했습니다';
+      toast.error(errorMsg);
     }
   };
 
