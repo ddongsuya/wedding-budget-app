@@ -15,6 +15,9 @@ interface VenueCardDeckProps {
   onDelete: (id: string) => void;
   onOpenGallery: (venue: Venue) => void;
   onAdd: () => void;
+  isSelectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({ 
@@ -22,7 +25,10 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
   onEdit, 
   onDelete, 
   onOpenGallery,
-  onAdd 
+  onAdd,
+  isSelectMode = false,
+  selectedIds = new Set(),
+  onToggleSelect
 }) => {
   const [[page, direction], setPage] = useState([0, 0]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -106,13 +112,20 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
   return (
     <div className="relative w-full h-[calc(100vh-200px)] min-h-[520px] max-h-[700px] flex flex-col items-center justify-start overflow-hidden">
       
+      {/* Select Mode Banner */}
+      {isSelectMode && (
+        <div className="w-full bg-rose-500 text-white text-center py-2 px-4 text-sm font-medium mb-2 rounded-lg mx-4" style={{ width: 'calc(100% - 32px)' }}>
+          비교할 웨딩홀을 선택하세요 (최대 4개)
+        </div>
+      )}
+
       {/* Top Indicators */}
       <div className="w-full flex justify-between items-center px-4 mb-4 z-10">
         <div className="text-sm font-bold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">
            {venueIndex + 1} / {venues.length}
         </div>
         <div className="flex gap-1">
-           {venues.map((_, idx) => (
+           {venues.map((_: VenueCalculated, idx: number) => (
               <div 
                 key={idx} 
                 className={`w-1.5 h-1.5 rounded-full transition-all ${idx === venueIndex ? 'bg-rose-500 w-3' : 'bg-stone-300'}`}
@@ -153,11 +166,42 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                 />
               )}
 
+              {/* Selection Overlay for Compare Mode */}
+              {isSelectMode && (
+                <div 
+                  className="absolute inset-0 z-30 flex items-center justify-center bg-black/10 cursor-pointer"
+                  onClick={(e: React.MouseEvent) => { 
+                    e.stopPropagation(); 
+                    onToggleSelect?.(currentVenue.id); 
+                  }}
+                >
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
+                    selectedIds.has(currentVenue.id) 
+                      ? 'bg-rose-500 text-white scale-110' 
+                      : 'bg-white/90 text-stone-400 border-2 border-stone-300'
+                  }`}>
+                    {selectedIds.has(currentVenue.id) ? (
+                      <Check size={32} strokeWidth={3} />
+                    ) : (
+                      <Plus size={32} />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Selection Badge */}
+              {isSelectMode && selectedIds.has(currentVenue.id) && (
+                <div className="absolute top-3 left-3 z-40 bg-rose-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                  선택됨 ✓
+                </div>
+              )}
+
               {/* Top Image Section (35%) */}
               <div 
                 className="h-[35%] min-h-[140px] max-h-[200px] bg-stone-200 relative shrink-0 cursor-pointer group"
                 onClick={() => {
-                  if (!isMenuOpen) onOpenGallery(currentVenue);
+                  if (!isMenuOpen && !isSelectMode) onOpenGallery(currentVenue);
+                  if (isSelectMode) onToggleSelect?.(currentVenue.id);
                 }}
               >
                 {thumbUrl ? (

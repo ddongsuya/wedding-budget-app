@@ -37,6 +37,7 @@ const Venues: React.FC = () => {
   // Comparison State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [isSelectMode, setIsSelectMode] = useState(false);
 
   // Filter & Sort State
   const [searchTerm, setSearchTerm] = useState('');
@@ -460,6 +461,9 @@ const Venues: React.FC = () => {
                 onDelete={handleDelete}
                 onOpenGallery={openGallery}
                 onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
+                isSelectMode={isSelectMode}
+                selectedIds={selectedIds}
+                onToggleSelect={toggleSelection}
               />
             )}
           </div>
@@ -587,25 +591,39 @@ const Venues: React.FC = () => {
         </>
       )}
 
-      {/* Floating Action Bar for Comparison (Desktop Only) */}
+      {/* Floating Action Bar for Comparison */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-bounce-in hidden md:block">
-          <div className="bg-stone-800 text-white rounded-full shadow-xl px-6 py-3 flex items-center gap-4 pr-2">
-            <span className="font-bold text-sm pl-2">{selectedIds.size}개 선택됨</span>
+        <div className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50 animate-bounce-in">
+          <div className="bg-stone-800 text-white rounded-full shadow-xl px-4 md:px-6 py-2 md:py-3 flex items-center gap-2 md:gap-4 pr-2">
+            <span className="font-bold text-xs md:text-sm pl-2">{selectedIds.size}개 선택됨</span>
             <div className="h-4 w-px bg-stone-600"></div>
             <button 
                onClick={() => setIsCompareOpen(true)}
-               className="bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors flex items-center gap-2"
+               className="bg-rose-500 hover:bg-rose-600 text-white text-xs md:text-sm font-bold px-3 md:px-4 py-1.5 md:py-2 rounded-full transition-colors flex items-center gap-1 md:gap-2"
             >
-               비교하기 <LayoutGrid size={16}/>
+               비교하기 <LayoutGrid size={14}/>
             </button>
             <button 
               onClick={() => setSelectedIds(new Set())}
-              className="p-2 text-stone-400 hover:text-white rounded-full hover:bg-stone-700"
+              className="p-1.5 md:p-2 text-stone-400 hover:text-white rounded-full hover:bg-stone-700"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Mobile Compare Mode Button */}
+      {venues.length >= 2 && selectedIds.size === 0 && (
+        <div className="md:hidden fixed bottom-24 right-4 z-40">
+          <button
+            onClick={() => setIsSelectMode(!isSelectMode)}
+            className={`p-3 rounded-full shadow-lg transition-colors ${
+              isSelectMode ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border border-stone-200'
+            }`}
+          >
+            <LayoutGrid size={20} />
+          </button>
         </div>
       )}
 
