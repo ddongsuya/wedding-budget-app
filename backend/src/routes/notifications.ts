@@ -9,6 +9,7 @@ import {
   clearAllNotifications,
   getPreferences,
   updatePreferences,
+  createTestNotification,
 } from '../controllers/notificationController';
 
 const router = Router();
@@ -27,6 +28,9 @@ router.get('/preferences', getPreferences);
 
 // 알림 설정 업데이트
 router.put('/preferences', updatePreferences);
+
+// 테스트 알림 생성
+router.post('/test', createTestNotification);
 
 // 모든 알림 읽음 처리
 router.put('/read-all', markAllAsRead);

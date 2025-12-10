@@ -106,4 +106,12 @@ export const notificationAPI = {
       success: boolean;
       data: NotificationPreference;
     }>('/notifications/preferences', data),
+
+  // 테스트 알림 생성
+  createTestNotification: (data?: { type?: string; title?: string; message?: string }) =>
+    apiClient.post<{
+      success: boolean;
+      message: string;
+      data: Notification;
+    }>('/notifications/test', data || {}),
 };

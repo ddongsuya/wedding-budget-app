@@ -175,6 +175,23 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }, []);
 
+  // 테스트 알림 생성
+  const createTestNotification = useCallback(async () => {
+    try {
+      const response = await notificationAPI.createTestNotification();
+      if (response.data.success) {
+        // 새 알림을 목록 맨 앞에 추가
+        setNotifications(prev => [response.data.data, ...prev]);
+        setUnreadCount(prev => prev + 1);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Create test notification error:', err);
+      return false;
+    }
+  }, []);
+
   // 인증 상태 변경 시 데이터 로드
   useEffect(() => {
     if (isAuthenticated) {

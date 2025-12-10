@@ -159,7 +159,7 @@ const NotificationCenter: React.FC = () => {
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
                 className={`${getNotificationBgColor(notification.type, notification.is_read)} 
-                  rounded-xl p-4 cursor-pointer hover:shadow-md transition-all border border-gray-100`}
+                  rounded-xl p-4 cursor-pointer hover:shadow-md transition-all border border-gray-100 group`}
               >
                 <div className="flex gap-3">
                   <div className="shrink-0 mt-0.5">

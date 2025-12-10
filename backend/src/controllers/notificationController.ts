@@ -248,3 +248,57 @@ export const updatePreferences = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ success: false, message: '알림 설정 업데이트에 실패했습니다' });
   }
 };
+
+// 테스트 알림 생성 (디버깅용)
+export const createTestNotification = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { type = 'announcement', title, message } = req.body;
+
+    const result = await pool.query(
+      `INSERT INTO notifications (user_id, type, title, message, data, link)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        userId,
+        type,
+        title || '테스트 알림',
+        message || '이것은 테스트 알림입니다. 알림 기능이 정상적으로 작동합니다!',
+        JSON.stringify({ test: true, timestamp: new Date().toISOString() }),
+        '/',
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: '테스트 알림이 생성되었습니다',
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Create test notification error:', error);
+    res.status(500).json({ success: false, message: '테스트 알림 생성에 실패했습니다' });
+  }
+};
+
+// 알림 직접 생성 (내부 API용)
+export const createNotificationDirect = async (
+  userId: number,
+  type: string,
+  title: string,
+  message: string,
+  data: Record<string, any> = {},
+  link?: string
+) => {
+  try {
+    const result = await pool.query(
+      `INSERT INTO notifications (user_id, type, title, message, data, link)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [userId, type, title, message, JSON.stringify(data), link]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Create notification direct error:', error);
+    return null;
+  }
+};

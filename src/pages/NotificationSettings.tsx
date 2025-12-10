@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, Calendar, ListChecks, DollarSign, Heart, Megaphone, Clock, BellRing } from 'lucide-react';
+import { ArrowLeft, Bell, Calendar, ListChecks, DollarSign, Heart, Megaphone, Clock, BellRing, Send } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useToastContext } from '../contexts/ToastContext';
 import { subscribeToPush, unsubscribeFromPush } from '../api/push';
+import { notificationAPI } from '../api/notifications';
 
 const NotificationSettings: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,23 @@ const NotificationSettings: React.FC = () => {
   const { preferences, fetchPreferences, updatePreferences } = useNotifications();
   const [isLoading, setIsLoading] = useState(true);
   const [pushPermission, setPushPermission] = useState<NotificationPermission>('default');
+  const [sendingTest, setSendingTest] = useState(false);
+
+  // 테스트 알림 전송
+  const sendTestNotification = async () => {
+    try {
+      setSendingTest(true);
+      await notificationAPI.createTestNotification({
+        title: '테스트 알림 🔔',
+        message: '알림 기능이 정상적으로 작동합니다! 이 알림은 테스트용입니다.',
+      });
+      showToast('success', '테스트 알림이 전송되었습니다. 알림 센터를 확인해보세요!');
+    } catch (error) {
+      showToast('error', '테스트 알림 전송에 실패했습니다');
+    } finally {
+      setSendingTest(false);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -153,6 +171,38 @@ const NotificationSettings: React.FC = () => {
       </header>
 
       <div className="p-4 space-y-4">
+        {/* 테스트 알림 */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+            <div className="flex items-center gap-2">
+              <Send size={20} className="text-blue-500" />
+              <h2 className="text-sm font-semibold text-blue-600">알림 테스트</h2>
+            </div>
+          </div>
+          <div className="p-4">
+            <p className="text-sm text-gray-600 mb-3">
+              알림 기능이 정상적으로 작동하는지 테스트해보세요.
+            </p>
+            <button
+              onClick={sendTestNotification}
+              disabled={sendingTest}
+              className="w-full px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {sendingTest ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  전송 중...
+                </>
+              ) : (
+                <>
+                  <Bell size={16} />
+                  테스트 알림 보내기
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* 푸시 알림 설정 */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-4 py-3 bg-rose-50 border-b border-rose-100">
