@@ -29,23 +29,32 @@ export const subscribeToPush = async (): Promise<boolean> => {
     // 브라우저 지원 확인
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       console.log('Push notifications not supported');
-      return false;
+      throw new Error('이 브라우저는 푸시 알림을 지원하지 않습니다');
     }
 
     // 알림 권한 요청
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       console.log('Notification permission denied');
-      return false;
+      throw new Error('알림 권한이 거부되었습니다');
     }
 
     // VAPID 공개 키 가져오기
-    const response = await pushAPI.getVapidPublicKey();
-    const vapidPublicKey = response.data.data.publicKey;
+    let vapidPublicKey: string | null = null;
+    try {
+      const response = await pushAPI.getVapidPublicKey();
+      vapidPublicKey = response.data.data?.publicKey;
+    } catch (error: any) {
+      console.log('VAPID key fetch failed:', error.response?.status);
+      if (error.response?.status === 503) {
+        throw new Error('푸시 알림 서비스가 아직 설정되지 않았습니다. 관리자에게 문의하세요.');
+      }
+      throw new Error('푸시 알림 서버에 연결할 수 없습니다');
+    }
     
     if (!vapidPublicKey) {
       console.log('VAPID public key not available');
-      return false;
+      throw new Error('푸시 알림 서비스가 설정되지 않았습니다');
     }
 
     // Service Worker 등록 확인
@@ -66,9 +75,10 @@ export const subscribeToPush = async (): Promise<boolean> => {
     await pushAPI.subscribe(subscription.toJSON());
     
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Push subscription error:', error);
-    return false;
+    // 에러 메시지를 상위로 전달
+    throw error;
   }
 };
 
@@ -91,7 +101,7 @@ export const unsubscribeFromPush = async (): Promise<boolean> => {
 };
 
 // Base64 URL을 Uint8Array로 변환
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
     .replace(/-/g, '+')
@@ -104,5 +114,5 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
     outputArray[i] = rawData.charCodeAt(i);
   }
 
-  return outputArray;
+  return outputArray as Uint8Array<ArrayBuffer>;
 }

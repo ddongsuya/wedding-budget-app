@@ -63,19 +63,20 @@ const NotificationSettings: React.FC = () => {
 
   const requestPushPermission = async () => {
     if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      setPushPermission(permission);
-      if (permission === 'granted') {
-        // 푸시 구독 등록
-        const subscribed = await subscribeToPush();
-        if (subscribed) {
+      try {
+        const permission = await Notification.requestPermission();
+        setPushPermission(permission);
+        if (permission === 'granted') {
+          // 푸시 구독 등록
+          await subscribeToPush();
           showToast('success', '푸시 알림이 활성화되었습니다');
           await updatePreferences({ push_enabled: true });
-        } else {
-          showToast('error', '푸시 알림 등록에 실패했습니다');
+        } else if (permission === 'denied') {
+          showToast('error', '푸시 알림이 차단되었습니다. 브라우저 설정에서 허용해주세요.');
         }
-      } else if (permission === 'denied') {
-        showToast('error', '푸시 알림이 차단되었습니다. 브라우저 설정에서 허용해주세요.');
+      } catch (error: any) {
+        console.error('Push permission error:', error);
+        showToast('error', error.message || '푸시 알림 등록에 실패했습니다');
       }
     }
   };
@@ -83,20 +84,17 @@ const NotificationSettings: React.FC = () => {
   const handlePushToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
-        const subscribed = await subscribeToPush();
-        if (subscribed) {
-          await updatePreferences({ push_enabled: true });
-          showToast('success', '푸시 알림이 활성화되었습니다');
-        } else {
-          showToast('error', '푸시 알림 등록에 실패했습니다');
-        }
+        await subscribeToPush();
+        await updatePreferences({ push_enabled: true });
+        showToast('success', '푸시 알림이 활성화되었습니다');
       } else {
         await unsubscribeFromPush();
         await updatePreferences({ push_enabled: false });
         showToast('success', '푸시 알림이 비활성화되었습니다');
       }
-    } catch (error) {
-      showToast('error', '설정 변경에 실패했습니다');
+    } catch (error: any) {
+      console.error('Push toggle error:', error);
+      showToast('error', error.message || '설정 변경에 실패했습니다');
     }
   };
 

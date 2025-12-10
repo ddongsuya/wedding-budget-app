@@ -12,6 +12,15 @@ const router = Router();
 // VAPID 공개 키 가져오기 (인증 불필요)
 router.get('/vapid-public-key', (req, res) => {
   const publicKey = getVapidPublicKey();
+  
+  if (!publicKey) {
+    return res.status(503).json({
+      success: false,
+      message: '푸시 알림 서비스가 설정되지 않았습니다',
+      data: { publicKey: null },
+    });
+  }
+  
   res.json({
     success: true,
     data: { publicKey },
