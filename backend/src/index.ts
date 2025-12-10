@@ -35,6 +35,7 @@ app.use(securityHeaders);
 // Middleware - CORS 설정
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:5173',
+  'https://wedding-budget-app.vercel.app',
   'https://wedding-budget-app-2.vercel.app',
 ];
 
