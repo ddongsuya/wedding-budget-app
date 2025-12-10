@@ -551,10 +551,10 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
+      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[85vh] md:max-h-[90vh] md:mx-4 flex flex-col">
         {/* 헤더 */}
-        <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-3xl md:rounded-t-2xl">
           <h2 className="text-xl font-bold text-stone-800">
             {event ? '일정 수정' : '일정 추가'}
           </h2>
@@ -567,7 +567,7 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
         </div>
 
         {/* 폼 */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* 제목 */}
           <div>
             <label className="block text-sm font-medium text-stone-700 mb-2">
@@ -738,23 +738,28 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
             </select>
           </div>
 
-          {/* 버튼 */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
-            >
-              {event ? '수정' : '추가'}
-            </button>
-          </div>
         </form>
+
+        {/* 버튼 - 하단 고정 */}
+        <div 
+          className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
+          >
+            {event ? '수정' : '추가'}
+          </button>
+        </div>
       </div>
     </div>
   );

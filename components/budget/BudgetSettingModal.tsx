@@ -49,7 +49,7 @@ export const BudgetSettingModal: React.FC<BudgetSettingModalProps> = ({ settings
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 safe-area-pb">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Total Budget */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-stone-700 flex items-center gap-2">
@@ -105,7 +105,10 @@ export const BudgetSettingModal: React.FC<BudgetSettingModalProps> = ({ settings
           </div>
         </form>
 
-        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb">
+        <div 
+          className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+        >
            <Button type="button" className="w-full" onClick={handleSubmit}>저장하기</Button>
         </div>
       </div>

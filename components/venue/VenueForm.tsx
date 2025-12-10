@@ -247,7 +247,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8 pb-32 md:pb-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
           
           {/* 0. Image Gallery Management */}
           <section className="space-y-4">
@@ -620,7 +620,10 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
              </span>
         </div>
 
-        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb">
+        <div 
+          className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+        >
           <Button variant="outline" className="flex-1" onClick={onCancel}>취소</Button>
           <Button variant="primary" className="flex-1" onClick={handleSubmit}>
             {initialData ? '수정 완료' : '등록하기'}
