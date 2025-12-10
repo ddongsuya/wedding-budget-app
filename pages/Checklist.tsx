@@ -349,10 +349,10 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categorie
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
-      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[85vh] md:max-h-[90vh] md:mx-4 flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pb-20 md:pb-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
         {/* 헤더 */}
-        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-3xl md:rounded-t-2xl">
+        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-bold text-stone-800">
             {item ? '항목 수정' : '항목 추가'}
           </h2>
@@ -461,10 +461,7 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categorie
         </form>
 
         {/* 버튼 - 하단 고정 */}
-        <div 
-          className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
-        >
+        <div className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white rounded-b-2xl">
           <button
             type="button"
             onClick={onClose}

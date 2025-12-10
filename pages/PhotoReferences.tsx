@@ -450,9 +450,9 @@ const PhotoReferences: React.FC = () => {
 
       {/* 업로드 모달 */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
-          <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[85vh] md:max-h-[90vh] md:mx-4 flex flex-col">
-            <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-3xl md:rounded-t-2xl">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 pb-20 md:pb-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
+            <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-xl font-bold text-stone-800">사진 추가</h2>
               <button
                 onClick={() => {
@@ -562,10 +562,7 @@ const PhotoReferences: React.FC = () => {
             </div>
 
             {/* 버튼 - 하단 고정 */}
-            <div 
-              className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white"
-              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
-            >
+            <div className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white rounded-b-2xl">
               <button
                 type="button"
                 onClick={() => {

@@ -40,9 +40,9 @@ export const BudgetSettingModal: React.FC<BudgetSettingModalProps> = ({ settings
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(val);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center p-0 md:p-4 bg-white md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in">
-      <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl shadow-none md:shadow-2xl flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white shrink-0">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 pb-20 md:pb-4 bg-black/50 md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in">
+      <div className="bg-white w-full max-h-full md:max-h-[90vh] md:max-w-md rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 rounded-t-2xl">
           <h3 className="text-xl font-bold text-stone-800">예산 설정</h3>
           <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
             <X size={20} className="text-stone-500" />
@@ -105,10 +105,7 @@ export const BudgetSettingModal: React.FC<BudgetSettingModalProps> = ({ settings
           </div>
         </form>
 
-        <div 
-          className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0"
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
-        >
+        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 rounded-b-2xl">
            <Button type="button" className="w-full" onClick={handleSubmit}>저장하기</Button>
         </div>
       </div>
