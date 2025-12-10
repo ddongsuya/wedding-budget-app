@@ -183,10 +183,10 @@ const PhotoReferences: React.FC = () => {
         </div>
 
         {/* 카테고리 필터 */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
               selectedCategory === 'all'
                 ? 'bg-rose-500 text-white'
                 : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -198,14 +198,14 @@ const PhotoReferences: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+              className={`px-2.5 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 flex-shrink-0 ${
                 selectedCategory === cat.id
                   ? 'bg-rose-500 text-white'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
-              <span>{cat.icon}</span>
-              {cat.name}
+              <span className="text-sm">{cat.icon}</span>
+              <span className="hidden sm:inline">{cat.name}</span>
             </button>
           ))}
         </div>
@@ -448,9 +448,9 @@ const PhotoReferences: React.FC = () => {
 
       {/* 업로드 모달 */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center p-4">
-          <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end md:items-center justify-center">
+          <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[85vh] md:max-h-[90vh] md:mx-4 flex flex-col">
+            <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-3xl md:rounded-t-2xl">
               <h2 className="text-xl font-bold text-stone-800">사진 추가</h2>
               <button
                 onClick={() => {
@@ -463,7 +463,7 @@ const PhotoReferences: React.FC = () => {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {/* 미리보기 */}
               {uploadData.image_url && (
                 <div className="aspect-video rounded-xl overflow-hidden bg-stone-100">
@@ -490,7 +490,7 @@ const PhotoReferences: React.FC = () => {
                           : 'border-stone-200 hover:border-stone-300'
                       }`}
                     >
-                      <span className="text-xl">{cat.icon}</span>
+                      <span className="text-lg md:text-xl">{cat.icon}</span>
                       <p className="text-xs mt-1">{cat.name}</p>
                     </button>
                   ))}
@@ -516,7 +516,7 @@ const PhotoReferences: React.FC = () => {
                   value={uploadData.memo}
                   onChange={(e) => setUploadData(prev => ({ ...prev, memo: e.target.value }))}
                   placeholder="이 사진에 대한 메모를 남겨보세요"
-                  rows={3}
+                  rows={2}
                   className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -536,7 +536,7 @@ const PhotoReferences: React.FC = () => {
                   <button
                     type="button"
                     onClick={addTag}
-                    className="px-4 py-2 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-colors"
+                    className="px-3 py-2 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-colors text-sm"
                   >
                     추가
                   </button>
@@ -557,27 +557,30 @@ const PhotoReferences: React.FC = () => {
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* 버튼 */}
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowUploadModal(false);
-                    setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
-                  }}
-                  className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
-                >
-                  취소
-                </button>
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors disabled:opacity-50"
-                >
-                  {uploading ? '업로드 중...' : '저장'}
-                </button>
-              </div>
+            {/* 버튼 - 하단 고정 */}
+            <div 
+              className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
+                }}
+                className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={uploading}
+                className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors disabled:opacity-50"
+              >
+                {uploading ? '업로드 중...' : '저장'}
+              </button>
             </div>
           </div>
         </div>
