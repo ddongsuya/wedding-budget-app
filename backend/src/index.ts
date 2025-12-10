@@ -293,6 +293,24 @@ const runMigrations = async () => {
     // 만료된 refresh token 삭제
     await pool.query(`DELETE FROM refresh_tokens WHERE expires_at < NOW() OR revoked = TRUE`).catch(() => {});
     
+    // announcements 테이블 생성 (공지사항)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS announcements (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'notice',
+        priority INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
+        start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        end_date TIMESTAMP,
+        created_by INTEGER REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_announcements_active ON announcements(is_active, start_date, end_date)`);
+    
     // venues 테이블에 추가 비용 컬럼 추가
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS meal_cost_per_person BIGINT DEFAULT 0`);
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS parking_spaces INTEGER DEFAULT 0`);
