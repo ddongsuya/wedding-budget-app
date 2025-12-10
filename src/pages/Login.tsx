@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
+import { Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState<{ remainingAttempts?: number; retryAfter?: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
@@ -15,6 +18,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setErrorDetails(null);
     setLoading(true);
 
     try {
@@ -22,9 +26,29 @@ export default function Login() {
       toast.success('로그인되었습니다! 💕');
       navigate('/');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || '로그인에 실패했습니다';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      const response = err.response?.data;
+      const errorCode = response?.error;
+      
+      // 계정 잠금 처리
+      if (errorCode === 'ACCOUNT_LOCKED' || err.response?.status === 423) {
+        setError(response?.message || '계정이 일시적으로 잠겼습니다');
+        setErrorDetails({ retryAfter: response?.retryAfter });
+      } 
+      // 너무 많은 시도
+      else if (errorCode === 'TOO_MANY_ATTEMPTS' || err.response?.status === 429) {
+        setError(response?.message || '너무 많은 로그인 시도가 있었습니다');
+        setErrorDetails({ retryAfter: response?.retryAfter });
+      }
+      // 일반 로그인 실패
+      else {
+        const errorMessage = response?.error || '로그인에 실패했습니다';
+        setError(errorMessage);
+        if (response?.remainingAttempts !== undefined) {
+          setErrorDetails({ remainingAttempts: response.remainingAttempts });
+        }
+      }
+      
+      toast.error(error || '로그인에 실패했습니다');
     } finally {
       setLoading(false);
     }
@@ -41,7 +65,22 @@ export default function Login() {
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-              {error}
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+                <div>
+                  <p>{error}</p>
+                  {errorDetails?.remainingAttempts !== undefined && (
+                    <p className="text-xs mt-1 text-red-500">
+                      남은 시도 횟수: {errorDetails.remainingAttempts}회
+                    </p>
+                  )}
+                  {errorDetails?.retryAfter && (
+                    <p className="text-xs mt-1 text-red-500">
+                      {errorDetails.retryAfter}분 후에 다시 시도해주세요
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -65,15 +104,24 @@ export default function Login() {
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 비밀번호
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button

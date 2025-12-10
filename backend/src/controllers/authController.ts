@@ -1,31 +1,118 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { pool } from '../config/database';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { AuthRequest } from '../types';
+import { recordLoginFailure, clearLoginAttempts } from '../middleware/rateLimiter';
+import { validatePassword, isValidEmail, sanitizeInput } from '../middleware/security';
+
+// 로그인 기록 저장
+const recordLoginHistory = async (userId: number, ip: string, userAgent: string, success: boolean) => {
+  try {
+    await pool.query(
+      `INSERT INTO login_history (user_id, ip_address, user_agent, success, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [userId, ip, userAgent?.substring(0, 500), success]
+    );
+  } catch (error) {
+    console.error('Failed to record login history:', error);
+  }
+};
+
+// Refresh Token을 DB에 저장
+const saveRefreshToken = async (userId: number, token: string, expiresAt: Date) => {
+  try {
+    // 기존 토큰 삭제 (같은 사용자의 오래된 토큰)
+    await pool.query(
+      'DELETE FROM refresh_tokens WHERE user_id = $1 AND expires_at < NOW()',
+      [userId]
+    );
+    
+    // 새 토큰 저장
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    await pool.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [userId, tokenHash, expiresAt]
+    );
+  } catch (error) {
+    console.error('Failed to save refresh token:', error);
+  }
+};
+
+// Refresh Token 검증
+const validateRefreshToken = async (userId: number, token: string): Promise<boolean> => {
+  try {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const result = await pool.query(
+      `SELECT id FROM refresh_tokens 
+       WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW() AND revoked = FALSE`,
+      [userId, tokenHash]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Failed to validate refresh token:', error);
+    return false;
+  }
+};
+
+// Refresh Token 폐기
+const revokeRefreshToken = async (userId: number, token: string) => {
+  try {
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    await pool.query(
+      'UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND token_hash = $2',
+      [userId, tokenHash]
+    );
+  } catch (error) {
+    console.error('Failed to revoke refresh token:', error);
+  }
+};
 
 export const register = async (req: Request, res: Response) => {
   try {
     const { email, password, name } = req.body;
-
-    // 이메일 중복 확인
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'Email already exists' });
+    
+    // 입력 검증
+    const sanitizedEmail = sanitizeInput(email?.toLowerCase());
+    const sanitizedName = sanitizeInput(name);
+    
+    if (!isValidEmail(sanitizedEmail)) {
+      return res.status(400).json({ error: '유효한 이메일 주소를 입력해주세요' });
+    }
+    
+    // 비밀번호 강도 검증
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        error: '비밀번호가 보안 요구사항을 충족하지 않습니다',
+        details: passwordValidation.errors,
+      });
     }
 
-    // 비밀번호 해싱
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 이메일 중복 확인
+    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [sanitizedEmail]);
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: '이미 등록된 이메일입니다' });
+    }
+
+    // 비밀번호 해싱 (강도 12로 증가)
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // 사용자 생성
     const result = await pool.query(
       'INSERT INTO users (email, password, name) VALUES ($1, $2, $3) RETURNING id, email, name, created_at',
-      [email, hashedPassword, name]
+      [sanitizedEmail, hashedPassword, sanitizedName]
     );
 
     const user = result.rows[0];
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
+    
+    // Refresh Token DB 저장
+    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30일
+    await saveRefreshToken(user.id, refreshToken, refreshExpires);
 
     res.status(201).json({
       user: {
@@ -46,20 +133,86 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+    
+    // 입력 검증
+    const sanitizedEmail = sanitizeInput(email?.toLowerCase());
+    
+    if (!sanitizedEmail || !password) {
+      return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요' });
+    }
 
-    // 사용자 조회
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    // 사용자 조회 (계정 잠금 상태 포함)
+    const result = await pool.query(
+      `SELECT *, 
+        CASE WHEN locked_until IS NOT NULL AND locked_until > NOW() THEN TRUE ELSE FALSE END as is_locked
+       FROM users WHERE email = $1`,
+      [sanitizedEmail]
+    );
+    
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      // 사용자가 없어도 동일한 응답 (타이밍 공격 방지)
+      await bcrypt.compare(password, '$2a$12$dummy.hash.for.timing.attack.prevention');
+      recordLoginFailure(ip, sanitizedEmail);
+      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다' });
     }
 
     const user = result.rows[0];
+    
+    // 계정 잠금 확인
+    if (user.is_locked) {
+      const remainingMinutes = Math.ceil((new Date(user.locked_until).getTime() - Date.now()) / 60000);
+      await recordLoginHistory(user.id, ip, userAgent, false);
+      return res.status(423).json({ 
+        error: 'ACCOUNT_LOCKED',
+        message: `계정이 일시적으로 잠겼습니다. ${remainingMinutes}분 후에 다시 시도해주세요.`,
+        retryAfter: remainingMinutes,
+      });
+    }
 
     // 비밀번호 확인
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      // 실패 횟수 증가
+      const failedAttempts = (user.failed_login_attempts || 0) + 1;
+      const maxAttempts = 5;
+      
+      if (failedAttempts >= maxAttempts) {
+        // 계정 잠금 (30분)
+        await pool.query(
+          `UPDATE users SET failed_login_attempts = $1, locked_until = NOW() + INTERVAL '30 minutes' WHERE id = $2`,
+          [failedAttempts, user.id]
+        );
+        await recordLoginHistory(user.id, ip, userAgent, false);
+        return res.status(423).json({
+          error: 'ACCOUNT_LOCKED',
+          message: '로그인 시도가 너무 많습니다. 30분 후에 다시 시도해주세요.',
+          retryAfter: 30,
+        });
+      } else {
+        await pool.query(
+          'UPDATE users SET failed_login_attempts = $1 WHERE id = $2',
+          [failedAttempts, user.id]
+        );
+      }
+      
+      recordLoginFailure(ip, sanitizedEmail);
+      await recordLoginHistory(user.id, ip, userAgent, false);
+      
+      return res.status(401).json({ 
+        error: '이메일 또는 비밀번호가 올바르지 않습니다',
+        remainingAttempts: maxAttempts - failedAttempts,
+      });
     }
+
+    // 로그인 성공 - 실패 횟수 초기화
+    await pool.query(
+      'UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = $1',
+      [user.id]
+    );
+    clearLoginAttempts(ip, sanitizedEmail);
+    await recordLoginHistory(user.id, ip, userAgent, true);
 
     // 커플이 없으면 자동 생성
     const coupleCheck = await pool.query(
@@ -77,6 +230,10 @@ export const login = async (req: Request, res: Response) => {
 
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
+    
+    // Refresh Token DB 저장
+    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await saveRefreshToken(user.id, refreshToken, refreshExpires);
 
     res.json({
       user: {
@@ -104,6 +261,12 @@ export const refresh = async (req: Request, res: Response) => {
 
     const decoded = verifyRefreshToken(refreshToken) as { id: number };
 
+    // DB에서 토큰 유효성 검증
+    const isValid = await validateRefreshToken(decoded.id, refreshToken);
+    if (!isValid) {
+      return res.status(401).json({ error: '유효하지 않거나 만료된 토큰입니다' });
+    }
+
     // 사용자 조회
     const result = await pool.query('SELECT id, email FROM users WHERE id = $1', [decoded.id]);
     if (result.rows.length === 0) {
@@ -111,8 +274,17 @@ export const refresh = async (req: Request, res: Response) => {
     }
 
     const user = result.rows[0];
+    
+    // 기존 토큰 폐기 (Token Rotation)
+    await revokeRefreshToken(user.id, refreshToken);
+    
+    // 새 토큰 발급
     const newAccessToken = generateAccessToken(user.id, user.email);
     const newRefreshToken = generateRefreshToken(user.id);
+    
+    // 새 Refresh Token 저장
+    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    await saveRefreshToken(user.id, newRefreshToken, refreshExpires);
 
     res.json({
       accessToken: newAccessToken,
@@ -121,6 +293,26 @@ export const refresh = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Refresh error:', error);
     res.status(401).json({ error: 'Invalid or expired refresh token' });
+  }
+};
+
+// 로그아웃 (토큰 폐기)
+export const logout = async (req: AuthRequest, res: Response) => {
+  try {
+    const { refreshToken } = req.body;
+    const userId = req.user!.id;
+    
+    if (refreshToken) {
+      await revokeRefreshToken(userId, refreshToken);
+    }
+    
+    // 해당 사용자의 모든 토큰 폐기 (선택적)
+    // await pool.query('UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1', [userId]);
+    
+    res.json({ success: true, message: '로그아웃되었습니다' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

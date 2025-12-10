@@ -1,8 +1,10 @@
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET: string = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+// Access Token: 1시간 (보안 강화)
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '1h';
 const JWT_REFRESH_SECRET: string = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret';
+// Refresh Token: 30일
 const JWT_REFRESH_EXPIRES_IN: string = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
 
 export const generateAccessToken = (userId: number, email: string): string => {

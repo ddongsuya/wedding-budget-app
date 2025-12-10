@@ -18,6 +18,8 @@ import notificationRoutes from './routes/notifications';
 import pushRoutes from './routes/push';
 import photoReferenceRoutes from './routes/photoReferences';
 import { initSentry, sentryErrorHandler } from './lib/sentry';
+import { securityHeaders, validateRequestBody } from './middleware/security';
+import { apiRateLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -27,21 +29,42 @@ initSentry();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// 보안 헤더 적용 (가장 먼저)
+app.use(securityHeaders);
+
 // Middleware - CORS 설정
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:5173',
+  'https://wedding-budget-app-2.vercel.app',
+];
+
 app.use(cors({
-  origin: true, // 모든 origin 허용 (개발용)
+  origin: (origin, callback) => {
+    // 개발 환경이거나 허용된 origin인 경우
+    if (!origin || process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
   maxAge: 86400 // 24시간
 }));
 
 // Preflight 요청 처리
 app.options('*', cors());
 
+// API Rate Limiter
+app.use('/api', apiRateLimiter);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 요청 본문 검증 (SQL Injection 방지)
+app.use(validateRequestBody);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -224,6 +247,46 @@ const runMigrations = async () => {
       )
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_photo_references_couple ON photo_references(couple_id)`);
+    
+    // 보안 관련 컬럼 추가
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP`);
+    
+    // 로그인 기록 테이블
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS login_history (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        ip_address VARCHAR(50),
+        user_agent TEXT,
+        success BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_login_history_user ON login_history(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_login_history_created ON login_history(created_at DESC)`);
+    
+    // Refresh Token 테이블 (토큰 관리용)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(64) NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        revoked BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)`);
+    
+    // 오래된 로그인 기록 자동 삭제 (90일 이상)
+    await pool.query(`DELETE FROM login_history WHERE created_at < NOW() - INTERVAL '90 days'`).catch(() => {});
+    
+    // 만료된 refresh token 삭제
+    await pool.query(`DELETE FROM refresh_tokens WHERE expires_at < NOW() OR revoked = TRUE`).catch(() => {});
     
     // venues 테이블에 추가 비용 컬럼 추가
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS meal_cost_per_person BIGINT DEFAULT 0`);

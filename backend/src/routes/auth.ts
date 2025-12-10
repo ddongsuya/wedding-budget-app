@@ -4,6 +4,7 @@ import {
   register, 
   login, 
   refresh, 
+  logout,
   getMe, 
   changePassword,
   forgotPassword,
@@ -11,6 +12,7 @@ import {
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
+import { loginRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -18,7 +20,7 @@ router.post(
   '/register',
   [
     body('email').isEmail().normalizeEmail(),
-    body('password').isLength({ min: 6 }),
+    body('password').isLength({ min: 8 }).withMessage('비밀번호는 8자 이상이어야 합니다'),
     body('name').trim().notEmpty(),
     validate,
   ],
@@ -27,6 +29,7 @@ router.post(
 
 router.post(
   '/login',
+  loginRateLimiter, // Rate Limiter 적용
   [
     body('email').isEmail().normalizeEmail(),
     body('password').notEmpty(),
@@ -36,6 +39,8 @@ router.post(
 );
 
 router.post('/refresh', [body('refreshToken').notEmpty(), validate], refresh);
+
+router.post('/logout', authenticate, logout);
 
 router.get('/me', authenticate, getMe);
 

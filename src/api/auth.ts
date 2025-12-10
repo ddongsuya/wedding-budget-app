@@ -15,6 +15,7 @@ export const authAPI = {
   register: (data: RegisterData) => apiClient.post('/auth/register', data),
   login: (data: LoginData) => apiClient.post('/auth/login', data),
   refresh: (refreshToken: string) => apiClient.post('/auth/refresh', { refreshToken }),
+  logout: (refreshToken: string) => apiClient.post('/auth/logout', { refreshToken }),
   me: () => apiClient.get('/auth/me'),
   
   // 비밀번호 변경
