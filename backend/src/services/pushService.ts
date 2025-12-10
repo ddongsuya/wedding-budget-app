@@ -4,7 +4,7 @@ import { pool } from '../config/database';
 // VAPID 키 설정 (환경변수에서 가져오거나 기본값 사용)
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || '';
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
-const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@weddingplanner.com';
+const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:gathering@csco.co.kr';
 
 // VAPID 키가 설정되어 있으면 web-push 설정
 if (vapidPublicKey && vapidPrivateKey) {

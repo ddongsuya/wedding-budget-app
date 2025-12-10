@@ -691,8 +691,8 @@ const SettingsNew: React.FC = () => {
               </div>
               <div className="flex justify-between py-2">
                 <span className="text-gray-600">문의하기</span>
-                <a href="mailto:support@needlesswedding.com" className="text-rose-500 font-medium hover:underline">
-                  support@needlesswedding.com
+                <a href="mailto:gathering@csco.co.kr" className="text-rose-500 font-medium hover:underline">
+                  gathering@csco.co.kr
                 </a>
               </div>
             </div>
