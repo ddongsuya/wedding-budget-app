@@ -241,6 +241,7 @@ export const login = async (req: Request, res: Response) => {
         email: user.email,
         name: user.name,
         created_at: user.created_at,
+        is_admin: user.is_admin || false,
       },
       accessToken,
       refreshToken,
@@ -319,7 +320,7 @@ export const logout = async (req: AuthRequest, res: Response) => {
 export const getMe = async (req: AuthRequest, res: Response) => {
   try {
     const result = await pool.query(
-      'SELECT id, email, name, created_at FROM users WHERE id = $1',
+      'SELECT id, email, name, created_at, is_admin FROM users WHERE id = $1',
       [req.user!.id]
     );
 
@@ -327,7 +328,14 @@ export const getMe = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user: result.rows[0], coupleId: req.user!.coupleId });
+    const user = result.rows[0];
+    res.json({ 
+      user: {
+        ...user,
+        is_admin: user.is_admin || false,
+      }, 
+      coupleId: req.user!.coupleId 
+    });
   } catch (error) {
     console.error('GetMe error:', error);
     res.status(500).json({ error: 'Internal server error' });
