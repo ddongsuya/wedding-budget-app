@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { BudgetCategory } from '../../types';
 import { Button } from '../ui/Button';
-import { X } from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { X, LucideIcon } from 'lucide-react';
 
 interface CategoryModalProps {
   initialData?: BudgetCategory | null;
@@ -12,7 +13,42 @@ interface CategoryModalProps {
 }
 
 const PRESET_COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#14b8a6', '#10b981', '#f59e0b', '#f97316', '#ef4444', '#64748b'];
-const ICONS = ['Building', 'Camera', 'Gem', 'Home', 'Plane', 'Gift', 'Utensils', 'Music', 'Flower', 'ShoppingBag'];
+
+// 결혼 준비에 유용한 아이콘들 (카테고리별로 정리)
+const ICON_CATEGORIES = [
+  {
+    name: '웨딩',
+    icons: ['Heart', 'Gem', 'Crown', 'Sparkles', 'Star', 'Flower2', 'Gift', 'PartyPopper'],
+  },
+  {
+    name: '장소/여행',
+    icons: ['Building', 'Building2', 'Home', 'Hotel', 'Plane', 'Car', 'MapPin', 'Palmtree'],
+  },
+  {
+    name: '의상/뷰티',
+    icons: ['Shirt', 'Scissors', 'Palette', 'Brush', 'Sparkle', 'Glasses', 'Watch', 'Footprints'],
+  },
+  {
+    name: '음식/파티',
+    icons: ['Utensils', 'UtensilsCrossed', 'Wine', 'Cake', 'Coffee', 'IceCream', 'Pizza', 'ChefHat'],
+  },
+  {
+    name: '사진/영상',
+    icons: ['Camera', 'Video', 'Image', 'Film', 'Aperture', 'Focus', 'SunMedium', 'Clapperboard'],
+  },
+  {
+    name: '음악/엔터',
+    icons: ['Music', 'Music2', 'Mic', 'Mic2', 'Radio', 'Headphones', 'Speaker', 'Guitar'],
+  },
+  {
+    name: '가구/가전',
+    icons: ['Sofa', 'Lamp', 'Tv', 'Refrigerator', 'WashingMachine', 'AirVent', 'Bed', 'Bath'],
+  },
+  {
+    name: '쇼핑/기타',
+    icons: ['ShoppingBag', 'ShoppingCart', 'Package', 'Wallet', 'CreditCard', 'Receipt', 'Truck', 'Box'],
+  },
+];
 
 export const CategoryModal: React.FC<CategoryModalProps> = ({ initialData, onSave, onClose, onDelete }) => {
   const [name, setName] = useState(initialData?.name || '');
@@ -98,17 +134,47 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ initialData, onSav
           
           <div className="space-y-2">
              <label className="text-sm font-medium text-stone-700">아이콘 선택</label>
-             <div className="flex flex-wrap gap-2 p-2 bg-stone-50 rounded-xl max-h-32 overflow-y-auto">
-               {ICONS.map((ic) => (
-                 <button
-                   key={ic}
-                   type="button"
-                   onClick={() => setIcon(ic)}
-                   className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${icon === ic ? 'bg-white border-stone-800 text-stone-900 shadow-sm' : 'border-transparent text-stone-500 hover:bg-stone-100'}`}
-                 >
-                   {ic}
-                 </button>
+             <div className="bg-stone-50 rounded-xl p-3 max-h-48 overflow-y-auto space-y-3">
+               {ICON_CATEGORIES.map((category) => (
+                 <div key={category.name}>
+                   <p className="text-xs text-stone-400 mb-2 font-medium">{category.name}</p>
+                   <div className="flex flex-wrap gap-2">
+                     {category.icons.map((iconName) => {
+                       const IconComponent = (Icons as Record<string, LucideIcon>)[iconName];
+                       if (!IconComponent) return null;
+                       return (
+                         <button
+                           key={iconName}
+                           type="button"
+                           onClick={() => setIcon(iconName)}
+                           className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center transition-all ${
+                             icon === iconName 
+                               ? 'border-rose-500 bg-rose-50 text-rose-600 shadow-sm scale-110' 
+                               : 'border-stone-200 bg-white text-stone-500 hover:border-stone-300 hover:bg-stone-100'
+                           }`}
+                           title={iconName}
+                         >
+                           <IconComponent size={20} />
+                         </button>
+                       );
+                     })}
+                   </div>
+                 </div>
                ))}
+             </div>
+             {/* 선택된 아이콘 미리보기 */}
+             <div className="flex items-center gap-2 mt-2 p-2 bg-stone-100 rounded-lg">
+               <span className="text-xs text-stone-500">선택됨:</span>
+               <div 
+                 className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                 style={{ backgroundColor: color }}
+               >
+                 {(() => {
+                   const SelectedIcon = (Icons as Record<string, LucideIcon>)[icon];
+                   return SelectedIcon ? <SelectedIcon size={16} /> : null;
+                 })()}
+               </div>
+               <span className="text-sm font-medium text-stone-700">{icon}</span>
              </div>
           </div>
         </form>
