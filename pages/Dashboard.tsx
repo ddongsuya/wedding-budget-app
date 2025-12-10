@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, memo } from 'react';
 import { Card, SummaryCard } from '../components/ui/Card';
 import { BudgetSettings, Venue, Expense, CoupleProfile } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
@@ -80,70 +80,86 @@ const Dashboard: React.FC = () => {
   // TODO: venues도 API로 변경 필요
   const venues: Venue[] = [];
 
-  if (loading) return <DashboardSkeleton />;
-
-  // --- Calculations ---
-
-  const totalSpent = budget.categories.reduce((acc, cat) => acc + cat.spentAmount, 0);
-  const remainingBudget = budget.totalBudget - totalSpent;
-  const progress = (totalSpent / budget.totalBudget) * 100;
-
-  // This Month Planned
-  const today = new Date();
-  const currentMonth = today.toISOString().slice(0, 7); // "YYYY-MM"
-  const thisMonthPlanned = expenses
-    .filter(e => e.status === 'planned' && e.paymentDate.startsWith(currentMonth))
-    .reduce((acc, e) => acc + e.amount, 0);
-
-  // Over Budget Categories
-  const overBudgetCategories = budget.categories.filter(c => c.spentAmount > c.budgetAmount && c.budgetAmount > 0);
-
-  // Groom vs Bride Actual Spending
-  const groomSpent = expenses.filter(e => e.paidBy === 'groom').reduce((acc, e) => acc + e.amount, 0);
-  const brideSpent = expenses.filter(e => e.paidBy === 'bride').reduce((acc, e) => acc + e.amount, 0);
-  const sharedSpent = expenses.filter(e => e.paidBy === 'shared').reduce((acc, e) => acc + e.amount, 0);
-  
-  // Recent Expenses (Top 5)
-  const recentExpenses = [...expenses]
-    .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
-    .slice(0, 5);
-
-  // Chart Data: Category Distribution
-  const categoryData = budget.categories.map(cat => ({
-    name: cat.name,
-    value: cat.spentAmount
-  })).filter(d => d.value > 0);
-
-  // Chart Data: Budget vs Actual
-  const budgetVsActualData = budget.categories.map(cat => ({
-    name: cat.name,
-    budget: cat.budgetAmount,
-    actual: cat.spentAmount
-  }));
-
-  // Chart Data: Contribution
-  const contributionData = [
-    { name: '신랑', value: groomSpent, fill: '#3b82f6' },
-    { name: '신부', value: brideSpent, fill: '#f43f5e' },
-    { name: '공동', value: sharedSpent, fill: '#a8a29e' },
-  ];
-
-  const formatMoney = (amount: number) => {
+  // 금액 포맷 함수 - useCallback으로 메모이제이션
+  const formatMoney = useCallback((amount: number) => {
     return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
-  };
+  }, []);
 
-  // Date Diff Calcs
-  const calculateDays = (targetDate: string) => {
+  // 날짜 계산 함수 - useCallback으로 메모이제이션
+  const calculateDays = useCallback((targetDate: string) => {
     if (!targetDate) return 0;
+    const today = new Date();
     const start = new Date(today.toISOString().split('T')[0]).getTime();
     const target = new Date(targetDate).getTime();
     const diff = target - start;
     const days = Math.ceil(diff / (1000 * 3600 * 24));
     return days;
-  };
+  }, []);
 
-  const dDay = calculateDays(profile.weddingDate);
-  const dPlusDay = profile.meetingDate ? Math.abs(calculateDays(profile.meetingDate)) + 1 : 0;
+  // --- Memoized Calculations ---
+  const { totalSpent, remainingBudget, progress, overBudgetCategories } = useMemo(() => {
+    const total = budget.categories.reduce((acc, cat) => acc + cat.spentAmount, 0);
+    const remaining = budget.totalBudget - total;
+    const prog = budget.totalBudget > 0 ? (total / budget.totalBudget) * 100 : 0;
+    const overBudget = budget.categories.filter(c => c.spentAmount > c.budgetAmount && c.budgetAmount > 0);
+    return { totalSpent: total, remainingBudget: remaining, progress: prog, overBudgetCategories: overBudget };
+  }, [budget.categories, budget.totalBudget]);
+
+  // This Month Planned - useMemo
+  const thisMonthPlanned = useMemo(() => {
+    const today = new Date();
+    const currentMonth = today.toISOString().slice(0, 7);
+    return expenses
+      .filter(e => e.status === 'planned' && e.paymentDate.startsWith(currentMonth))
+      .reduce((acc, e) => acc + e.amount, 0);
+  }, [expenses]);
+
+  // Spending by payer - useMemo
+  const { groomSpent, brideSpent, sharedSpent } = useMemo(() => ({
+    groomSpent: expenses.filter(e => e.paidBy === 'groom').reduce((acc, e) => acc + e.amount, 0),
+    brideSpent: expenses.filter(e => e.paidBy === 'bride').reduce((acc, e) => acc + e.amount, 0),
+    sharedSpent: expenses.filter(e => e.paidBy === 'shared').reduce((acc, e) => acc + e.amount, 0),
+  }), [expenses]);
+  
+  // Recent Expenses - useMemo
+  const recentExpenses = useMemo(() => 
+    [...expenses]
+      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+      .slice(0, 5),
+    [expenses]
+  );
+
+  // Chart Data - useMemo
+  const categoryData = useMemo(() => 
+    budget.categories.map(cat => ({
+      name: cat.name,
+      value: cat.spentAmount
+    })).filter(d => d.value > 0),
+    [budget.categories]
+  );
+
+  const budgetVsActualData = useMemo(() => 
+    budget.categories.map(cat => ({
+      name: cat.name,
+      budget: cat.budgetAmount,
+      actual: cat.spentAmount
+    })),
+    [budget.categories]
+  );
+
+  const contributionData = useMemo(() => [
+    { name: '신랑', value: groomSpent, fill: '#3b82f6' },
+    { name: '신부', value: brideSpent, fill: '#f43f5e' },
+    { name: '공동', value: sharedSpent, fill: '#a8a29e' },
+  ], [groomSpent, brideSpent, sharedSpent]);
+
+  // D-day calculations - useMemo
+  const { dDay, dPlusDay } = useMemo(() => ({
+    dDay: calculateDays(profile.weddingDate),
+    dPlusDay: profile.meetingDate ? Math.abs(calculateDays(profile.meetingDate)) + 1 : 0,
+  }), [profile.weddingDate, profile.meetingDate, calculateDays]);
+
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
@@ -215,24 +231,28 @@ const Dashboard: React.FC = () => {
           value={formatMoney(budget.totalBudget)} 
           icon={<Wallet size={20} />} 
           trend={`${progress.toFixed(1)}% 배정됨`}
+          delay={0}
         />
         <SummaryCard 
           label="현재 총 지출" 
           value={formatMoney(totalSpent)} 
           icon={<CreditCard size={20} />} 
           trend="예산의 사용률"
+          delay={50}
         />
         <SummaryCard 
           label="이번 달 지출 예정" 
           value={formatMoney(thisMonthPlanned)} 
           icon={<CalendarClock size={20} />} 
           trend="결제 예정 금액"
+          delay={100}
         />
         <SummaryCard 
           label="관심 식장" 
           value={`${venues.length}곳`} 
           icon={<Store size={20} />} 
           trend={`${venues.filter(v => v.status === 'visited').length}곳 방문 완료`}
+          delay={150}
         />
       </div>
 
@@ -344,8 +364,12 @@ const Dashboard: React.FC = () => {
         >
           <div className="space-y-4">
             {recentExpenses.length > 0 ? (
-              recentExpenses.map(expense => (
-                <div key={expense.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-colors">
+              recentExpenses.map((expense, index) => (
+                <div 
+                  key={expense.id} 
+                  className="flex justify-between items-center p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-all duration-200 stagger-item touch-feedback active:scale-[0.98]"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-400">
                       {expense.paymentMethod === 'card' ? <CreditCard size={18}/> : <Wallet size={18}/>}

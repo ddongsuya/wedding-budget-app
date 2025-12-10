@@ -261,13 +261,14 @@ const PhotoReferences: React.FC = () => {
         ) : viewMode === 'grid' ? (
           /* 그리드 뷰 */
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {filteredPhotos.map(photo => {
+            {filteredPhotos.map((photo, index) => {
               const category = getCategoryInfo(photo.category);
               return (
                 <div
                   key={photo.id}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="relative group cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow"
+                  className="relative group cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.98]"
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
                   <div className="aspect-square">
                     <img
@@ -309,13 +310,14 @@ const PhotoReferences: React.FC = () => {
         ) : (
           /* 리스트 뷰 */
           <div className="space-y-3">
-            {filteredPhotos.map(photo => {
+            {filteredPhotos.map((photo, index) => {
               const category = getCategoryInfo(photo.category);
               return (
                 <div
                   key={photo.id}
                   onClick={() => setSelectedPhoto(photo)}
-                  className="bg-white rounded-xl p-3 shadow-sm flex gap-3 cursor-pointer hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl p-3 shadow-sm flex gap-3 cursor-pointer hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.99]"
+                  style={{ animationDelay: `${index * 40}ms` }}
                 >
                   <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
                     <img

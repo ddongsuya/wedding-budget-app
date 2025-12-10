@@ -202,10 +202,11 @@ const Budget: React.FC = () => {
         />
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {budget.categories.map((category) => (
+          {budget.categories.map((category, index) => (
           <div 
             key={category.id} 
-            className="bg-white rounded-xl border border-stone-100 p-4 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden"
+            className="bg-white rounded-xl border border-stone-100 p-4 shadow-sm hover:shadow-md transition-all group cursor-pointer relative overflow-hidden stagger-item touch-feedback active:scale-[0.99]"
+            style={{ animationDelay: `${index * 50}ms` }}
             onClick={() => { setEditingCategory(category); setIsCategoryModalOpen(true); }}
           >
             {/* Progress Background */}

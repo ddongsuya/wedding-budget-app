@@ -236,12 +236,13 @@ const Checklist: React.FC = () => {
 
                 {/* 아이템 목록 */}
                 <div className="space-y-2">
-                  {periodItems.map(item => (
+                  {periodItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 transition-all hover:shadow-md ${
+                      className={`bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 transition-all hover:shadow-md stagger-item touch-feedback active:scale-[0.99] ${
                         item.is_completed ? 'opacity-60' : ''
                       }`}
+                      style={{ animationDelay: `${index * 30}ms` }}
                     >
                       {/* 체크박스 */}
                       <button

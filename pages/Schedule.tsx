@@ -252,13 +252,14 @@ const Schedule: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {selectedDateEvents.map((event) => {
+              {selectedDateEvents.map((event, index) => {
                 const categoryInfo = event.category ? EVENT_CATEGORIES[event.category] : null;
 
                 return (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.99]"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {/* 카테고리 아이콘 */}
                     <div
