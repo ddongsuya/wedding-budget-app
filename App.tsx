@@ -26,6 +26,7 @@ const ChangePassword = lazy(() => import('./src/pages/ChangePassword'));
 const ForgotPassword = lazy(() => import('./src/pages/ForgotPassword'));
 const CoupleConnect = lazy(() => import('./src/pages/CoupleConnect'));
 const AdminDashboard = lazy(() => import('./src/pages/AdminDashboard'));
+const AdminAnnouncements = lazy(() => import('./src/pages/AdminAnnouncements'));
 const Announcements = lazy(() => import('./src/pages/Announcements'));
 const NotificationCenter = lazy(() => import('./src/pages/NotificationCenter'));
 const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings'));
@@ -147,6 +148,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/announcements"
+            element={
+              <ProtectedRoute>
+                <AdminAnnouncements />
               </ProtectedRoute>
             }
           />
