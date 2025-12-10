@@ -254,6 +254,10 @@ const runMigrations = async () => {
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP`);
     await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP`);
     
+    // 비밀번호 재설정 토큰 컬럼 추가
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(10)`);
+    await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP`);
+    
     // 로그인 기록 테이블
     await pool.query(`
       CREATE TABLE IF NOT EXISTS login_history (
