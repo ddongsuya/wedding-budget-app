@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { pool } from '../config/database';
+import { notifyScheduleChange } from '../services/coupleNotificationService';
 
 // 이벤트 목록 (필터 지원)
 export const getEvents = async (req: Request, res: Response) => {
@@ -203,6 +204,13 @@ export const createEvent = async (req: Request, res: Response) => {
       ]
     );
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyScheduleChange(String(userId), String(coupleId), 'add', title);
+    } catch (error) {
+      console.error('Schedule notification error:', error);
+    }
+
     res.status(201).json({
       success: true,
       data: result.rows[0],
@@ -218,6 +226,7 @@ export const updateEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const coupleId = (req as any).user.coupleId;
+    const userId = (req as any).user.id;
     const updates = req.body;
 
     const fields = Object.keys(updates);
@@ -241,6 +250,13 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: '이벤트를 찾을 수 없습니다' });
     }
 
+    // 파트너에게 알림 전송
+    try {
+      await notifyScheduleChange(String(userId), String(coupleId), 'update', result.rows[0].title);
+    } catch (error) {
+      console.error('Schedule notification error:', error);
+    }
+
     res.json({
       success: true,
       data: result.rows[0],
@@ -256,14 +272,30 @@ export const deleteEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const coupleId = (req as any).user.coupleId;
+    const userId = (req as any).user.id;
+
+    // 삭제 전 제목 조회
+    const eventResult = await pool.query(
+      'SELECT title FROM events WHERE id = $1 AND couple_id = $2',
+      [id, coupleId]
+    );
+
+    if (eventResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: '이벤트를 찾을 수 없습니다' });
+    }
+
+    const eventTitle = eventResult.rows[0].title;
 
     const result = await pool.query(
       'DELETE FROM events WHERE id = $1 AND couple_id = $2 RETURNING id',
       [id, coupleId]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: '이벤트를 찾을 수 없습니다' });
+    // 파트너에게 알림 전송
+    try {
+      await notifyScheduleChange(String(userId), String(coupleId), 'delete', eventTitle);
+    } catch (error) {
+      console.error('Schedule notification error:', error);
     }
 
     res.json({

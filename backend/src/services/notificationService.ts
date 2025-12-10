@@ -166,7 +166,7 @@ export const createBudgetWarningNotification = async (
 export const createCoupleActivityNotification = async (
   partnerId: string,
   actorName: string,
-  activityType: 'venue' | 'expense' | 'checklist',
+  activityType: 'venue' | 'expense' | 'checklist' | 'schedule',
   action: 'add' | 'update' | 'delete',
   itemName?: string
 ): Promise<any> => {
@@ -186,12 +186,18 @@ export const createCoupleActivityNotification = async (
       update: `${actorName}님이 체크리스트를 완료했어요`,
       delete: `${actorName}님이 체크리스트 항목을 삭제했어요`,
     },
+    schedule: {
+      add: `${actorName}님이 새 일정을 추가했어요`,
+      update: `${actorName}님이 일정을 수정했어요`,
+      delete: `${actorName}님이 일정을 삭제했어요`,
+    },
   };
 
   const linkMap: Record<string, string> = {
     venue: '/venues',
     expense: '/budget',
     checklist: '/checklist',
+    schedule: '/schedule',
   };
 
   return createNotification({

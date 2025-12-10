@@ -25,7 +25,7 @@ export const getUserName = async (userId: string): Promise<string> => {
 export const notifyPartnerOfActivity = async (
   actorUserId: string,
   coupleId: string,
-  activityType: 'venue' | 'expense' | 'checklist',
+  activityType: 'venue' | 'expense' | 'checklist' | 'schedule',
   action: 'add' | 'update' | 'delete',
   itemName?: string
 ): Promise<boolean> => {
@@ -79,4 +79,14 @@ export const notifyChecklistChange = async (
   itemTitle?: string
 ): Promise<boolean> => {
   return notifyPartnerOfActivity(userId, coupleId, 'checklist', action, itemTitle);
+};
+
+// 일정 변경 알림
+export const notifyScheduleChange = async (
+  userId: string,
+  coupleId: string,
+  action: 'add' | 'update' | 'delete',
+  eventTitle?: string
+): Promise<boolean> => {
+  return notifyPartnerOfActivity(userId, coupleId, 'schedule', action, eventTitle);
 };
