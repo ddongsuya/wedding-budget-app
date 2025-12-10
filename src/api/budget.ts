@@ -25,4 +25,5 @@ export const budgetAPI = {
   createCategory: (data: BudgetCategoryInput) => apiClient.post('/budget/categories', data),
   updateCategory: (id: string, data: Partial<BudgetCategoryInput>) =>
     apiClient.put(`/budget/categories/${id}`, data),
+  deleteCategory: (id: string) => apiClient.delete(`/budget/categories/${id}`),
 };

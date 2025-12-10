@@ -165,3 +165,48 @@ export const updateCategory = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const deleteCategory = async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = req.user!.coupleId;
+    const { id } = req.params;
+
+    if (!coupleId) {
+      return res.status(404).json({ error: 'No couple found' });
+    }
+
+    // 해당 카테고리의 지출 내역이 있는지 확인
+    const expenseCheck = await pool.query(
+      'SELECT COUNT(*) FROM expenses WHERE category_id = $1',
+      [id]
+    );
+
+    const expenseCount = parseInt(expenseCheck.rows[0].count);
+
+    // 지출 내역이 있으면 카테고리만 삭제하고 지출은 유지 (category_id를 null로)
+    if (expenseCount > 0) {
+      await pool.query(
+        'UPDATE expenses SET category_id = NULL WHERE category_id = $1',
+        [id]
+      );
+    }
+
+    const result = await pool.query(
+      'DELETE FROM budget_categories WHERE id = $1 AND couple_id = $2 RETURNING *',
+      [id, coupleId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found' });
+    }
+
+    res.json({ 
+      success: true, 
+      message: '카테고리가 삭제되었습니다',
+      expensesUpdated: expenseCount 
+    });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

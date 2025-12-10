@@ -111,12 +111,15 @@ const Checklist: React.FC = () => {
     }
   };
 
-  // 아이템 저장
+  // 아이템 저장 (추가/수정)
   const handleSave = async (data: Partial<ChecklistItem>) => {
     try {
       if (editingItem) {
         await checklistAPI.updateItem(editingItem.id, data);
         toast.success('수정되었습니다');
+      } else {
+        await checklistAPI.createItem(data);
+        toast.success('항목이 추가되었습니다');
       }
       setShowEditModal(false);
       setEditingItem(null);
@@ -140,7 +143,16 @@ const Checklist: React.FC = () => {
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
       {/* 헤더 */}
       <div className="bg-white px-4 py-6 shadow-sm sticky top-[60px] md:top-0 z-10">
-        <h1 className="text-2xl font-bold text-stone-800 mb-4">체크리스트</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold text-stone-800">체크리스트</h1>
+          <button
+            onClick={() => { setEditingItem(null); setShowEditModal(true); }}
+            className="bg-rose-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-rose-600 transition-colors flex items-center gap-2"
+          >
+            <Plus size={18} />
+            항목 추가
+          </button>
+        </div>
         
         {/* 진행률 */}
         {stats && (
@@ -286,6 +298,187 @@ const Checklist: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* 아이템 추가/수정 모달 */}
+      {showEditModal && (
+        <ChecklistItemModal
+          item={editingItem}
+          categories={categories}
+          onClose={() => { setShowEditModal(false); setEditingItem(null); }}
+          onSave={handleSave}
+        />
+      )}
+    </div>
+  );
+};
+
+// 체크리스트 아이템 추가/수정 모달
+interface ChecklistItemModalProps {
+  item: ChecklistItem | null;
+  categories: ChecklistCategory[];
+  onClose: () => void;
+  onSave: (data: Partial<ChecklistItem>) => void;
+}
+
+const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categories, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    title: item?.title || '',
+    description: item?.description || '',
+    category_id: item?.category_id || '',
+    due_period: item?.due_period || 'D-90' as DuePeriod,
+    priority: item?.priority || 'medium',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.title.trim()) {
+      alert('제목을 입력해주세요');
+      return;
+    }
+
+    onSave({
+      ...formData,
+      category_id: formData.category_id || undefined,
+    });
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50">
+      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-lg max-h-[85vh] md:max-h-[90vh] md:mx-4 flex flex-col">
+        {/* 헤더 */}
+        <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-3xl md:rounded-t-2xl">
+          <h2 className="text-xl font-bold text-stone-800">
+            {item ? '항목 수정' : '항목 추가'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+          >
+            <X size={24} className="text-stone-600" />
+          </button>
+        </div>
+
+        {/* 폼 */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* 제목 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              제목 *
+            </label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="예: 청첩장 발송하기"
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          {/* 카테고리 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              카테고리
+            </label>
+            <select
+              value={formData.category_id}
+              onChange={(e) => handleChange('category_id', e.target.value)}
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            >
+              <option value="">선택 안함</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 시기 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              완료 시기
+            </label>
+            <select
+              value={formData.due_period}
+              onChange={(e) => handleChange('due_period', e.target.value)}
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+            >
+              {DUE_PERIODS.map(period => (
+                <option key={period.value} value={period.value}>
+                  {period.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 우선순위 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              우선순위
+            </label>
+            <div className="flex gap-2">
+              {[
+                { value: 'low', label: '낮음', color: 'bg-stone-100 text-stone-600' },
+                { value: 'medium', label: '보통', color: 'bg-blue-100 text-blue-600' },
+                { value: 'high', label: '높음', color: 'bg-red-100 text-red-600' },
+              ].map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => handleChange('priority', p.value)}
+                  className={`flex-1 py-2 rounded-xl font-medium transition-all ${
+                    formData.priority === p.value
+                      ? p.color + ' ring-2 ring-offset-1 ring-rose-500'
+                      : 'bg-stone-50 text-stone-500'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 메모 */}
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-2">
+              메모
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="추가 메모를 입력하세요"
+              rows={2}
+              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
+            />
+          </div>
+        </form>
+
+        {/* 버튼 - 하단 고정 */}
+        <div 
+          className="flex-shrink-0 flex gap-3 p-4 border-t border-stone-200 bg-white"
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors"
+          >
+            {item ? '수정' : '추가'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

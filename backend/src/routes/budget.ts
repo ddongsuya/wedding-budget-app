@@ -6,6 +6,7 @@ import {
   getCategories,
   createCategory,
   updateCategory,
+  deleteCategory,
 } from '../controllers/budgetController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
@@ -41,5 +42,7 @@ router.post(
 );
 
 router.put('/categories/:id', authenticate, updateCategory);
+
+router.delete('/categories/:id', authenticate, deleteCategory);
 
 export default router;

@@ -115,6 +115,21 @@ export const useBudget = () => {
     }
   };
 
+  const deleteCategory = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await budgetAPI.deleteCategory(id);
+      setCategories((prev) => prev.filter((c) => c.id !== parseInt(id)));
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || '카테고리 삭제에 실패했습니다';
+      setError(errorMsg);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
     fetchCategories();
@@ -130,5 +145,6 @@ export const useBudget = () => {
     fetchCategories,
     addCategory,
     updateCategory,
+    deleteCategory,
   };
 };

@@ -13,7 +13,7 @@ import { useBudget } from '../src/hooks/useBudget';
 
 const Budget: React.FC = () => {
   const { toast } = useToast();
-  const { settings, categories, loading, fetchSettings, fetchCategories, updateSettings, addCategory, updateCategory } = useBudget();
+  const { settings, categories, loading, fetchCategories, updateSettings, addCategory, updateCategory, deleteCategory } = useBudget();
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
@@ -113,9 +113,8 @@ const Budget: React.FC = () => {
   const handleDeleteCategory = async (id: string) => {
     if (confirm('이 카테고리를 삭제하시겠습니까? 관련 지출 내역은 유지되지만 예산 정보는 사라집니다.')) {
       try {
-        // TODO: API에 삭제 기능 추가 필요
+        await deleteCategory(id);
         toast.success('카테고리가 삭제되었습니다');
-        await fetchCategories();
       } catch (error) {
         toast.error('삭제에 실패했습니다');
       }
