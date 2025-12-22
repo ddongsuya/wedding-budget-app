@@ -156,7 +156,7 @@ export const GalleryViewer: React.FC<GalleryViewerProps> = ({ images, initialInd
                   }}
                   className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all snap-center ${currentIndex === idx ? 'ring-2 ring-rose-500 scale-110 opacity-100' : 'opacity-50 hover:opacity-100'}`}
                 >
-                   <img src={img.url} className="w-full h-full object-cover" />
+                   <img src={img.url} alt={img.caption || '갤러리 이미지'} loading="lazy" className="w-full h-full object-cover" />
                 </button>
              ))}
           </div>

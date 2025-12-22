@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { pool } from '../config/database';
 import { notifyChecklistChange } from '../services/coupleNotificationService';
+import { parsePaginationParams, calculateOffset, buildPaginationMeta } from '../utils/pagination';
 
 // 카테고리 목록 조회
 export const getCategories = async (req: Request, res: Response) => {

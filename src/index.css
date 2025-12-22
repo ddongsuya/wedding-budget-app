@@ -40,3 +40,153 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Touch Target Utilities - Minimum 44x44px for accessibility */
+@layer utilities {
+  /* Minimum touch target size class */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  /* Touch target with centered content */
+  .touch-target-center {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Touch feedback for mobile */
+  .touch-feedback {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* GPU acceleration for smooth animations */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Interactive card with proper touch feedback */
+  .card-interactive {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Touch-friendly spacing between interactive elements */
+  .touch-spacing {
+    gap: 8px;
+  }
+  
+  /* Ensure icon buttons have proper touch area */
+  .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 9999px;
+    transition: background-color 0.2s;
+  }
+  
+  .icon-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .icon-btn:active {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+
+/* Accessibility - Focus Indicators */
+@layer utilities {
+  /* Visible focus indicator for keyboard navigation */
+  .focus-visible-ring {
+    outline: none;
+  }
+  
+  .focus-visible-ring:focus-visible {
+    outline: 2px solid #f43f5e;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* Global focus styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Enhanced focus styles for buttons */
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2);
+}
+
+/* Enhanced focus styles for links */
+a:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enhanced focus styles for form inputs */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 0;
+  border-color: #f43f5e;
+}
+
+/* Skip to main content link for keyboard users */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #f43f5e;
+  color: white;
+  padding: 8px 16px;
+  z-index: 100;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 0 0 8px 0;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Ensure interactive elements have visible focus */
+[tabindex]:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 2px;
+}
+
+/* Focus styles for cards and interactive containers */
+.card-interactive:focus-visible {
+  outline: 2px solid #f43f5e;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.15);
+}
+
+/* High contrast focus for dark backgrounds */
+.dark-bg-focus:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}

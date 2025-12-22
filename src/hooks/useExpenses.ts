@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput, ExpenseListParams } from '../api/expenses';
-import { Expense } from '../types';
+import type { Expense } from '../../types';
 
 export const useExpenses = (params?: ExpenseListParams) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);

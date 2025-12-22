@@ -93,7 +93,7 @@ export default function Register() {
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm" role="alert" aria-live="assertive">
               <p className="font-medium">{error}</p>
               {errorDetails.length > 0 && (
                 <p className="text-xs mt-1">필요: {errorDetails.join(', ')}</p>
@@ -101,18 +101,21 @@ export default function Register() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                 이름
               </label>
               <input
                 id="name"
+                name="name"
                 type="text"
+                autoComplete="name"
+                autoCapitalize="words"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                className="w-full px-4 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
                 placeholder="홍길동"
               />
             </div>
@@ -123,11 +126,17 @@ export default function Register() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                className="w-full px-4 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
                 placeholder="your@email.com"
               />
             </div>
@@ -139,27 +148,30 @@ export default function Register() {
               <div className="relative">
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent"
+                  className="w-full px-4 py-3 pr-12 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 touch-feedback"
+                  aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                 </button>
               </div>
               
               {/* 비밀번호 강도 표시 */}
               {password && (
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-2" role="status" aria-live="polite" aria-label="비밀번호 강도">
                   {/* 강도 바 */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-1" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
@@ -186,13 +198,13 @@ export default function Register() {
                        passwordValidation.strength === 'medium' ? '보통' : '약함'}
                     </span>
                     <div className="flex items-center gap-1 text-gray-500">
-                      <Shield size={12} />
+                      <Shield size={12} aria-hidden="true" />
                       <span>보안 수준</span>
                     </div>
                   </div>
                   
                   {/* 체크리스트 */}
-                  <div className="grid grid-cols-2 gap-1 text-xs">
+                  <div className="grid grid-cols-2 gap-1 text-xs" role="list" aria-label="비밀번호 요구사항">
                     {[
                       { key: 'length', label: '8자 이상' },
                       { key: 'uppercase', label: '대문자' },
@@ -200,14 +212,14 @@ export default function Register() {
                       { key: 'number', label: '숫자' },
                       { key: 'special', label: '특수문자' },
                     ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center gap-1">
+                      <div key={key} className="flex items-center gap-1" role="listitem">
                         {passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? (
-                          <Check size={12} className="text-green-500" />
+                          <Check size={12} className="text-green-500" aria-hidden="true" />
                         ) : (
-                          <X size={12} className="text-gray-300" />
+                          <X size={12} className="text-gray-300" aria-hidden="true" />
                         )}
                         <span className={passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? 'text-green-600' : 'text-gray-400'}>
-                          {label}
+                          {label} {passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? '(충족)' : '(미충족)'}
                         </span>
                       </div>
                     ))}
@@ -223,11 +235,13 @@ export default function Register() {
               <div className="relative">
                 <input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent ${
+                  className={`w-full px-4 py-3 pr-12 min-h-[48px] border rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base ${
                     confirmPassword && password !== confirmPassword
                       ? 'border-red-300 bg-red-50'
                       : confirmPassword && password === confirmPassword
@@ -239,17 +253,18 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 touch-feedback"
+                  aria-label={showConfirmPassword ? '비밀번호 확인 숨기기' : '비밀번호 확인 보기'}
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showConfirmPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                 </button>
               </div>
               {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-red-500 mt-1">비밀번호가 일치하지 않습니다</p>
+                <p className="text-xs text-red-500 mt-1" role="alert">비밀번호가 일치하지 않습니다</p>
               )}
               {confirmPassword && password === confirmPassword && (
-                <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-                  <Check size={12} /> 비밀번호가 일치합니다
+                <p className="text-xs text-green-500 mt-1 flex items-center gap-1" role="status">
+                  <Check size={12} aria-hidden="true" /> 비밀번호가 일치합니다
                 </p>
               )}
             </div>
@@ -257,7 +272,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-rose-400 to-pink-500 text-white py-3 rounded-lg font-medium hover:from-rose-500 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full min-h-[48px] bg-gradient-to-r from-rose-400 to-pink-500 text-white py-3 rounded-lg font-medium hover:from-rose-500 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-feedback"
             >
               {loading ? '가입 중...' : '회원가입'}
             </button>

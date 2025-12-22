@@ -1,5 +1,12 @@
 import { Router } from 'express';
+import { param } from 'express-validator';
 import { authenticate } from '../middleware/auth';
+import {
+  validate,
+  createAnnouncementValidation,
+  updateAnnouncementValidation,
+  validateIdParam,
+} from '../middleware/validation';
 import * as adminController from '../controllers/adminController';
 
 const router = Router();
@@ -18,12 +25,17 @@ router.get('/dashboard/stats', adminController.getDashboardStats);
 
 // 사용자 관리
 router.get('/users', adminController.getUsers);
-router.put('/users/:userId/admin', adminController.toggleUserAdmin);
+router.put(
+  '/users/:userId/admin',
+  [param('userId').isInt({ min: 1 }).withMessage('유효한 사용자 ID를 입력해주세요')],
+  validate,
+  adminController.toggleUserAdmin
+);
 
 // 공지사항 관리
 router.get('/announcements', adminController.getAnnouncements);
-router.post('/announcements', adminController.createAnnouncement);
-router.put('/announcements/:id', adminController.updateAnnouncement);
-router.delete('/announcements/:id', adminController.deleteAnnouncement);
+router.post('/announcements', createAnnouncementValidation, validate, adminController.createAnnouncement);
+router.put('/announcements/:id', updateAnnouncementValidation, validate, adminController.updateAnnouncement);
+router.delete('/announcements/:id', validateIdParam, validate, adminController.deleteAnnouncement);
 
 export default router;

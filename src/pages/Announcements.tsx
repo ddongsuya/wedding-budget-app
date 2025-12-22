@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, ArrowLeft, Pin, AlertCircle, Info, Megaphone, Wrench } from 'lucide-react';
 import { adminAPI, Announcement } from '../api/admin';
 import { useToastContext } from '../contexts/ToastContext';
+import { EmptyState } from '../components/common/EmptyState';
 
 const Announcements = () => {
   const navigate = useNavigate();
@@ -117,9 +118,14 @@ const Announcements = () => {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {announcements.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center shadow-sm">
-            <Bell size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">등록된 공지사항이 없습니다</p>
+          <div className="bg-white rounded-xl shadow-sm">
+            <EmptyState
+              illustration="notification"
+              title="등록된 공지사항이 없습니다"
+              description="새로운 공지사항이 등록되면 여기에 표시됩니다"
+              actionLabel="새로고침"
+              onAction={loadAnnouncements}
+            />
           </div>
         ) : (
           <div className="space-y-4">

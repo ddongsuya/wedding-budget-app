@@ -1,29 +1,99 @@
 import { Request, Response, NextFunction } from 'express';
+import helmet from 'helmet';
+import { CorsOptions } from 'cors';
 
-// 보안 헤더 미들웨어
-export const securityHeaders = (req: Request, res: Response, next: NextFunction) => {
-  // XSS 방지
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  
-  // 클릭재킹 방지
-  res.setHeader('X-Frame-Options', 'DENY');
-  
-  // MIME 타입 스니핑 방지
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  
-  // Referrer 정책
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // 권한 정책
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  
-  // HSTS (HTTPS 강제) - 프로덕션에서만
-  if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  }
-  
-  next();
+// 허용된 Origin 목록 (환경변수에서 가져오거나 기본값 사용)
+const getAllowedOrigins = (): string[] => {
+  const envOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
+  return envOrigins || [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://wedding-budget-app.vercel.app',
+    'https://wedding-budget-app-2.vercel.app',
+  ];
 };
+
+// CORS 설정 강화
+// Requirements 8.4: 허용된 origin만 접근 가능하도록 설정
+export const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = getAllowedOrigins();
+    
+    // 개발 환경에서는 origin이 없는 요청 허용 (Postman, curl 등)
+    if (!origin && process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    
+    // 프로덕션에서는 허용된 origin만 허용
+    if (origin && allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // 허용되지 않은 origin
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // 쿠키 전송 허용
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: [
+    'Content-Length',
+    'X-Requested-With',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset',
+  ],
+  maxAge: 86400, // Preflight 캐시 24시간
+  optionsSuccessStatus: 200, // 일부 레거시 브라우저 호환성
+};
+
+// CORS origin 검증 유틸리티 함수
+export const isAllowedOrigin = (origin: string | undefined): boolean => {
+  if (!origin) return process.env.NODE_ENV !== 'production';
+  return getAllowedOrigins().includes(origin);
+};
+
+// Helmet 보안 헤더 설정
+// Requirements 8.3: API 응답에 적절한 보안 헤더 설정
+export const securityHeaders = helmet({
+  // Content Security Policy 설정
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:", "blob:"],
+      connectSrc: ["'self'", "https:"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  // X-Frame-Options: DENY - 클릭재킹 방지
+  frameguard: { action: 'deny' },
+  // X-Content-Type-Options: nosniff - MIME 타입 스니핑 방지
+  noSniff: true,
+  // X-XSS-Protection: 1; mode=block - XSS 방지
+  xssFilter: true,
+  // Referrer-Policy 설정
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // HSTS 설정 (프로덕션에서만 활성화)
+  hsts: process.env.NODE_ENV === 'production' 
+    ? { maxAge: 31536000, includeSubDomains: true }
+    : false,
+  // X-DNS-Prefetch-Control
+  dnsPrefetchControl: { allow: false },
+  // X-Download-Options (IE 전용)
+  ieNoOpen: true,
+  // X-Permitted-Cross-Domain-Policies
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+  // Cross-Origin-Embedder-Policy 비활성화 (이미지 로딩 호환성)
+  crossOriginEmbedderPolicy: false,
+  // Cross-Origin-Opener-Policy
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
+  // Cross-Origin-Resource-Policy
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+});
 
 // 입력 검증 유틸리티
 export const sanitizeInput = (input: string): string => {

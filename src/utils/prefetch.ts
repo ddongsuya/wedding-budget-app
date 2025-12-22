@@ -13,12 +13,12 @@ export const prefetchComponent = (importFn: () => Promise<any>) => {
 
 // 페이지 프리페치 함수들
 export const prefetchPages = {
-  dashboard: () => import('../pages/Dashboard'),
-  budget: () => import('../pages/Budget'),
-  venues: () => import('../pages/Venues'),
-  checklist: () => import('../pages/Checklist'),
-  schedule: () => import('../pages/Schedule'),
-  settings: () => import('../pages/Settings'),
-  login: () => import('../src/pages/Login'),
-  register: () => import('../src/pages/Register'),
+  dashboard: () => import('../../pages/Dashboard'),
+  budget: () => import('../../pages/Budget'),
+  venues: () => import('../../pages/Venues'),
+  checklist: () => import('../../pages/Checklist'),
+  schedule: () => import('../../pages/Schedule'),
+  settings: () => import('../../pages/Settings'),
+  login: () => import('../pages/Login'),
+  register: () => import('../pages/Register'),
 };

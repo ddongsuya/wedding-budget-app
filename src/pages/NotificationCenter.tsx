@@ -151,6 +151,8 @@ const NotificationCenter: React.FC = () => {
             illustration="notification"
             title="알림이 없습니다"
             description="새로운 알림이 오면 여기에 표시됩니다"
+            actionLabel="알림 설정하기"
+            onAction={() => navigate('/notifications/settings')}
           />
         ) : (
           <div className="space-y-2">

@@ -1,0 +1,145 @@
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        console: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        FormData: 'readonly',
+        Blob: 'readonly',
+        File: 'readonly',
+        FileReader: 'readonly',
+        Image: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLImageElement: 'readonly',
+        HTMLCanvasElement: 'readonly',
+        Event: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        TouchEvent: 'readonly',
+        DragEvent: 'readonly',
+        CustomEvent: 'readonly',
+        IntersectionObserver: 'readonly',
+        ResizeObserver: 'readonly',
+        MutationObserver: 'readonly',
+        AbortController: 'readonly',
+        Request: 'readonly',
+        Response: 'readonly',
+        Headers: 'readonly',
+        crypto: 'readonly',
+        performance: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
+        prompt: 'readonly',
+        atob: 'readonly',
+        btoa: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
+        Notification: 'readonly',
+        ServiceWorkerRegistration: 'readonly',
+        PushSubscription: 'readonly',
+        BeforeInstallPromptEvent: 'readonly',
+        OffscreenCanvas: 'readonly',
+        createImageBitmap: 'readonly',
+        ImageBitmap: 'readonly',
+        CanvasRenderingContext2D: 'readonly',
+        OffscreenCanvasRenderingContext2D: 'readonly',
+        caches: 'readonly',
+        indexedDB: 'readonly',
+        IDBDatabase: 'readonly',
+        IDBTransaction: 'readonly',
+        IDBObjectStore: 'readonly',
+        IDBRequest: 'readonly',
+        IDBCursor: 'readonly',
+        IDBKeyRange: 'readonly',
+        self: 'readonly',
+        clients: 'readonly',
+        registration: 'readonly',
+        skipWaiting: 'readonly',
+        importScripts: 'readonly',
+        workbox: 'readonly',
+        __WB_MANIFEST: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      'react': react,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      // TypeScript rules
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      
+      // React rules
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      'react/jsx-uses-react': 'off',
+      'react/jsx-uses-vars': 'error',
+      
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      
+      // General rules
+      'no-console': 'off',
+      'no-unused-vars': 'off', // Use TypeScript's version
+      'no-undef': 'off', // TypeScript handles this
+      'prefer-const': 'warn',
+      'no-var': 'error',
+      'eqeqeq': ['warn', 'always', { null: 'ignore' }],
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+  },
+  {
+    ignores: [
+      'node_modules/**',
+      'dist/**',
+      'build/**',
+      'backend/**',
+      '*.config.js',
+      '*.config.ts',
+      'public/**',
+      'scripts/**',
+    ],
+  },
+];

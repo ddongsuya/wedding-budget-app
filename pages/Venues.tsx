@@ -2,13 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Venue, ViewMode } from '../types';
 import { venueAPI } from '../src/api/venues';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { VenueForm } from '../components/venue/VenueForm';
 import { VenueCompare } from '../components/venue/VenueCompare';
 import { VenueCardDeck } from '../components/venue/VenueCardDeck';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { GalleryViewer } from '../components/ui/GalleryViewer';
-import { Plus, MapPin, Star, Car, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, Square, X, Image as ImageIcon, Check, Minus } from 'lucide-react';
+import { Plus, Star, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, X, Image as ImageIcon } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useToast } from '../src/hooks/useToast';
 import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
@@ -534,7 +533,7 @@ const Venues: React.FC = () => {
                             onClick={(e) => { e.stopPropagation(); openGallery(venue); }}
                          >
                             {thumbUrl ? (
-                              <img src={thumbUrl} className="w-full h-full object-cover" />
+                              <img src={thumbUrl} loading="lazy" alt={venue.name} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-stone-300">
                                  <ImageIcon size={16} />

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Plus, Heart, Trash2, X, Filter, Grid, List, Tag, ExternalLink, Edit2 } from 'lucide-react';
+import { Plus, Heart, Trash2, X, Grid, List, ExternalLink } from 'lucide-react';
 import { photoReferenceAPI, PhotoReference, PhotoCategory } from '../src/api/photoReferences';
 import { compressImage } from '../src/utils/imageCompression';
 import { useToast } from '../src/hooks/useToast';
 import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
+import { PhotoReferencesGridSkeleton } from '../src/components/skeleton/PhotoReferencesSkeleton';
 import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
 
 const CATEGORIES: PhotoCategory[] = [
@@ -64,12 +65,13 @@ const PhotoReferences: React.FC = () => {
     try {
       setUploading(true);
       
-      // 이미지 압축
+      // 이미지 압축 (WebP 포맷 자동 변환)
       const compressed = await compressImage(file, {
         maxWidth: 1200,
         maxHeight: 1200,
         quality: 0.8,
         maxSizeMB: 0.8,
+        format: 'auto', // WebP 지원 시 자동 변환
       });
 
       // Base64로 변환
@@ -245,11 +247,22 @@ const PhotoReferences: React.FC = () => {
       {/* 콘텐츠 */}
       <div className="p-4">
         {loading ? (
-          <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-4 gap-3' : 'space-y-3'}>
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <Skeleton key={i} variant="rounded" width="100%" height={viewMode === 'grid' ? 200 : 80} />
-            ))}
-          </div>
+          viewMode === 'grid' ? (
+            <PhotoReferencesGridSkeleton />
+          ) : (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white rounded-xl p-3 shadow-sm flex gap-3">
+                  <Skeleton variant="rounded" width={80} height={80} />
+                  <div className="flex-1">
+                    <Skeleton variant="text" width={60} height={20} className="mb-2" />
+                    <Skeleton variant="text" width="80%" height={18} className="mb-1" />
+                    <Skeleton variant="text" width="60%" height={14} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         ) : filteredPhotos.length === 0 ? (
           <EmptyState
             illustration="photo"
@@ -274,6 +287,7 @@ const PhotoReferences: React.FC = () => {
                     <img
                       src={photo.image_url}
                       alt={photo.title || '레퍼런스 사진'}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -323,6 +337,7 @@ const PhotoReferences: React.FC = () => {
                     <img
                       src={photo.image_url}
                       alt={photo.title || '레퍼런스 사진'}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>

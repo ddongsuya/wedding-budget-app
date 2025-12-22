@@ -1,8 +1,9 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { ToastProvider } from './src/contexts/ToastContext';
 import { NotificationProvider } from './src/contexts/NotificationContext';
+import { QueryProvider } from './src/contexts/QueryProvider';
 import { ToastContainer } from './src/components/common/Toast';
 import { InstallPrompt } from './src/components/common/InstallPrompt';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
@@ -55,6 +56,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <QueryProvider>
       <ToastProvider>
         <AuthProvider>
           <NotificationProvider>
@@ -204,6 +206,7 @@ function App() {
           </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
+      </QueryProvider>
     </ErrorBoundary>
   );
 }

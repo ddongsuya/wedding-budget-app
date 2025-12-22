@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Settings as SettingsIcon, Info, Database, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield } from 'lucide-react';
+import { User, Settings as SettingsIcon, Info, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield } from 'lucide-react';
 import { useToastContext } from '../src/contexts/ToastContext';
 import { coupleAPI } from '../src/api/couple';
 import { useAuth } from '../src/contexts/AuthContext';
 import DatePicker from '../src/components/common/DatePicker/DatePicker';
 import { compressImage } from '../src/utils/imageCompression';
+import { SettingsSkeleton } from '../src/components/skeleton/SettingsSkeleton';
 
 type Tab = 'profile' | 'app' | 'account' | 'info';
 
@@ -134,7 +135,7 @@ const SettingsNew: React.FC = () => {
       showToast('success', '프로필이 저장되었습니다! 💕');
     } catch (error) {
       console.error('Save profile error:', error);
-      showToast('error', '프로필 저장에 실패했습니다');
+      showToast('error', '프로필 저장에 실패했습니다', { onRetry: saveProfile });
     } finally {
       setIsSaving(false);
     }
@@ -180,7 +181,16 @@ const SettingsNew: React.FC = () => {
       showToast('success', '이미지가 업로드되었습니다');
     } catch (error) {
       console.error('Image upload error:', error);
-      showToast('error', '이미지 업로드에 실패했습니다');
+      showToast('error', '이미지 업로드에 실패했습니다', { 
+        onRetry: () => {
+          // 파일 선택 다이얼로그 다시 열기
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.onchange = (e) => handleImageUpload(e as any, target);
+          input.click();
+        }
+      });
     }
   };
 
@@ -196,11 +206,7 @@ const SettingsNew: React.FC = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-2 border-rose-300 border-t-rose-500 rounded-full" />
-      </div>
-    );
+    return <SettingsSkeleton />;
   }
 
   if (!profile) return null;
@@ -362,9 +368,12 @@ const SettingsNew: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    name="groom_name"
+                    autoComplete="name"
+                    autoCapitalize="words"
                     value={profile.groom_name}
                     onChange={(e) => handleProfileChange('groom_name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
                     placeholder="이름 입력"
                   />
                 </div>
@@ -382,9 +391,12 @@ const SettingsNew: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">연락처</label>
                   <input
                     type="tel"
+                    name="groom_contact"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={profile.groom_contact}
                     onChange={(e) => handleProfileChange('groom_contact', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
                     placeholder="010-0000-0000"
                   />
                 </div>
@@ -400,9 +412,12 @@ const SettingsNew: React.FC = () => {
                   </label>
                   <input
                     type="text"
+                    name="bride_name"
+                    autoComplete="name"
+                    autoCapitalize="words"
                     value={profile.bride_name}
                     onChange={(e) => handleProfileChange('bride_name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
                     placeholder="이름 입력"
                   />
                 </div>
@@ -420,9 +435,12 @@ const SettingsNew: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">연락처</label>
                   <input
                     type="tel"
+                    name="bride_contact"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={profile.bride_contact}
                     onChange={(e) => handleProfileChange('bride_contact', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
                     placeholder="010-0000-0000"
                   />
                 </div>
@@ -436,9 +454,11 @@ const SettingsNew: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">우리의 애칭/별명</label>
                   <input
                     type="text"
+                    name="couple_nickname"
+                    autoCapitalize="words"
                     value={profile.couple_nickname}
                     onChange={(e) => handleProfileChange('couple_nickname', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
                     placeholder="예: 알콩달콩 우리"
                   />
                 </div>

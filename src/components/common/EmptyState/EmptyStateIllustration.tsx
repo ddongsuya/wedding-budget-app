@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface EmptyStateIllustrationProps {
-  type: 'wedding' | 'budget' | 'expense' | 'venue' | 'checklist' | 'calendar';
+  type: 'wedding' | 'budget' | 'expense' | 'venue' | 'checklist' | 'calendar' | 'photo' | 'notification';
   className?: string;
 }
 
@@ -92,6 +92,28 @@ export const EmptyStateIllustration: React.FC<EmptyStateIllustrationProps> = ({ 
         <rect x="55" y="73" width="10" height="10" rx="2" fill="#FDA4AF" />
         <rect x="72" y="73" width="10" height="10" rx="2" fill="#FFF" />
         <circle cx="60" cy="78" r="3" fill="#E11D48" />
+      </svg>
+    ),
+
+    // 사진 일러스트
+    photo: (
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className={className}>
+        <circle cx="60" cy="60" r="50" fill="#FEE2E2" />
+        <rect x="30" y="35" width="60" height="50" rx="6" fill="#FECACA" />
+        <circle cx="50" cy="55" r="10" fill="#FDA4AF" />
+        <path d="M35 75L50 60L65 75L80 55L85 75" stroke="#F87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="75" cy="45" r="5" fill="#FFF" />
+      </svg>
+    ),
+
+    // 알림 일러스트
+    notification: (
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none" className={className}>
+        <circle cx="60" cy="60" r="50" fill="#FEF3C7" />
+        <path d="M60 30C48 30 38 40 38 52V65L32 75H88L82 65V52C82 40 72 30 60 30Z" fill="#FCD34D" />
+        <circle cx="60" cy="85" r="8" fill="#F59E0B" />
+        <circle cx="75" cy="35" r="10" fill="#EF4444" />
+        <path d="M72 35H78M75 32V38" stroke="#FFF" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   };

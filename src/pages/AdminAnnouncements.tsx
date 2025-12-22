@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { useToastContext } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { EmptyState } from '../components/common/EmptyState';
 
 interface Announcement {
   id: number;
@@ -135,7 +136,15 @@ const AdminAnnouncements = () => {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {announcements.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">등록된 공지사항이 없습니다</div>
+          <div className="bg-white rounded-xl shadow-sm">
+            <EmptyState
+              illustration="notification"
+              title="등록된 공지사항이 없습니다"
+              description="새 공지사항을 등록해보세요"
+              actionLabel="공지사항 등록"
+              onAction={() => setShowModal(true)}
+            />
+          </div>
         ) : (
           <div className="space-y-4">
             {announcements.map((announcement) => (

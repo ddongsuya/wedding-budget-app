@@ -1,17 +1,19 @@
-import React, { useEffect, useState, useMemo, useCallback, memo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Card, SummaryCard } from '../components/ui/Card';
-import { BudgetSettings, Venue, Expense, CoupleProfile } from '../types';
+import { BudgetSettings, Venue, Expense } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { Wallet, Store, CreditCard, TrendingUp, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { Wallet, Store, CreditCard, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
 import { useBudget } from '../src/hooks/useBudget';
 import { useExpenses } from '../src/hooks/useExpenses';
+import { EmptyState } from '../src/components/common/EmptyState';
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { profile: apiProfile, loading: profileLoading } = useCoupleProfile();
   const { settings: budgetSettings, categories, loading: budgetLoading } = useBudget();
   const { expenses: apiExpenses, loading: expensesLoading } = useExpenses();
@@ -49,6 +51,7 @@ const Dashboard: React.FC = () => {
       id: String(c.id),
       name: c.name,
       icon: c.icon || 'Circle',
+      parentId: null,
       budgetAmount: c.budget_amount || 0,
       spentAmount: c.spent_amount || 0,
       color: c.color || '#f43f5e',
@@ -62,17 +65,21 @@ const Dashboard: React.FC = () => {
   };
 
   // API 지출 데이터를 기존 형식으로 변환
-  const expenses: Expense[] = apiExpenses?.map((e: any) => ({
+  const expenses: Expense[] = (apiExpenses as any[])?.map((e: { id: number; category_id?: number; title: string; amount: number; date: string; payer: string; payment_method?: string; vendor?: string; notes?: string; created_at?: string; updated_at?: string }) => ({
     id: String(e.id),
     categoryId: String(e.category_id || ''),
     title: e.title,
     amount: e.amount,
     paymentDate: e.date,
-    paidBy: e.payer,
-    status: 'paid',
-    paymentMethod: e.payment_method,
-    vendor: e.vendor,
-    notes: e.notes,
+    paidBy: (e.payer || 'shared') as 'groom' | 'bride' | 'shared',
+    status: 'completed' as const,
+    paymentMethod: (e.payment_method || 'card') as 'cash' | 'card' | 'transfer',
+    paymentType: 'full' as const,
+    vendorName: e.vendor || '',
+    receiptUrl: null,
+    memo: e.notes || '',
+    createdAt: e.created_at || new Date().toISOString(),
+    updatedAt: e.updated_at || new Date().toISOString(),
   })) || [];
 
   const loading = profileLoading || budgetLoading || expensesLoading;
@@ -97,12 +104,12 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // --- Memoized Calculations ---
-  const { totalSpent, remainingBudget, progress, overBudgetCategories } = useMemo(() => {
+  const { totalSpent, progress, overBudgetCategories } = useMemo(() => {
     const total = budget.categories.reduce((acc, cat) => acc + cat.spentAmount, 0);
     const remaining = budget.totalBudget - total;
     const prog = budget.totalBudget > 0 ? (total / budget.totalBudget) * 100 : 0;
     const overBudget = budget.categories.filter(c => c.spentAmount > c.budgetAmount && c.budgetAmount > 0);
-    return { totalSpent: total, remainingBudget: remaining, progress: prog, overBudgetCategories: overBudget };
+    return { totalSpent: total, progress: prog, overBudgetCategories: overBudget };
   }, [budget.categories, budget.totalBudget]);
 
   // This Month Planned - useMemo
@@ -170,10 +177,10 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center gap-3 sm:gap-6">
                <div className="flex -space-x-3 sm:-space-x-4">
                   <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden">
-                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt="Groom" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={24}/></div>}
+                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt={`${profile.groom.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300" role="img" aria-label={`${profile.groom.name} 프로필`}><User size={24} aria-hidden="true" /></div>}
                   </div>
                   <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden z-10">
-                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt="Bride" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300"><User size={24}/></div>}
+                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt={`${profile.bride.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300" role="img" aria-label={`${profile.bride.name} 프로필`}><User size={24} aria-hidden="true" /></div>}
                   </div>
                </div>
                <div className="min-w-0 flex-1">
@@ -204,8 +211,8 @@ const Dashboard: React.FC = () => {
          
          {/* Background Decoration */}
          {profile.couplePhotoUrl && (
-            <div className="absolute inset-0 z-0 opacity-10">
-               <img src={profile.couplePhotoUrl} alt="Back" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 z-0 opacity-10" aria-hidden="true">
+               <img src={profile.couplePhotoUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
             </div>
          )}
@@ -306,10 +313,14 @@ const Dashboard: React.FC = () => {
                   </PieChart>
                 </ResponsiveContainer>
                ) : (
-                 <div className="text-center text-stone-400">
-                   <p className="mb-2">지출 내역이 없습니다</p>
-                   <p className="text-xs">첫 지출을 기록해보세요</p>
-                 </div>
+                 <EmptyState
+                   illustration="expense"
+                   title="지출 내역이 없어요"
+                   description="첫 지출을 기록해보세요"
+                   actionLabel="지출 기록하기"
+                   onAction={() => navigate('/expenses')}
+                   className="py-4"
+                 />
                )}
             </div>
           </Card>
@@ -388,9 +399,14 @@ const Dashboard: React.FC = () => {
                 </div>
               ))
             ) : (
-              <div className="text-center py-10 text-stone-400">
-                <p>최근 내역이 없습니다.</p>
-              </div>
+              <EmptyState
+                illustration="expense"
+                title="최근 지출 내역이 없어요"
+                description="결혼 준비 비용을 기록해보세요"
+                actionLabel="지출 기록하기"
+                onAction={() => navigate('/expenses')}
+                className="py-4"
+              />
             )}
           </div>
         </Card>

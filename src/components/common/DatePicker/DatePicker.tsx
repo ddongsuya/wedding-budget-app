@@ -103,7 +103,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
           key={day}
           type="button"
           onClick={() => handleDateSelect(day)}
-          className={`w-9 h-9 rounded-full text-sm font-medium transition-all
+          className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full text-sm font-medium transition-all touch-feedback
             ${isSelected 
               ? 'bg-rose-500 text-white' 
               : isToday 
@@ -147,7 +147,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1 hover:bg-gray-100 rounded-full"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded-full touch-feedback"
             >
               <ChevronLeft size={20} className="text-gray-600" />
             </button>
@@ -176,7 +176,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1 hover:bg-gray-100 rounded-full"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-100 rounded-full touch-feedback"
             >
               <ChevronRight size={20} className="text-gray-600" />
             </button>
@@ -206,7 +206,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
                 onChange(dateStr);
                 setIsOpen(false);
               }}
-              className="text-sm text-rose-500 hover:text-rose-600 font-medium"
+              className="text-sm text-rose-500 hover:text-rose-600 font-medium min-h-[44px] px-4 flex items-center touch-feedback"
             >
               오늘
             </button>

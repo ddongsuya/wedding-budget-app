@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { CheckCircle, XCircle, AlertTriangle, Info, X, RotateCcw } from 'lucide-react';
 import { Toast } from '../../../contexts/ToastContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 interface ToastItemProps {
   toast: Toast;
@@ -15,6 +15,7 @@ const icons = {
   info: Info,
 };
 
+// 일관된 색상 스타일 (Requirements 6.3, 6.4)
 const colors = {
   success: 'from-emerald-500 to-emerald-600',
   error: 'from-red-500 to-red-600',
@@ -22,13 +23,32 @@ const colors = {
   info: 'from-blue-500 to-blue-600',
 };
 
+// 접근성을 위한 aria-live 설정
+const ariaLive = {
+  success: 'polite' as const,
+  error: 'assertive' as const,
+  warning: 'assertive' as const,
+  info: 'polite' as const,
+};
+
 export const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
-  const [isExiting, setIsExiting] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const Icon = icons[toast.type];
 
   const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(() => onRemove(toast.id), 300);
+    onRemove(toast.id);
+  };
+
+  const handleRetry = async () => {
+    if (toast.onRetry && !isRetrying) {
+      setIsRetrying(true);
+      try {
+        await toast.onRetry();
+      } finally {
+        setIsRetrying(false);
+        handleClose();
+      }
+    }
   };
 
   return (
@@ -37,6 +57,8 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
+      role="alert"
+      aria-live={ariaLive[toast.type]}
       className={`
         relative flex items-center gap-3 px-5 py-4 rounded-xl shadow-lg
         bg-gradient-to-r ${colors[toast.type]}
@@ -46,13 +68,28 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     >
       {/* Icon */}
       <div className="flex-shrink-0">
-        <Icon size={22} strokeWidth={2.5} />
+        <Icon size={22} strokeWidth={2.5} aria-hidden="true" />
       </div>
 
       {/* Message */}
       <p className="flex-1 text-sm font-medium leading-snug">
         {toast.message}
       </p>
+
+      {/* Retry Button (에러 토스트에서 onRetry가 있을 때만 표시) */}
+      {toast.type === 'error' && toast.onRetry && (
+        <button
+          onClick={handleRetry}
+          disabled={isRetrying}
+          className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg 
+                     bg-white/20 hover:bg-white/30 transition-colors
+                     text-xs font-medium disabled:opacity-50"
+          aria-label="다시 시도"
+        >
+          <RotateCcw size={14} className={isRetrying ? 'animate-spin' : ''} />
+          <span>다시 시도</span>
+        </button>
+      )}
 
       {/* Close Button */}
       <button
@@ -63,7 +100,7 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
         <X size={18} />
       </button>
 
-      {/* Progress Bar (optional) */}
+      {/* Progress Bar */}
       {toast.duration && toast.duration > 0 && (
         <motion.div
           initial={{ width: '100%' }}

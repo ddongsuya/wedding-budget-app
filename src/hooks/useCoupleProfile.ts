@@ -25,8 +25,8 @@ export const useCoupleProfile = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await coupleAPI.getCouple();
-      setCouple(response.data.couple);
+      const response = await coupleAPI.getCoupleInfo();
+      setCouple(response.data.data?.couple || null);
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || '커플 정보를 불러오는데 실패했습니다';
       setError(errorMsg);
@@ -112,8 +112,8 @@ export const useCoupleProfile = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await coupleAPI.invite();
-      return response.data.inviteCode;
+      const response = await coupleAPI.createCouple();
+      return response.data.data.inviteCode;
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || '초대 코드 생성에 실패했습니다';
       setError(errorMsg);
@@ -127,9 +127,9 @@ export const useCoupleProfile = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await coupleAPI.join(inviteCode);
-      setCouple(response.data.couple);
-      return response.data.couple;
+      const response = await coupleAPI.joinCouple(inviteCode);
+      setCouple(response.data.data.couple);
+      return response.data.data.couple;
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || '커플 연결에 실패했습니다';
       setError(errorMsg);

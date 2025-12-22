@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Venue } from '../../types';
-import { X, Calculator, Star, Check, Minus, Info } from 'lucide-react';
+import { X, Calculator, Star, Check, Minus } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface VenueCompareProps {
@@ -34,7 +34,7 @@ export const VenueCompare: React.FC<VenueCompareProps> = ({ venues, onClose }) =
   const minTotal = Math.min(...totals);
   
   const ratings = venues.map(v => v.rating);
-  const maxRating = Math.max(...ratings);
+  const _maxRating = Math.max(...ratings);
 
   return (
     <div className="fixed inset-0 z-[70] bg-white flex flex-col animate-fade-in">

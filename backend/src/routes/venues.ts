@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
 import {
   getVenues,
   createVenue,
@@ -8,7 +7,12 @@ import {
   deleteVenue,
 } from '../controllers/venueController';
 import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validation';
+import {
+  validate,
+  createVenueValidation,
+  updateVenueValidation,
+  validateIdParam,
+} from '../middleware/validation';
 
 const router = Router();
 
@@ -17,21 +21,15 @@ router.get('/', authenticate, getVenues);
 router.post(
   '/',
   authenticate,
-  [
-    body('name').trim().notEmpty().withMessage('식장 이름은 필수입니다'),
-    body('type').optional().trim(),
-    body('price').optional().isInt({ min: 0 }).withMessage('가격은 0 이상이어야 합니다'),
-    body('capacity').optional().isInt({ min: 0 }).withMessage('수용인원은 0 이상이어야 합니다'),
-    body('rating').optional().isFloat({ min: 0, max: 5 }).withMessage('별점은 0-5 사이여야 합니다'),
-    validate,
-  ],
+  createVenueValidation,
+  validate,
   createVenue
 );
 
-router.get('/:id', authenticate, getVenue);
+router.get('/:id', authenticate, validateIdParam, validate, getVenue);
 
-router.put('/:id', authenticate, updateVenue);
+router.put('/:id', authenticate, updateVenueValidation, validate, updateVenue);
 
-router.delete('/:id', authenticate, deleteVenue);
+router.delete('/:id', authenticate, validateIdParam, validate, deleteVenue);
 
 export default router;

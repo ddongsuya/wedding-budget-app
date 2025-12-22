@@ -1,5 +1,4 @@
 import apiClient from './client';
-import { Expense } from '../types';
 
 export interface ExpenseListParams {
   page?: number;

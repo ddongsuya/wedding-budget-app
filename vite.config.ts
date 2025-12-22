@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -12,6 +13,13 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [
         react(),
+        // 번들 분석 플러그인 (npm run build 후 stats.html 생성)
+        visualizer({
+          filename: 'stats.html',
+          open: false,
+          gzipSize: true,
+          brotliSize: true,
+        }),
         VitePWA({
           registerType: 'autoUpdate',
           includeAssets: ['favicon.ico', 'icons/*.png', 'splash/*.png', 'custom-sw.js'],
@@ -66,37 +74,123 @@ export default defineConfig(({ mode }) => {
             ]
           },
           workbox: {
-            globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+            // 정적 자산 캐싱 패턴 (Requirements: 2.1)
+            globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot}'],
             maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB로 증가
             importScripts: ['custom-sw.js'],
+            
+            // 런타임 캐싱 전략 (Requirements: 2.1, 2.6)
             runtimeCaching: [
+              // API 응답 캐싱 - NetworkFirst 전략
+              // 네트워크 우선, 실패 시 캐시 사용
               {
-                urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/.*/i,
+                urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/(stats|budget|venues|expenses|events|checklist)/i,
                 handler: 'NetworkFirst',
                 options: {
-                  cacheName: 'api-cache',
+                  cacheName: 'api-data-cache',
                   expiration: {
                     maxEntries: 100,
-                    maxAgeSeconds: 60 * 60 * 24
+                    maxAgeSeconds: 60 * 60 * 24, // 24시간
                   },
                   cacheableResponse: {
-                    statuses: [0, 200]
-                  }
-                }
+                    statuses: [0, 200],
+                  },
+                  networkTimeoutSeconds: 10, // 10초 타임아웃 후 캐시 사용
+                },
               },
+              // 인증 관련 API - NetworkOnly 전략
+              // 항상 네트워크 사용 (보안상 캐시하지 않음)
+              {
+                urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/auth/i,
+                handler: 'NetworkOnly',
+              },
+              // 알림 API - NetworkFirst 전략 (짧은 캐시)
+              {
+                urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/notifications/i,
+                handler: 'NetworkFirst',
+                options: {
+                  cacheName: 'api-notifications-cache',
+                  expiration: {
+                    maxEntries: 50,
+                    maxAgeSeconds: 60 * 5, // 5분
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                  networkTimeoutSeconds: 5,
+                },
+              },
+              // 기타 API - StaleWhileRevalidate 전략
+              // 캐시 먼저 반환하고 백그라운드에서 업데이트
+              {
+                urlPattern: /^https:\/\/wedding-budget-app-2\.onrender\.com\/api\/.*/i,
+                handler: 'StaleWhileRevalidate',
+                options: {
+                  cacheName: 'api-general-cache',
+                  expiration: {
+                    maxEntries: 50,
+                    maxAgeSeconds: 60 * 60, // 1시간
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+              // Cloudinary 이미지 - CacheFirst 전략
+              // 캐시 우선, 없으면 네트워크
               {
                 urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
                 handler: 'CacheFirst',
                 options: {
+                  cacheName: 'cloudinary-image-cache',
+                  expiration: {
+                    maxEntries: 100,
+                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30일
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+              // 외부 폰트 - CacheFirst 전략
+              {
+                urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+                handler: 'CacheFirst',
+                options: {
+                  cacheName: 'google-fonts-cache',
+                  expiration: {
+                    maxEntries: 30,
+                    maxAgeSeconds: 60 * 60 * 24 * 365, // 1년
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+              // 기타 이미지 - CacheFirst 전략
+              {
+                urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+                handler: 'CacheFirst',
+                options: {
                   cacheName: 'image-cache',
                   expiration: {
-                    maxEntries: 50,
-                    maxAgeSeconds: 60 * 60 * 24 * 30
-                  }
-                }
-              }
-            ]
-          }
+                    maxEntries: 100,
+                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30일
+                  },
+                  cacheableResponse: {
+                    statuses: [0, 200],
+                  },
+                },
+              },
+            ],
+            
+            // 네비게이션 프리로드 활성화
+            navigationPreload: true,
+            
+            // 오프라인 폴백 페이지
+            navigateFallback: '/index.html',
+            navigateFallbackDenylist: [/^\/api\//],
+          },
         })
       ],
       define: {
@@ -127,6 +221,12 @@ export default defineConfig(({ mode }) => {
               
               // HTTP 클라이언트
               'vendor-http': ['axios'],
+              
+              // 애니메이션 라이브러리
+              'vendor-animation': ['framer-motion'],
+              
+              // 에러 트래킹
+              'vendor-sentry': ['@sentry/react'],
             },
           },
         },

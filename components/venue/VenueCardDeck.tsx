@@ -4,6 +4,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Venue } from '../../types';
 import { MapPin, Star, Minus, Check, Edit2, Trash2, Image as ImageIcon, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { EmptyState } from '../../src/components/common/EmptyState';
 
 interface VenueCalculated extends Venue {
   totalEstimate: number;
@@ -41,18 +42,13 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
   // Handle empty state
   if (venues.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] p-6 text-center space-y-6">
-        <div className="w-24 h-24 bg-stone-100 rounded-full flex items-center justify-center mb-4 animate-bounce-in">
-          <ImageIcon className="text-stone-300" size={40} />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-stone-800">아직 등록된 웨딩홀이 없어요</h3>
-          <p className="text-stone-500 mt-2 text-sm">관심 있는 웨딩홀을 등록하고 비교해보세요.</p>
-        </div>
-        <Button onClick={onAdd} icon={<Plus size={20} />} className="w-full max-w-xs shadow-lg shadow-rose-200">
-          새 웨딩홀 추가
-        </Button>
-      </div>
+      <EmptyState
+        illustration="venue"
+        title="아직 등록된 웨딩홀이 없어요"
+        description="관심 있는 웨딩홀을 등록하고 비교해보세요. 여러 식장을 한눈에 비교할 수 있어요!"
+        actionLabel="새 웨딩홀 추가"
+        onAction={onAdd}
+      />
     );
   }
 
@@ -205,10 +201,10 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                 }}
               >
                 {thumbUrl ? (
-                  <img src={thumbUrl} alt={currentVenue.name} className="w-full h-full object-cover pointer-events-none" />
+                  <img src={thumbUrl} alt={`${currentVenue.name} 웨딩홀 사진`} loading="lazy" className="w-full h-full object-cover pointer-events-none" />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-100">
-                    <ImageIcon size={32} className="mb-2 opacity-50"/>
+                  <div className="w-full h-full flex flex-col items-center justify-center text-stone-400 bg-stone-100" role="img" aria-label={`${currentVenue.name} - 사진 없음`}>
+                    <ImageIcon size={32} className="mb-2 opacity-50" aria-hidden="true" />
                     <span className="text-xs">사진 없음</span>
                   </div>
                 )}

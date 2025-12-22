@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { BudgetSettings, BudgetCategory } from '../types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { BudgetSettingModal } from '../components/budget/BudgetSettingModal';
 import { CategoryModal } from '../components/budget/CategoryModal';
-import { Plus, ChevronRight, AlertCircle, Settings, Wallet, Heart } from 'lucide-react';
-import * as Icons from 'lucide-react';
+import { Plus, ChevronRight, Settings, Wallet, Heart } from 'lucide-react';
+import { getIconByName } from '../src/utils/iconMap';
 import { useToast } from '../src/hooks/useToast';
-import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
+import { BudgetSkeleton } from '../src/components/skeleton/BudgetSkeleton';
 import { EmptyState } from '../src/components/common/EmptyState';
 import { useBudget } from '../src/hooks/useBudget';
 
@@ -28,6 +28,7 @@ const Budget: React.FC = () => {
       id: String(c.id),
       name: c.name,
       icon: c.icon || 'Circle',
+      parentId: null,
       budgetAmount: c.budget_amount || 0,
       spentAmount: c.spent_amount || 0,
       color: c.color || '#f43f5e',
@@ -35,28 +36,7 @@ const Budget: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6 pb-20 md:pb-0">
-        <div className="flex justify-between items-center">
-          <div>
-            <Skeleton variant="text" width={150} height={28} className="mb-2" />
-            <Skeleton variant="text" width={250} height={16} />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton variant="rounded" width={80} height={36} />
-            <Skeleton variant="rounded" width={120} height={36} />
-          </div>
-        </div>
-        <div className="bg-white rounded-2xl p-6 shadow-sm">
-          <Skeleton variant="rounded" width="100%" height={150} />
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} variant="rounded" width="100%" height={80} />
-          ))}
-        </div>
-      </div>
-    );
+    return <BudgetSkeleton />;
   }
 
   const formatMoney = (amount: number) => 
@@ -79,7 +59,7 @@ const Budget: React.FC = () => {
         bride_ratio: newSettings.brideRatio,
       });
       toast.success('예산 설정이 저장되었습니다');
-    } catch (error) {
+    } catch (_error) {
       toast.error('설정 저장에 실패했습니다');
     }
   };
@@ -105,7 +85,7 @@ const Budget: React.FC = () => {
       }
       await fetchCategories();
       setEditingCategory(null);
-    } catch (error) {
+    } catch (_error) {
       toast.error('저장에 실패했습니다');
     }
   };
@@ -115,14 +95,14 @@ const Budget: React.FC = () => {
       try {
         await deleteCategory(id);
         toast.success('카테고리가 삭제되었습니다');
-      } catch (error) {
+      } catch (_error) {
         toast.error('삭제에 실패했습니다');
       }
     }
   };
 
   const getIcon = (iconName: string) => {
-    const IconComponent = (Icons as any)[iconName] || Icons.Circle;
+    const IconComponent = getIconByName(iconName);
     return <IconComponent size={20} />;
   };
 

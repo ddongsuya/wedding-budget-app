@@ -54,7 +54,9 @@ const CoupleConnect = () => {
       // 사용자 정보 새로고침 (couple_id 업데이트)
       await refreshUser?.();
     } catch (error: any) {
-      showToast('error', error.response?.data?.message || '커플 생성에 실패했습니다');
+      showToast('error', error.response?.data?.message || '커플 생성에 실패했습니다', { 
+        onRetry: handleCreateCouple 
+      });
     } finally {
       setIsCreating(false);
     }
@@ -83,7 +85,9 @@ const CoupleConnect = () => {
       // 대시보드로 이동
       setTimeout(() => navigate('/'), 1500);
     } catch (error: any) {
-      showToast('error', error.response?.data?.message || '연결에 실패했습니다');
+      showToast('error', error.response?.data?.message || '연결에 실패했습니다', {
+        onRetry: handleJoinCouple
+      });
     } finally {
       setIsJoining(false);
     }
@@ -100,7 +104,7 @@ const CoupleConnect = () => {
 
       setTimeout(() => setIsCopied(false), 2000);
     } catch (error) {
-      showToast('error', '복사에 실패했습니다');
+      showToast('error', '복사에 실패했습니다', { onRetry: handleCopyCode });
     }
   };
 
@@ -111,7 +115,7 @@ const CoupleConnect = () => {
       setCoupleInfo(prev => prev ? { ...prev, invite_code: response.data.data.inviteCode } : null);
       showToast('success', '새 초대 코드가 생성되었습니다');
     } catch (error) {
-      showToast('error', '코드 재생성에 실패했습니다');
+      showToast('error', '코드 재생성에 실패했습니다', { onRetry: handleRegenerateCode });
     }
   };
 

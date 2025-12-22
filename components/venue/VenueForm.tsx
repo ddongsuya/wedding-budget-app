@@ -2,16 +2,17 @@ import React, { useState, useRef } from 'react';
 import { Venue, VenueImage } from '../../types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
-import { X, Calculator, Camera, Star, Trash2, GripVertical, Check, Image as ImageIcon } from 'lucide-react';
+import { X, Calculator, Camera, Star, Trash2, GripVertical, Image as ImageIcon } from 'lucide-react';
 import { compressImage } from '../../src/utils/imageCompression';
 
 interface VenueFormProps {
   initialData?: Venue | null;
-  onSubmit: (venue: Venue) => void;
+  onSubmit: (venue: Venue) => Promise<void> | void;
   onCancel: () => void;
 }
 
 export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onCancel }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<Venue>>({
     name: '',
     location: '',
@@ -109,15 +110,14 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     const fileArray = Array.from(files) as File[];
     for (const file of fileArray) {
       try {
-        // 이미지 압축 (최대 500KB, 1000px) - 여러 이미지 저장을 위해 더 강하게 압축
+        // 이미지 압축 (최대 500KB, 1000px) - WebP 포맷 자동 변환
         const compressedFile = await compressImage(file, {
           maxWidth: 1000,
           maxHeight: 1000,
           quality: 0.7,
           maxSizeMB: 0.5,
+          format: 'auto', // WebP 지원 시 자동 변환
         });
-        
-        console.log(`원본: ${(file.size / 1024 / 1024).toFixed(2)}MB → 압축: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
         
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -172,7 +172,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent, _index: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   };
@@ -197,42 +197,47 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
     setDraggedItemIndex(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
     
-    const venue: Venue = {
-      id: initialData?.id || Math.random().toString(36).substr(2, 9),
-      createdAt: initialData?.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      name: formData.name!,
-      location: formData.location!,
-      rentalFee: Number(formData.rentalFee),
-      sdmIncluded: !!formData.sdmIncluded,
-      studioFee: Number(formData.studioFee),
-      dressFee: Number(formData.dressFee),
-      makeupFee: Number(formData.makeupFee),
-      mealCostPerPerson: Number(formData.mealCostPerPerson),
-      minimumGuests: Number(formData.minimumGuests),
-      bouquetIncluded: !!formData.bouquetIncluded,
-      bouquetFee: Number(formData.bouquetFee),
-      rehearsalMakeupIncluded: !!formData.rehearsalMakeupIncluded,
-      rehearsalMakeupFee: Number(formData.rehearsalMakeupFee),
-      parkingSpaces: Number(formData.parkingSpaces),
-      // 새로운 추가 옵션
-      extraFittingFee: Number(formData.extraFittingFee) || 0,
-      weddingRobeFee: Number(formData.weddingRobeFee) || 0,
-      outdoorVenueFee: Number(formData.outdoorVenueFee) || 0,
-      freshFlowerFee: Number(formData.freshFlowerFee) || 0,
-      additionalBenefits: formData.additionalBenefits || '',
-      memo: formData.memo || '',
-      rating: Number(formData.rating),
-      visitDate: formData.visitDate ? formData.visitDate.split('T')[0] : null, // 날짜만 저장
-      status: formData.status as any,
-      images: formData.images || [],
-      thumbnailImage: formData.thumbnailImage || null,
-    };
+    try {
+      const venue: Venue = {
+        id: initialData?.id || Math.random().toString(36).substr(2, 9),
+        createdAt: initialData?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        name: formData.name!,
+        location: formData.location!,
+        rentalFee: Number(formData.rentalFee),
+        sdmIncluded: !!formData.sdmIncluded,
+        studioFee: Number(formData.studioFee),
+        dressFee: Number(formData.dressFee),
+        makeupFee: Number(formData.makeupFee),
+        mealCostPerPerson: Number(formData.mealCostPerPerson),
+        minimumGuests: Number(formData.minimumGuests),
+        bouquetIncluded: !!formData.bouquetIncluded,
+        bouquetFee: Number(formData.bouquetFee),
+        rehearsalMakeupIncluded: !!formData.rehearsalMakeupIncluded,
+        rehearsalMakeupFee: Number(formData.rehearsalMakeupFee),
+        parkingSpaces: Number(formData.parkingSpaces),
+        // 새로운 추가 옵션
+        extraFittingFee: Number(formData.extraFittingFee) || 0,
+        weddingRobeFee: Number(formData.weddingRobeFee) || 0,
+        outdoorVenueFee: Number(formData.outdoorVenueFee) || 0,
+        freshFlowerFee: Number(formData.freshFlowerFee) || 0,
+        additionalBenefits: formData.additionalBenefits || '',
+        memo: formData.memo || '',
+        rating: Number(formData.rating),
+        visitDate: formData.visitDate ? formData.visitDate.split('T')[0] : null, // 날짜만 저장
+        status: formData.status as any,
+        images: formData.images || [],
+        thumbnailImage: formData.thumbnailImage || null,
+      };
 
-    onSubmit(venue);
+      await onSubmit(venue);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -282,7 +287,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
                          } ${draggedItemIndex === index ? 'opacity-50' : 'opacity-100'}`}
                       >
                          <div className="aspect-[4/3] relative">
-                            <img src={img.url} className="w-full h-full object-cover" />
+                            <img src={img.url} alt={img.caption || '웨딩홀 이미지'} loading="lazy" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                <button 
                                   type="button"
@@ -621,9 +626,9 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
         </div>
 
         <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 rounded-b-2xl">
-          <Button variant="outline" className="flex-1" onClick={onCancel}>취소</Button>
-          <Button variant="primary" className="flex-1" onClick={handleSubmit}>
-            {initialData ? '수정 완료' : '등록하기'}
+          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
+          <Button variant="primary" className="flex-1" onClick={handleSubmit} loading={isSaving} disabled={isSaving}>
+            {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}
           </Button>
         </div>
       </div>

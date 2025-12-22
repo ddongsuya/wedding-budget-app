@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
+import { validate, joinCoupleValidation } from '../middleware/validation';
 import * as coupleController from '../controllers/coupleController';
 
 const router = Router();
@@ -13,7 +14,7 @@ router.get('/', coupleController.getCoupleInfo);
 router.post('/create', coupleController.createCouple);
 
 // 초대 코드로 커플 연결
-router.post('/join', coupleController.joinCouple);
+router.post('/join', joinCoupleValidation, validate, coupleController.joinCouple);
 
 // 초대 코드 재생성
 router.post('/regenerate-code', coupleController.regenerateInviteCode);

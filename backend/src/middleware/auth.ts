@@ -9,16 +9,24 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
+    // Try to get token from cookie first, then from Authorization header (backward compatibility)
+    let token = req.cookies?.accessToken;
+    
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.substring(7);
+      }
+    }
+    
     console.log('[AUTH] Request URL:', req.originalUrl);
-    console.log('[AUTH] Auth header exists:', !!authHeader);
+    console.log('[AUTH] Token source:', req.cookies?.accessToken ? 'cookie' : 'header');
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       console.log('[AUTH] No token provided');
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const token = authHeader.substring(7);
     console.log('[AUTH] Token length:', token.length);
     console.log('[AUTH] Token preview:', token.substring(0, 20) + '...');
     

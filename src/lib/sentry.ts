@@ -52,6 +52,26 @@ export const initSentry = () => {
         'canceled',
       ],
     });
+    
+    // 초기 컨텍스트 설정 - Requirements 10.2, 10.5
+    Sentry.setContext('app', {
+      name: 'Needless Wedding',
+      version: import.meta.env.VITE_APP_VERSION || '1.0.0',
+      environment: import.meta.env.MODE,
+    });
+    
+    // 브라우저 정보 컨텍스트
+    Sentry.setContext('browser', {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      cookiesEnabled: navigator.cookieEnabled,
+      onLine: navigator.onLine,
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    });
   }
 };
 

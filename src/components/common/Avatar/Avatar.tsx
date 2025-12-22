@@ -56,6 +56,8 @@ export const Avatar = ({
           ${className}
         `}
         onClick={onClick}
+        role="img"
+        aria-label={name ? `${name}의 프로필` : '프로필 이미지'}
       >
         {initials}
       </div>
@@ -65,7 +67,7 @@ export const Avatar = ({
   return (
     <img
       src={optimizedSrc}
-      alt={name || 'Profile'}
+      alt={name ? `${name}의 프로필 사진` : '프로필 사진'}
       className={`${sizeMap[size]} rounded-full object-cover ${className}`}
       onClick={onClick}
     />

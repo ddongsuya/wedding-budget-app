@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { StorageService } from '../services/storage';
 import { Expense, BudgetCategory } from '../types';
 import { Button } from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
 import { SwipeableRow } from '../components/ui/SwipeableRow';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { BottomSheet } from '../components/ui/BottomSheet';
@@ -50,7 +49,7 @@ export const Expenses: React.FC = () => {
       setExpenses(StorageService.getExpenses());
       setIsFormOpen(false);
       setEditingExpense(null);
-    } catch (error) {
+    } catch (_error) {
       toast.error('저장에 실패했습니다. 다시 시도해주세요');
     }
   };
@@ -61,7 +60,7 @@ export const Expenses: React.FC = () => {
         StorageService.deleteExpense(id);
         setExpenses(prev => prev.filter(e => e.id !== id));
         toast.success('지출 내역이 삭제되었습니다');
-      } catch (error) {
+      } catch (_error) {
         toast.error('삭제에 실패했습니다');
       }
     }

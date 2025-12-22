@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
 import { sendAnnouncementToAllUsers } from '../services/notificationService';
+import { sanitizeUsersForAdmin } from '../utils/sanitize';
 
 // 관리자 권한 확인 미들웨어
 export const checkAdminPermission = async (req: AuthRequest, res: Response, next: any) => {
@@ -122,10 +123,13 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].count);
 
+    // Sanitize user data to remove any sensitive fields (Requirements 9.3)
+    const sanitizedUsers = sanitizeUsersForAdmin(result.rows);
+
     res.json({
       success: true,
       data: {
-        users: result.rows,
+        users: sanitizedUsers,
         pagination: {
           page: Number(page),
           limit: Number(limit),

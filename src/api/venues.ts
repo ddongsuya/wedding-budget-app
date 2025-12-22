@@ -1,5 +1,4 @@
 import apiClient from './client';
-import { Venue } from '../types';
 
 export interface VenueListParams {
   page?: number;

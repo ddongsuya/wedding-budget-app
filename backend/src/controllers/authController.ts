@@ -2,10 +2,41 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { pool } from '../config/database';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, JWT_ACCESS_EXPIRES_MS, JWT_REFRESH_EXPIRES_MS } from '../utils/jwt';
 import { AuthRequest } from '../types';
 import { recordLoginFailure, clearLoginAttempts } from '../middleware/rateLimiter';
 import { validatePassword, isValidEmail, sanitizeInput } from '../middleware/security';
+import { 
+  sendBadRequest, 
+  sendUnauthorized, 
+  sendNotFound, 
+  sendInternalError,
+  sendConflict,
+  ErrorCodes,
+  handleDatabaseError
+} from '../utils/errorResponse';
+
+// Bcrypt cost factor for password hashing (Requirements 7.5: minimum 10)
+export const BCRYPT_COST_FACTOR = 12;
+
+// Cookie options for secure token storage (Requirements 7.1)
+const isProduction = process.env.NODE_ENV === 'production';
+
+export const getAccessTokenCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'strict' as const : 'lax' as const,
+  maxAge: JWT_ACCESS_EXPIRES_MS,
+  path: '/',
+});
+
+export const getRefreshTokenCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? 'strict' as const : 'lax' as const,
+  maxAge: JWT_REFRESH_EXPIRES_MS,
+  path: '/api/auth', // Only sent to auth endpoints
+});
 
 // 로그인 기록 저장
 const recordLoginHistory = async (userId: number, ip: string, userAgent: string, success: boolean) => {
@@ -79,26 +110,28 @@ export const register = async (req: Request, res: Response) => {
     const sanitizedName = sanitizeInput(name);
     
     if (!isValidEmail(sanitizedEmail)) {
-      return res.status(400).json({ error: '유효한 이메일 주소를 입력해주세요' });
+      return sendBadRequest(res, '유효한 이메일 주소를 입력해주세요', ErrorCodes.VALIDATION_ERROR);
     }
     
     // 비밀번호 강도 검증
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      return res.status(400).json({ 
-        error: '비밀번호가 보안 요구사항을 충족하지 않습니다',
-        details: passwordValidation.errors,
-      });
+      return sendBadRequest(
+        res, 
+        '비밀번호가 보안 요구사항을 충족하지 않습니다',
+        ErrorCodes.VALIDATION_ERROR,
+        passwordValidation.errors.map((e: string) => ({ field: 'password', message: e }))
+      );
     }
 
     // 이메일 중복 확인
     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [sanitizedEmail]);
     if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: '이미 등록된 이메일입니다' });
+      return sendConflict(res, '이미 등록된 이메일입니다', ErrorCodes.DUPLICATE_ENTRY);
     }
 
-    // 비밀번호 해싱 (강도 12로 증가)
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // 비밀번호 해싱 (Requirements 7.5: bcrypt cost factor >= 10)
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
 
     // 사용자 생성
     const result = await pool.query(
@@ -110,37 +143,43 @@ export const register = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
     
-    // Refresh Token DB 저장
-    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30일
+    // Refresh Token DB 저장 (7일)
+    const refreshExpires = new Date(Date.now() + JWT_REFRESH_EXPIRES_MS);
     await saveRefreshToken(user.id, refreshToken, refreshExpires);
 
+    // Set HTTP-only cookies (Requirements 7.1)
+    res.cookie('accessToken', accessToken, getAccessTokenCookieOptions());
+    res.cookie('refreshToken', refreshToken, getRefreshTokenCookieOptions());
+
     res.status(201).json({
+      success: true,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         created_at: user.created_at,
       },
+      // Also return tokens in body for backward compatibility
       accessToken,
       refreshToken,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Register error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleDatabaseError(res, error, '회원가입에 실패했습니다');
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
     const userAgent = req.headers['user-agent'] || '';
     
     // 입력 검증
     const sanitizedEmail = sanitizeInput(email?.toLowerCase());
     
     if (!sanitizedEmail || !password) {
-      return res.status(400).json({ error: '이메일과 비밀번호를 입력해주세요' });
+      return sendBadRequest(res, '이메일과 비밀번호를 입력해주세요', ErrorCodes.MISSING_REQUIRED_FIELD);
     }
 
     // 사용자 조회 (계정 잠금 상태 포함)
@@ -155,7 +194,7 @@ export const login = async (req: Request, res: Response) => {
       // 사용자가 없어도 동일한 응답 (타이밍 공격 방지)
       await bcrypt.compare(password, '$2a$12$dummy.hash.for.timing.attack.prevention');
       recordLoginFailure(ip, sanitizedEmail);
-      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다' });
+      return sendUnauthorized(res, '이메일 또는 비밀번호가 올바르지 않습니다', ErrorCodes.UNAUTHORIZED);
     }
 
     const user = result.rows[0];
@@ -165,8 +204,9 @@ export const login = async (req: Request, res: Response) => {
       const remainingMinutes = Math.ceil((new Date(user.locked_until).getTime() - Date.now()) / 60000);
       await recordLoginHistory(user.id, ip, userAgent, false);
       return res.status(423).json({ 
-        error: 'ACCOUNT_LOCKED',
+        success: false,
         message: `계정이 일시적으로 잠겼습니다. ${remainingMinutes}분 후에 다시 시도해주세요.`,
+        code: ErrorCodes.ACCOUNT_LOCKED,
         retryAfter: remainingMinutes,
       });
     }
@@ -186,8 +226,9 @@ export const login = async (req: Request, res: Response) => {
         );
         await recordLoginHistory(user.id, ip, userAgent, false);
         return res.status(423).json({
-          error: 'ACCOUNT_LOCKED',
+          success: false,
           message: '로그인 시도가 너무 많습니다. 30분 후에 다시 시도해주세요.',
+          code: ErrorCodes.ACCOUNT_LOCKED,
           retryAfter: 30,
         });
       } else {
@@ -201,7 +242,9 @@ export const login = async (req: Request, res: Response) => {
       await recordLoginHistory(user.id, ip, userAgent, false);
       
       return res.status(401).json({ 
-        error: '이메일 또는 비밀번호가 올바르지 않습니다',
+        success: false,
+        message: '이메일 또는 비밀번호가 올바르지 않습니다',
+        code: ErrorCodes.UNAUTHORIZED,
         remainingAttempts: maxAttempts - failedAttempts,
       });
     }
@@ -231,11 +274,16 @@ export const login = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(user.id, user.email);
     const refreshToken = generateRefreshToken(user.id);
     
-    // Refresh Token DB 저장
-    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    // Refresh Token DB 저장 (7일)
+    const refreshExpires = new Date(Date.now() + JWT_REFRESH_EXPIRES_MS);
     await saveRefreshToken(user.id, refreshToken, refreshExpires);
 
+    // Set HTTP-only cookies (Requirements 7.1)
+    res.cookie('accessToken', accessToken, getAccessTokenCookieOptions());
+    res.cookie('refreshToken', refreshToken, getRefreshTokenCookieOptions());
+
     res.json({
+      success: true,
       user: {
         id: user.id,
         email: user.email,
@@ -243,21 +291,23 @@ export const login = async (req: Request, res: Response) => {
         created_at: user.created_at,
         is_admin: user.is_admin || false,
       },
+      // Also return tokens in body for backward compatibility
       accessToken,
       refreshToken,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleDatabaseError(res, error, '로그인에 실패했습니다');
   }
 };
 
 export const refresh = async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    // Try to get refresh token from cookie first, then from body (backward compatibility)
+    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
 
     if (!refreshToken) {
-      return res.status(400).json({ error: 'Refresh token required' });
+      return sendBadRequest(res, 'Refresh token이 필요합니다', ErrorCodes.MISSING_REQUIRED_FIELD);
     }
 
     const decoded = verifyRefreshToken(refreshToken) as { id: number };
@@ -265,13 +315,13 @@ export const refresh = async (req: Request, res: Response) => {
     // DB에서 토큰 유효성 검증
     const isValid = await validateRefreshToken(decoded.id, refreshToken);
     if (!isValid) {
-      return res.status(401).json({ error: '유효하지 않거나 만료된 토큰입니다' });
+      return sendUnauthorized(res, '유효하지 않거나 만료된 토큰입니다', ErrorCodes.TOKEN_EXPIRED);
     }
 
     // 사용자 조회
     const result = await pool.query('SELECT id, email FROM users WHERE id = $1', [decoded.id]);
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid refresh token' });
+      return sendUnauthorized(res, '유효하지 않은 토큰입니다', ErrorCodes.INVALID_TOKEN);
     }
 
     const user = result.rows[0];
@@ -283,37 +333,45 @@ export const refresh = async (req: Request, res: Response) => {
     const newAccessToken = generateAccessToken(user.id, user.email);
     const newRefreshToken = generateRefreshToken(user.id);
     
-    // 새 Refresh Token 저장
-    const refreshExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    // 새 Refresh Token 저장 (7일)
+    const refreshExpires = new Date(Date.now() + JWT_REFRESH_EXPIRES_MS);
     await saveRefreshToken(user.id, newRefreshToken, refreshExpires);
 
+    // Set HTTP-only cookies (Requirements 7.1)
+    res.cookie('accessToken', newAccessToken, getAccessTokenCookieOptions());
+    res.cookie('refreshToken', newRefreshToken, getRefreshTokenCookieOptions());
+
     res.json({
+      success: true,
+      // Also return tokens in body for backward compatibility
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Refresh error:', error);
-    res.status(401).json({ error: 'Invalid or expired refresh token' });
+    return sendUnauthorized(res, '유효하지 않거나 만료된 토큰입니다', ErrorCodes.TOKEN_EXPIRED);
   }
 };
 
 // 로그아웃 (토큰 폐기)
 export const logout = async (req: AuthRequest, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    // Try to get refresh token from cookie first, then from body
+    const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
     const userId = req.user!.id;
     
     if (refreshToken) {
       await revokeRefreshToken(userId, refreshToken);
     }
     
-    // 해당 사용자의 모든 토큰 폐기 (선택적)
-    // await pool.query('UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1', [userId]);
+    // Clear cookies (Requirements 7.1)
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/api/auth' });
     
     res.json({ success: true, message: '로그아웃되었습니다' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Logout error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return sendInternalError(res, '로그아웃에 실패했습니다');
   }
 };
 
@@ -325,20 +383,21 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
+      return sendNotFound(res, '사용자를 찾을 수 없습니다', ErrorCodes.USER_NOT_FOUND);
     }
 
     const user = result.rows[0];
     res.json({ 
+      success: true,
       user: {
         ...user,
         is_admin: user.is_admin || false,
       }, 
       coupleId: req.user!.coupleId 
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('GetMe error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return handleDatabaseError(res, error, '사용자 정보 조회에 실패했습니다');
   }
 };
 
@@ -412,8 +471,8 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // 새 비밀번호 해싱
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    // 새 비밀번호 해싱 (Requirements 7.5: bcrypt cost factor >= 10)
+    const newPasswordHash = await bcrypt.hash(newPassword, BCRYPT_COST_FACTOR);
 
     // 비밀번호 업데이트
     await pool.query(
@@ -519,8 +578,8 @@ export const resetPassword = async (req: Request, res: Response) => {
       });
     }
 
-    // 새 비밀번호 해싱 및 업데이트
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    // 새 비밀번호 해싱 및 업데이트 (Requirements 7.5: bcrypt cost factor >= 10)
+    const passwordHash = await bcrypt.hash(newPassword, BCRYPT_COST_FACTOR);
 
     await pool.query(
       `UPDATE users 

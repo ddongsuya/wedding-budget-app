@@ -77,8 +77,10 @@ export const OptimizedImage = ({
       <div
         className={`bg-stone-100 flex items-center justify-center ${className}`}
         style={{ width, height }}
+        role="img"
+        aria-label={alt || '이미지를 불러올 수 없습니다'}
       >
-        <span className="text-stone-400 text-2xl">📷</span>
+        <span className="text-stone-400 text-2xl" aria-hidden="true">📷</span>
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { pool } from '../config/database';
 import { AuthRequest } from '../types';
+import { sanitizeUser } from '../utils/sanitize';
 
 // 초대 코드 생성 함수 (6자리 대문자+숫자)
 const generateInviteCode = (): string => {
@@ -58,11 +59,14 @@ export const getCoupleInfo = async (req: AuthRequest, res: Response) => {
       [coupleId, userId]
     );
 
+    // Sanitize partner data (Requirements 9.3)
+    const sanitizedPartner = partnerResult.rows[0] ? sanitizeUser(partnerResult.rows[0]) : null;
+
     res.json({
       success: true,
       data: {
         couple: coupleResult.rows[0],
-        partner: partnerResult.rows[0] || null,
+        partner: sanitizedPartner,
         isConnected: partnerResult.rows.length > 0,
       },
     });
@@ -222,11 +226,14 @@ export const joinCouple = async (req: AuthRequest, res: Response) => {
       [couple.id, userId]
     );
 
+    // Sanitize partner data (Requirements 9.3)
+    const sanitizedPartner = partnerResult.rows[0] ? sanitizeUser(partnerResult.rows[0]) : null;
+
     res.json({
       success: true,
       data: {
         couple,
-        partner: partnerResult.rows[0],
+        partner: sanitizedPartner,
       },
       message: '커플 연결이 완료되었습니다! 💕',
     });
@@ -408,9 +415,12 @@ export const getPartnerInfo = async (req: AuthRequest, res: Response) => {
       [coupleId, userId]
     );
 
+    // Sanitize partner data (Requirements 9.3)
+    const sanitizedPartner = result.rows[0] ? sanitizeUser(result.rows[0]) : null;
+
     res.json({
       success: true,
-      data: result.rows[0] || null,
+      data: sanitizedPartner,
     });
   } catch (error) {
     console.error('Get partner info error:', error);

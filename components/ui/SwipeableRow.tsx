@@ -26,23 +26,25 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onEdit, on
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl ${className}`} role="group" aria-label="스와이프 가능한 항목">
       {/* Background Actions */}
-      <div className="absolute inset-0 flex justify-end">
+      <div className="absolute inset-0 flex justify-end" aria-hidden="true">
         {onEdit && (
           <button 
             onClick={() => { controls.start({ x: 0 }); onEdit(); }}
-            className="w-[70px] bg-stone-200 flex items-center justify-center text-stone-600"
+            className="w-[70px] min-h-[44px] bg-stone-200 flex items-center justify-center text-stone-600 touch-feedback"
+            aria-label="수정"
           >
-            <Edit2 size={20} />
+            <Edit2 size={20} aria-hidden="true" />
           </button>
         )}
         {onDelete && (
           <button 
             onClick={() => { controls.start({ x: 0 }); onDelete(); }}
-            className="w-[70px] bg-rose-500 flex items-center justify-center text-white rounded-r-2xl"
+            className="w-[70px] min-h-[44px] bg-rose-500 flex items-center justify-center text-white rounded-r-2xl touch-feedback"
+            aria-label="삭제"
           >
-            <Trash2 size={20} />
+            <Trash2 size={20} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -55,6 +57,7 @@ export const SwipeableRow: React.FC<SwipeableRowProps> = ({ children, onEdit, on
         onDragEnd={handleDragEnd}
         animate={controls}
         className="relative bg-white z-10"
+        role="listitem"
       >
         {children}
       </motion.div>

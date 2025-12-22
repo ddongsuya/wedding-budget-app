@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
-import { pool } from './config/database';
+import { pool, testConnection, getPoolStats } from './config/database';
 
 import authRoutes from './routes/auth';
 import coupleRoutes from './routes/couple';
@@ -17,9 +19,10 @@ import adminRoutes from './routes/admin';
 import notificationRoutes from './routes/notifications';
 import pushRoutes from './routes/push';
 import photoReferenceRoutes from './routes/photoReferences';
-import { initSentry, sentryErrorHandler } from './lib/sentry';
-import { securityHeaders, validateRequestBody } from './middleware/security';
+import { initSentry } from './lib/sentry';
+import { securityHeaders, validateRequestBody, corsOptions } from './middleware/security';
 import { apiRateLimiter } from './middleware/rateLimiter';
+import { globalErrorHandler, notFoundHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -32,31 +35,28 @@ const PORT = process.env.PORT || 3000;
 // 보안 헤더 적용 (가장 먼저)
 app.use(securityHeaders);
 
-// Middleware - CORS 설정
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:5173',
-  'https://wedding-budget-app.vercel.app',
-  'https://wedding-budget-app-2.vercel.app',
-];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // 개발 환경이거나 허용된 origin인 경우
-    if (!origin || process.env.NODE_ENV !== 'production' || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+// 응답 압축 (gzip) - Requirements 3.1
+app.use(compression({
+  filter: (req, res) => {
+    // 이미 압축된 응답이나 SSE는 압축하지 않음
+    if (req.headers['x-no-compression']) {
+      return false;
     }
+    // 기본 필터 사용 (text, json, javascript 등 압축)
+    return compression.filter(req, res);
   },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'],
-  maxAge: 86400 // 24시간
+  level: 6, // 압축 레벨 (1-9, 6이 기본값으로 속도와 압축률의 균형)
+  threshold: 1024, // 1KB 이상인 응답만 압축
 }));
 
+// Middleware - CORS 설정 강화 (Requirements 8.4)
+app.use(cors(corsOptions));
+
 // Preflight 요청 처리
-app.options('*', cors());
+app.options('*', cors(corsOptions));
+
+// Cookie parser for HTTP-only cookie authentication (Requirements 7.1)
+app.use(cookieParser());
 
 // API Rate Limiter
 app.use('/api', apiRateLimiter);
@@ -86,21 +86,25 @@ app.use('/api/push', pushRoutes);
 app.use('/api/photo-references', photoReferenceRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Error handling
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  
-  // Sentry에 에러 전송
-  sentryErrorHandler()(err, req, res, () => {});
-  
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
+app.get('/health', async (req, res) => {
+  const poolStats = getPoolStats();
+  res.json({ 
+    status: poolStats.isConnected ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    database: {
+      connected: poolStats.isConnected,
+      totalConnections: poolStats.totalCount,
+      idleConnections: poolStats.idleCount,
+      waitingRequests: poolStats.waitingCount,
+    }
   });
 });
+
+// Global error handling middleware (Requirements 10.4)
+app.use(globalErrorHandler);
+
+// 404 handler for undefined routes
+app.use(notFoundHandler);
 
 // 서버 시작 시 마이그레이션 실행
 const runMigrations = async () => {
@@ -336,6 +340,12 @@ const runMigrations = async () => {
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Test database connection
+  const dbConnected = await testConnection();
+  if (!dbConnected) {
+    console.error('Warning: Database connection failed on startup');
+  }
   
   // 마이그레이션 실행
   await runMigrations();

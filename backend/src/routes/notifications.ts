@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import {
+  validate,
+  updateNotificationPreferencesValidation,
+  validateUuidParam,
+} from '../middleware/validation';
+import { param } from 'express-validator';
+import {
   getNotifications,
   getUnreadCount,
   markAsRead,
@@ -27,7 +33,7 @@ router.get('/unread-count', getUnreadCount);
 router.get('/preferences', getPreferences);
 
 // 알림 설정 업데이트
-router.put('/preferences', updatePreferences);
+router.put('/preferences', updateNotificationPreferencesValidation, validate, updatePreferences);
 
 // 테스트 알림 생성
 router.post('/test', createTestNotification);
@@ -36,10 +42,20 @@ router.post('/test', createTestNotification);
 router.put('/read-all', markAllAsRead);
 
 // 특정 알림 읽음 처리
-router.put('/:id/read', markAsRead);
+router.put(
+  '/:id/read',
+  [param('id').isUUID().withMessage('유효한 알림 ID가 아닙니다')],
+  validate,
+  markAsRead
+);
 
 // 특정 알림 삭제
-router.delete('/:id', deleteNotification);
+router.delete(
+  '/:id',
+  [param('id').isUUID().withMessage('유효한 알림 ID가 아닙니다')],
+  validate,
+  deleteNotification
+);
 
 // 모든 알림 삭제
 router.delete('/', clearAllNotifications);

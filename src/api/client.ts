@@ -8,11 +8,14 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  // Enable sending cookies with requests (Requirements 7.1)
+  withCredentials: true,
 });
 
-// 요청 인터셉터: 토큰 자동 첨부
+// 요청 인터셉터: 토큰 자동 첨부 (backward compatibility with localStorage)
 apiClient.interceptors.request.use(
   (config) => {
+    // Only add Authorization header if token exists in localStorage (fallback)
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -46,19 +49,27 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        // Try to refresh using cookie (server will read from cookie)
+        // Also send refreshToken from localStorage for backward compatibility
         const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refreshToken,
-          });
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh`, 
+          { refreshToken },
+          { withCredentials: true }
+        );
 
-          const { accessToken, refreshToken: newRefreshToken } = response.data;
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        
+        // Store in localStorage for backward compatibility
+        if (accessToken) {
           localStorage.setItem('accessToken', accessToken);
-          localStorage.setItem('refreshToken', newRefreshToken);
-
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return apiClient(originalRequest);
         }
+        if (newRefreshToken) {
+          localStorage.setItem('refreshToken', newRefreshToken);
+        }
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');

@@ -4,6 +4,7 @@ import { eventAPI } from '../src/api/events';
 import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '../src/types/event';
 import { useToast } from '../src/hooks/useToast';
 import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
+import { ScheduleSkeleton } from '../src/components/skeleton/ScheduleSkeleton';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
@@ -64,7 +65,7 @@ const Schedule: React.FC = () => {
   };
 
   // 일정 삭제
-  const handleDeleteEvent = async (eventId: number) => {
+  const handleDeleteEvent = async (eventId: string | number) => {
     if (!confirm('이 일정을 삭제하시겠습니까?')) return;
 
     try {
@@ -125,6 +126,10 @@ const Schedule: React.FC = () => {
   const selectedDateEvents = selectedDate
     ? eventsByDate[format(selectedDate, 'yyyy-MM-dd')] || []
     : [];
+
+  if (isLoading) {
+    return <ScheduleSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
@@ -241,15 +246,14 @@ const Schedule: React.FC = () => {
           </h2>
 
           {selectedDateEvents.length === 0 ? (
-            <div className="bg-white rounded-xl p-6 text-center text-stone-500">
-              <p className="mb-3">이 날의 일정이 없어요</p>
-              <button
-                onClick={() => openAddEventModal(selectedDate)}
-                className="text-rose-500 font-medium hover:text-rose-600"
-              >
-                + 일정 추가하기
-              </button>
-            </div>
+            <EmptyState
+              illustration="calendar"
+              title="이 날의 일정이 없어요"
+              description="새로운 일정을 추가해서 결혼 준비를 계획해보세요"
+              actionLabel="일정 추가하기"
+              onAction={() => openAddEventModal(selectedDate)}
+              className="bg-white rounded-xl"
+            />
           ) : (
             <div className="space-y-2">
               {selectedDateEvents.map((event, index) => {
@@ -372,7 +376,7 @@ interface UpcomingEventsProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   onEditEvent: (event: CalendarEvent) => void;
-  onDeleteEvent: (eventId: number) => void;
+  onDeleteEvent: (eventId: string | number) => void;
 }
 
 const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, onEventClick, onEditEvent, onDeleteEvent }) => {
@@ -384,7 +388,7 @@ const UpcomingEvents: React.FC<UpcomingEventsProps> = ({ events, onEventClick, o
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
     .slice(0, 5);
 
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | number | null>(null);
 
   if (upcomingEvents.length === 0) return null;
 

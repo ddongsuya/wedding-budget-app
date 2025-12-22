@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { venueAPI, VenueCreateInput, VenueUpdateInput, VenueListParams } from '../api/venues';
-import { Venue } from '../types';
+import type { Venue } from '../../types';
 
 export const useVenues = (params?: VenueListParams) => {
   const [venues, setVenues] = useState<Venue[]>([]);
