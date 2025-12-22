@@ -333,13 +333,14 @@ export const updateNotificationPreferencesValidation = [
 ];
 
 // Photo reference validators
+// 카테고리: outdoor(야외), indoor(실내), pose(포즈), props(소품), dress(드레스), suit(수트), makeup(메이크업), etc(기타)
 export const createPhotoReferenceValidation = [
   body('image_url')
     .notEmpty()
     .withMessage('이미지 URL은 필수입니다')
-    .isLength({ max: 10000 })
-    .withMessage('이미지 데이터가 너무 큽니다'),
-  validateOptionalEnum('category', ['dress', 'makeup', 'bouquet', 'studio', 'snap', 'etc']),
+    .isLength({ max: 2000000 })
+    .withMessage('이미지 데이터가 너무 큽니다 (최대 2MB)'),
+  validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
   validateOptionalString('title', 200),
   validateOptionalString('memo', 1000),
   validateArray('tags'),
@@ -349,7 +350,7 @@ export const createPhotoReferenceValidation = [
 
 export const updatePhotoReferenceValidation = [
   validateIdParam,
-  validateOptionalEnum('category', ['dress', 'makeup', 'bouquet', 'studio', 'snap', 'etc']),
+  validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
   validateOptionalString('title', 200),
   validateOptionalString('memo', 1000),
   validateArray('tags'),
