@@ -237,7 +237,9 @@ export const createExpenseValidation = [
   validateRequiredDate('date'),
   validateEnum('payer', ['groom', 'bride']),
   body('category_id').optional().isInt({ min: 1 }).toInt(),
-  validateOptionalString('memo', 1000),
+  validateOptionalString('payment_method', 50),
+  validateOptionalString('vendor', 200),
+  validateOptionalString('notes', 1000),
 ];
 
 export const updateExpenseValidation = [

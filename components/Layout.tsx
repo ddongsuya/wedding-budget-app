@@ -85,17 +85,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleSaveExpense = async (expense: Expense) => {
     try {
+      // category_id 파싱 (빈 문자열이나 유효하지 않은 값 처리)
+      const categoryId = expense.categoryId ? parseInt(expense.categoryId) : null;
+      const validCategoryId = categoryId && !isNaN(categoryId) ? categoryId : undefined;
+      
       // API를 통해 지출 저장
       const apiData: ExpenseCreateInput = {
         title: expense.title,
         amount: expense.amount,
-        date: expense.paymentDate,
+        date: expense.paymentDate, // YYYY-MM-DD 형식
         payer: expense.paidBy === 'shared' ? 'groom' : expense.paidBy, // API는 shared를 지원하지 않으므로 groom으로 대체
-        category_id: expense.categoryId ? parseInt(expense.categoryId) : undefined,
+        category_id: validCategoryId,
         payment_method: expense.paymentMethod,
-        vendor: expense.vendorName,
-        notes: expense.memo,
+        vendor: expense.vendorName || undefined,
+        notes: expense.memo || undefined,
       };
+      
+      console.log('Sending expense data:', apiData); // 디버깅용
       
       await expenseAPI.create(apiData);
       
