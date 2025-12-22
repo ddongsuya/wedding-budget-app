@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useToast } from '../src/hooks/useToast';
 import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
+import { expenseAPI, ExpenseCreateInput } from '../src/api/expenses';
+import { invalidateQueries } from '../src/lib/queryClient';
 
 interface LayoutProps {
   children: ReactNode;
@@ -81,11 +83,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSaveExpense = (expense: Expense) => {
-    StorageService.addExpense(expense);
-    setIsExpenseModalOpen(false);
-    if (location.pathname === '/expenses' || location.pathname === '/') {
-      window.location.reload(); 
+  const handleSaveExpense = async (expense: Expense) => {
+    try {
+      // API를 통해 지출 저장
+      const apiData: ExpenseCreateInput = {
+        title: expense.title,
+        amount: expense.amount,
+        date: expense.paymentDate,
+        payer: expense.paidBy === 'shared' ? 'groom' : expense.paidBy, // API는 shared를 지원하지 않으므로 groom으로 대체
+        category_id: expense.categoryId ? parseInt(expense.categoryId) : undefined,
+        payment_method: expense.paymentMethod,
+        vendor: expense.vendorName,
+        notes: expense.memo,
+      };
+      
+      await expenseAPI.create(apiData);
+      
+      // 캐시 무효화하여 대시보드 등에서 새 데이터 반영
+      invalidateQueries.expenses();
+      invalidateQueries.budget();
+      invalidateQueries.stats();
+      
+      toast.success('지출이 저장되었습니다');
+      setIsExpenseModalOpen(false);
+    } catch (error) {
+      console.error('지출 저장 실패:', error);
+      toast.error('지출 저장에 실패했습니다');
     }
   };
   
