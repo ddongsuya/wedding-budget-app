@@ -101,14 +101,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         notes: expense.memo || undefined,
       };
       
-      console.log('Sending expense data:', apiData); // 디버깅용
-      
       await expenseAPI.create(apiData);
       
-      // 캐시 무효화하여 대시보드 등에서 새 데이터 반영
+      // React Query 캐시 무효화 (React Query를 사용하는 컴포넌트용)
       invalidateQueries.expenses();
       invalidateQueries.budget();
       invalidateQueries.stats();
+      
+      // 커스텀 이벤트 발생 (useState 기반 훅들이 데이터를 다시 가져오도록)
+      window.dispatchEvent(new CustomEvent('expense-updated'));
       
       toast.success('지출이 저장되었습니다');
       setIsExpenseModalOpen(false);

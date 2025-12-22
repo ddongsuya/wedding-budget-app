@@ -108,6 +108,15 @@ export const useExpenses = (params?: ExpenseListParams) => {
     fetchExpenses();
   }, [fetchExpenses]);
 
+  // 지출 업데이트 이벤트 수신 (Layout.tsx에서 지출 추가 시 발생)
+  useEffect(() => {
+    const handleExpenseUpdated = () => {
+      fetchExpenses();
+    };
+    window.addEventListener('expense-updated', handleExpenseUpdated);
+    return () => window.removeEventListener('expense-updated', handleExpenseUpdated);
+  }, [fetchExpenses]);
+
   useEffect(() => {
     if (expenses.length > 0) {
       localStorage.setItem('expenses_cache', JSON.stringify(expenses));

@@ -135,6 +135,15 @@ export const useBudget = () => {
     fetchCategories();
   }, [fetchSettings, fetchCategories]);
 
+  // 지출 업데이트 이벤트 수신 (Layout.tsx에서 지출 추가 시 카테고리 spent_amount 갱신)
+  useEffect(() => {
+    const handleExpenseUpdated = () => {
+      fetchCategories();
+    };
+    window.addEventListener('expense-updated', handleExpenseUpdated);
+    return () => window.removeEventListener('expense-updated', handleExpenseUpdated);
+  }, [fetchCategories]);
+
   return {
     settings,
     categories,
