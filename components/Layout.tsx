@@ -19,6 +19,7 @@ interface LayoutProps {
 const NAV_ITEMS = [
   { path: '/', label: '홈', icon: LayoutDashboard },
   { path: '/budget', label: '예산', icon: Wallet },
+  { path: '/expenses', label: '지출', icon: Receipt },
   { path: '/checklist', label: '체크', icon: FileText },
   { path: '/schedule', label: '일정', icon: Calendar },
   { path: '/venues', label: '식장', icon: Store },

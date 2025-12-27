@@ -38,6 +38,7 @@ const Announcements = lazy(() => import('./src/pages/Announcements'));
 const NotificationCenter = lazy(() => import('./src/pages/NotificationCenter'));
 const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings'));
 const PhotoReferences = lazy(() => import('./pages/PhotoReferences'));
+const Expenses = lazy(() => import('./pages/Expenses'));
 
 // 온보딩 및 마일스톤 래퍼 컴포넌트
 const AppContent: React.FC = () => {
@@ -241,6 +242,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <PhotoReferences />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Expenses />
                 </Layout>
               </ProtectedRoute>
             }
