@@ -340,14 +340,27 @@ export const createPhotoReferenceValidation = [
   body('image_url')
     .notEmpty()
     .withMessage('이미지 URL은 필수입니다')
-    .isLength({ max: 2000000 })
-    .withMessage('이미지 데이터가 너무 큽니다 (최대 2MB)'),
+    .isLength({ max: 5000000 })
+    .withMessage('이미지 데이터가 너무 큽니다 (최대 5MB)'),
   validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
   validateOptionalString('title', 200),
   validateOptionalString('memo', 1000),
-  validateArray('tags'),
-  validateUrl('source_url'),
-  validateBoolean('is_favorite'),
+  body('tags')
+    .optional()
+    .custom((value) => {
+      if (value === undefined || value === null) return true;
+      if (!Array.isArray(value)) return false;
+      return true;
+    })
+    .withMessage('tags는 배열이어야 합니다'),
+  body('source_url')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('source_url은 유효한 URL이어야 합니다'),
+  body('is_favorite')
+    .optional()
+    .isBoolean()
+    .withMessage('is_favorite는 true 또는 false여야 합니다'),
 ];
 
 export const updatePhotoReferenceValidation = [
@@ -355,9 +368,22 @@ export const updatePhotoReferenceValidation = [
   validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
   validateOptionalString('title', 200),
   validateOptionalString('memo', 1000),
-  validateArray('tags'),
-  validateUrl('source_url'),
-  validateBoolean('is_favorite'),
+  body('tags')
+    .optional()
+    .custom((value) => {
+      if (value === undefined || value === null) return true;
+      if (!Array.isArray(value)) return false;
+      return true;
+    })
+    .withMessage('tags는 배열이어야 합니다'),
+  body('source_url')
+    .optional({ values: 'falsy' })
+    .isURL()
+    .withMessage('source_url은 유효한 URL이어야 합니다'),
+  body('is_favorite')
+    .optional()
+    .isBoolean()
+    .withMessage('is_favorite는 true 또는 false여야 합니다'),
 ];
 
 // Admin validators

@@ -61,11 +61,17 @@ export const createPhotoReference = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Image is required' });
     }
 
+    // 빈 문자열을 null로 변환
+    const cleanSourceUrl = source_url && source_url.trim() ? source_url.trim() : null;
+    const cleanTitle = title && title.trim() ? title.trim() : '';
+    const cleanMemo = memo && memo.trim() ? memo.trim() : '';
+    const cleanTags = Array.isArray(tags) ? tags.filter((t: string) => t && t.trim()) : [];
+
     const result = await pool.query(
       `INSERT INTO photo_references (couple_id, image_url, category, title, memo, tags, source_url, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [coupleId, image_url, category || 'etc', title || '', memo || '', tags || [], source_url || null, req.user!.id]
+      [coupleId, image_url, category || 'etc', cleanTitle, cleanMemo, cleanTags, cleanSourceUrl, req.user!.id]
     );
 
     res.status(201).json({
