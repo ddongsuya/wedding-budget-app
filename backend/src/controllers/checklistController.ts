@@ -159,7 +159,11 @@ export const getItems = async (req: Request, res: Response) => {
 export const getItem = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
+
+    if (!coupleId) {
+      return res.status(403).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
 
     const result = await pool.query(
       `SELECT ci.*, cc.name as category_name, cc.icon as category_icon, cc.color as category_color
@@ -499,8 +503,12 @@ export const initDefaultItems = async (req: Request, res: Response) => {
 // 순서 변경 (카테고리)
 export const reorderCategories = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { orders } = req.body; // [{ id, sort_order }]
+
+    if (!coupleId) {
+      return res.status(403).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
 
     for (const order of orders) {
       await pool.query(
@@ -522,8 +530,12 @@ export const reorderCategories = async (req: Request, res: Response) => {
 // 순서 변경 (아이템)
 export const reorderItems = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { orders } = req.body; // [{ id, sort_order }]
+
+    if (!coupleId) {
+      return res.status(403).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
 
     for (const order of orders) {
       await pool.query(
@@ -545,9 +557,13 @@ export const reorderItems = async (req: Request, res: Response) => {
 // 일괄 완료
 export const bulkComplete = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const userId = (req as any).user.id;
     const { ids } = req.body;
+
+    if (!coupleId) {
+      return res.status(403).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
 
     await pool.query(
       `UPDATE checklist_items
@@ -569,8 +585,12 @@ export const bulkComplete = async (req: Request, res: Response) => {
 // 일괄 삭제
 export const bulkDelete = async (req: Request, res: Response) => {
   try {
-    const coupleId = (req as any).user.couple_id;
+    const coupleId = (req as any).user.coupleId;
     const { ids } = req.body;
+
+    if (!coupleId) {
+      return res.status(403).json({ success: false, message: '커플 연결이 필요합니다' });
+    }
 
     await pool.query(
       'DELETE FROM checklist_items WHERE id = ANY($1) AND couple_id = $2',
