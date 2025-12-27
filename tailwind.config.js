@@ -17,17 +17,31 @@ export default {
     },
     extend: {
       colors: {
+        // 메인 브랜드 컬러 - 웨딩 테마에 맞는 로즈 골드 계열
         rose: {
-          50: '#fff1f2',
-          100: '#ffe4e6',
-          200: '#fecdd3',
-          300: '#fda4af',
-          400: '#fb7185',
-          500: '#f43f5e',
-          600: '#e11d48',
-          700: '#be123c',
-          800: '#9f1239',
-          900: '#881337',
+          50: '#fdf2f4',
+          100: '#fce7eb',
+          200: '#fbd0da',
+          300: '#f8a9bc',
+          400: '#f27a98',
+          500: '#e84c72',  // 메인 컬러 - 더 세련된 로즈
+          600: '#d42a5a',
+          700: '#b21e4a',
+          800: '#951c42',
+          900: '#7d1b3c',
+        },
+        // 보조 컬러 - 골드 계열 추가
+        gold: {
+          50: '#fdfaf3',
+          100: '#faf3e0',
+          200: '#f5e6c0',
+          300: '#edd49a',
+          400: '#e4bc6a',
+          500: '#d4a44a',  // 골드 포인트
+          600: '#c08a30',
+          700: '#9f6d28',
+          800: '#825728',
+          900: '#6b4824',
         },
         stone: {
           850: '#1c1917',
@@ -35,6 +49,13 @@ export default {
       },
       fontFamily: {
         sans: ['Pretendard', 'Noto Sans KR', 'sans-serif'],
+        display: ['Pretendard', 'sans-serif'],  // 제목용
+      },
+      // 더 세련된 border-radius
+      borderRadius: {
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+        '4xl': '2rem',
       },
       // 부드러운 트랜지션 기본값
       transitionDuration: {
@@ -101,11 +122,27 @@ export default {
           '50%': { opacity: '0.7' },
         },
       },
-      // 그림자 개선
+      // 그림자 개선 - 더 부드럽고 세련된 그림자
       boxShadow: {
-        'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.08)',
-        'soft-lg': '0 4px 16px -4px rgba(0, 0, 0, 0.1)',
-        'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.04)',
+        'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.06)',
+        'soft-md': '0 4px 12px -4px rgba(0, 0, 0, 0.08)',
+        'soft-lg': '0 8px 24px -8px rgba(0, 0, 0, 0.1)',
+        'soft-xl': '0 16px 40px -12px rgba(0, 0, 0, 0.12)',
+        'inner-soft': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.03)',
+        'glow': '0 0 20px rgba(232, 76, 114, 0.15)',
+        'glow-gold': '0 0 20px rgba(212, 164, 74, 0.2)',
+        'card': '0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04)',
+        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06)',
+        'button': '0 2px 4px rgba(232, 76, 114, 0.2)',
+        'button-hover': '0 4px 12px rgba(232, 76, 114, 0.3)',
+      },
+      // 배경 그라데이션
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-rose': 'linear-gradient(135deg, #fdf2f4 0%, #fce7eb 100%)',
+        'gradient-gold': 'linear-gradient(135deg, #fdfaf3 0%, #f5e6c0 100%)',
+        'gradient-card': 'linear-gradient(180deg, #ffffff 0%, #fafaf9 100%)',
+        'shimmer': 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
       },
     }
   },

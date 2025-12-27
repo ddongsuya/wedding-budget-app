@@ -1,14 +1,44 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { Card, SummaryCard } from '../components/ui/Card';
 import { BudgetSettings, Venue, Expense } from '../types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
-import { Wallet, Store, CreditCard, CalendarClock, AlertTriangle, ArrowRight, User, Heart } from 'lucide-react';
+import { Wallet, Store, CreditCard, CalendarClock, AlertTriangle, ArrowRight, User, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
 import { useBudget } from '../src/hooks/useBudget';
 import { useExpenses } from '../src/hooks/useExpenses';
 import { EmptyState } from '../src/components/common/EmptyState';
+
+// Sticky Summary Bar 컴포넌트
+const StickySummary: React.FC<{dDay: number, budgetProgress: number, totalSpent: number, totalBudget: number}> = 
+  ({ dDay, budgetProgress, totalSpent, totalBudget }) => (
+  <div className="sticky top-[60px] md:top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-100 px-4 py-2.5 -mx-4 md:-mx-8 mb-4">
+    <div className="flex items-center justify-between max-w-7xl mx-auto">
+      {/* D-day */}
+      <div className="flex items-center gap-2">
+        <Heart size={14} className="text-rose-500 fill-rose-500" />
+        <span className="text-xl font-bold text-rose-500">
+          {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
+        </span>
+      </div>
+      
+      {/* 미니 진행 바 */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-stone-500 hidden sm:inline">예산</span>
+          <div className="w-12 sm:w-16 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-rose-500 transition-all"
+              style={{ width: `${Math.min(budgetProgress, 100)}%` }}
+            />
+          </div>
+          <span className="text-[10px] font-medium text-stone-600">{budgetProgress.toFixed(0)}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const COLORS = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#64748b'];
 
