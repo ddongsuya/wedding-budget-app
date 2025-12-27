@@ -134,13 +134,13 @@ const Schedule: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
       {/* 헤더 */}
-      <div className="bg-white px-4 py-4 shadow-sm sticky top-[60px] md:top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={goToPrevMonth}
-            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+            className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
           >
-            <ChevronLeft size={24} className="text-stone-600" />
+            <ChevronLeft size={22} className="text-stone-600" />
           </button>
           
           <div className="text-center">
@@ -149,7 +149,7 @@ const Schedule: React.FC = () => {
             </h1>
             <button
               onClick={goToToday}
-              className="text-sm text-rose-500 font-medium hover:text-rose-600"
+              className="text-sm text-rose-500 font-medium hover:text-rose-600 transition-colors"
             >
               오늘
             </button>
@@ -157,23 +157,23 @@ const Schedule: React.FC = () => {
           
           <button
             onClick={goToNextMonth}
-            className="p-2 hover:bg-stone-100 rounded-full transition-colors"
+            className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
           >
-            <ChevronRight size={24} className="text-stone-600" />
+            <ChevronRight size={22} className="text-stone-600" />
           </button>
         </div>
 
         {/* 일정 추가 버튼 */}
         <button
           onClick={() => openAddEventModal()}
-          className="w-full bg-rose-500 text-white py-2.5 rounded-xl font-medium hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+          className="w-full bg-gradient-to-r from-rose-500 to-rose-600 text-white py-3 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
         >
           <Plus size={20} />
           일정 추가
         </button>
 
         {/* 요일 헤더 */}
-        <div className="grid grid-cols-7 text-center text-sm">
+        <div className="grid grid-cols-7 text-center text-sm mt-4">
           {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
             <div
               key={day}
@@ -186,11 +186,11 @@ const Schedule: React.FC = () => {
       </div>
 
       {/* 캘린더 그리드 */}
-      <div className="bg-white mx-4 mt-4 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white mx-4 mt-4 rounded-2xl shadow-card overflow-hidden border border-stone-100">
         <div className="grid grid-cols-7">
           {calendarDays.map((day, index) => {
             if (!day) {
-              return <div key={`empty-${index}`} className="h-20 border-b border-r border-stone-100" />;
+              return <div key={`empty-${index}`} className="h-20 border-b border-r border-stone-100/80" />;
             }
 
             const dateKey = format(day, 'yyyy-MM-dd');
@@ -204,15 +204,15 @@ const Schedule: React.FC = () => {
               <button
                 key={dateKey}
                 onClick={() => setSelectedDate(day)}
-                className={`h-20 p-1 border-b border-r border-stone-100 flex flex-col items-center transition-colors
+                className={`h-20 p-1 border-b border-r border-stone-100/80 flex flex-col items-center transition-all touch-feedback
                   ${!isCurrentMonth ? 'opacity-30' : ''}
-                  ${isSelected ? 'bg-rose-50' : 'hover:bg-stone-50'}
+                  ${isSelected ? 'bg-rose-50/80' : 'hover:bg-stone-50'}
                 `}
               >
                 {/* 날짜 숫자 */}
                 <span className={`
-                  w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium
-                  ${isTodayDate ? 'bg-rose-500 text-white' : ''}
+                  w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium transition-colors
+                  ${isTodayDate ? 'bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-sm' : ''}
                   ${dayOfWeek === 0 ? 'text-red-400' : dayOfWeek === 6 ? 'text-blue-400' : 'text-stone-700'}
                 `}>
                   {format(day, 'd')}
@@ -223,7 +223,7 @@ const Schedule: React.FC = () => {
                   {dayEvents.slice(0, 3).map((event) => (
                     <div
                       key={event.id}
-                      className="w-1.5 h-1.5 rounded-full"
+                      className="w-1.5 h-1.5 rounded-full shadow-sm"
                       style={{ backgroundColor: event.color }}
                       title={event.title}
                     />
@@ -252,7 +252,7 @@ const Schedule: React.FC = () => {
               description="새로운 일정을 추가해서 결혼 준비를 계획해보세요"
               actionLabel="일정 추가하기"
               onAction={() => openAddEventModal(selectedDate)}
-              className="bg-white rounded-xl"
+              className="bg-white rounded-2xl shadow-card border border-stone-100"
             />
           ) : (
             <div className="space-y-2">
@@ -262,26 +262,26 @@ const Schedule: React.FC = () => {
                 return (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3 hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.99]"
+                    className="bg-white rounded-2xl p-4 shadow-card border border-stone-100 flex items-start gap-3 hover:shadow-card-hover transition-all stagger-item touch-feedback active:scale-[0.99]"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     {/* 카테고리 아이콘 */}
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: event.color + '20' }}
+                      className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: event.color + '15' }}
                     >
                       <span className="text-lg">{categoryInfo?.icon || '📅'}</span>
                     </div>
 
                     {/* 내용 */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-stone-800 truncate">{event.title}</h3>
+                      <h3 className="font-semibold text-stone-800 truncate">{event.title}</h3>
 
-                      <div className="flex flex-wrap gap-2 mt-1 text-sm text-stone-500">
+                      <div className="flex flex-wrap gap-2 mt-1.5 text-sm text-stone-500">
                         {/* 시간 */}
                         {event.start_time && (
                           <span className="flex items-center gap-1">
-                            <Clock size={12} />
+                            <Clock size={12} className="text-stone-400" />
                             {event.start_time.slice(0, 5)}
                             {event.end_time && ` - ${event.end_time.slice(0, 5)}`}
                           </span>
@@ -290,7 +290,7 @@ const Schedule: React.FC = () => {
                         {/* 위치 */}
                         {event.location && (
                           <span className="flex items-center gap-1">
-                            <MapPin size={12} />
+                            <MapPin size={12} className="text-stone-400" />
                             <span className="truncate max-w-[150px]">{event.location}</span>
                           </span>
                         )}
@@ -299,9 +299,9 @@ const Schedule: React.FC = () => {
                       {/* 카테고리 태그 */}
                       {categoryInfo && (
                         <span
-                          className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium"
+                          className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium"
                           style={{
-                            backgroundColor: event.color + '20',
+                            backgroundColor: event.color + '15',
                             color: event.color
                           }}
                         >
@@ -314,9 +314,9 @@ const Schedule: React.FC = () => {
                     <div className="flex gap-1">
                       <button
                         onClick={() => openEditEventModal(event)}
-                        className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+                        className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
                       >
-                        <Edit2 size={16} className="text-stone-500" />
+                        <Edit2 size={16} className="text-stone-400" />
                       </button>
                       <button
                         onClick={() => handleDeleteEvent(event.id)}

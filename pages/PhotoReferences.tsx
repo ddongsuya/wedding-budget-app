@@ -157,7 +157,7 @@ const PhotoReferences: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
       {/* 헤더 */}
-      <div className="bg-white px-4 py-4 shadow-sm sticky top-[60px] md:top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-stone-800">📸 포토 레퍼런스</h1>
@@ -166,7 +166,7 @@ const PhotoReferences: React.FC = () => {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="bg-rose-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-rose-600 transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-[0.98]"
           >
             {uploading ? (
               <span className="animate-spin">⏳</span>
@@ -188,9 +188,9 @@ const PhotoReferences: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
               selectedCategory === 'all'
-                ? 'bg-rose-500 text-white'
+                ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
                 : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
@@ -200,9 +200,9 @@ const PhotoReferences: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2.5 py-1.5 rounded-full text-xs md:text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 flex-shrink-0 ${
+              className={`px-3 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
                 selectedCategory === cat.id
-                  ? 'bg-rose-500 text-white'
+                  ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
                   : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
               }`}
             >
@@ -216,7 +216,7 @@ const PhotoReferences: React.FC = () => {
         <div className="flex items-center justify-between mt-3">
           <button
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-lg transition-colors ${
+            className={`flex items-center gap-1.5 text-sm font-medium px-3 py-2 rounded-xl transition-all ${
               showFavoritesOnly
                 ? 'bg-rose-100 text-rose-600'
                 : 'text-stone-500 hover:bg-stone-100'

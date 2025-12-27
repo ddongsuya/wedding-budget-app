@@ -90,27 +90,29 @@ const Announcements = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-rose-300 border-t-rose-500 rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* 헤더 */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-lg shadow-soft border-b border-stone-100 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={20} className="text-stone-600" />
             </button>
             <div className="flex items-center gap-2">
-              <Bell size={24} className="text-rose-500" />
-              <h1 className="text-xl font-bold text-gray-800">공지사항</h1>
+              <div className="w-10 h-10 bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl flex items-center justify-center shadow-button">
+                <Bell size={20} className="text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-stone-800">공지사항</h1>
             </div>
           </div>
         </div>
@@ -118,7 +120,7 @@ const Announcements = () => {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {announcements.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm">
+          <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100">
             <EmptyState
               illustration="notification"
               title="등록된 공지사항이 없습니다"
@@ -132,29 +134,29 @@ const Announcements = () => {
             {announcements.map((announcement) => (
               <div
                 key={announcement.id}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-card border border-stone-100 hover:shadow-card-hover transition-all"
               >
                 {/* 헤더 */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     {getTypeIcon(announcement.type)}
                     <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeBadgeColor(announcement.type)}`}
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${getTypeBadgeColor(announcement.type)}`}
                     >
                       {getTypeLabel(announcement.type)}
                     </span>
                     {getPriorityBadge(announcement.priority)}
                   </div>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-stone-500">
                     {new Date(announcement.created_at).toLocaleDateString('ko-KR')}
                   </span>
                 </div>
 
                 {/* 제목 */}
-                <h3 className="text-lg font-bold text-gray-800 mb-2">{announcement.title}</h3>
+                <h3 className="text-lg font-bold text-stone-800 mb-2">{announcement.title}</h3>
 
                 {/* 내용 */}
-                <p className="text-gray-600 whitespace-pre-wrap leading-relaxed">
+                <p className="text-stone-600 whitespace-pre-wrap leading-relaxed">
                   {announcement.content}
                 </p>
 

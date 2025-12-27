@@ -154,37 +154,37 @@ const NotificationSettings: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* 헤더 */}
-      <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-0 z-10 border-b border-stone-100">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} className="text-stone-600" />
           </button>
-          <h1 className="text-lg font-semibold">알림 설정</h1>
+          <h1 className="text-lg font-semibold text-stone-800">알림 설정</h1>
         </div>
       </header>
 
       <div className="p-4 space-y-4">
         {/* 테스트 알림 */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 overflow-hidden">
+          <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100/50 border-b border-blue-100">
             <div className="flex items-center gap-2">
               <Send size={20} className="text-blue-500" />
               <h2 className="text-sm font-semibold text-blue-600">알림 테스트</h2>
             </div>
           </div>
           <div className="p-4">
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-sm text-stone-600 mb-3">
               알림 기능이 정상적으로 작동하는지 테스트해보세요.
             </p>
             <button
               onClick={sendTestNotification}
               disabled={sendingTest}
-              className="w-full px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {sendingTest ? (
                 <>
@@ -202,8 +202,8 @@ const NotificationSettings: React.FC = () => {
         </div>
 
         {/* 푸시 알림 설정 */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-rose-50 border-b border-rose-100">
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 overflow-hidden">
+          <div className="px-4 py-3 bg-gradient-to-r from-rose-50 to-rose-100/50 border-b border-rose-100">
             <div className="flex items-center gap-2">
               <BellRing size={20} className="text-rose-500" />
               <h2 className="text-sm font-semibold text-rose-600">푸시 알림</h2>
@@ -213,8 +213,8 @@ const NotificationSettings: React.FC = () => {
             {pushPermission === 'granted' ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-800">푸시 알림</p>
-                  <p className="text-sm text-gray-500">브라우저 푸시 알림 수신</p>
+                  <p className="font-medium text-stone-800">푸시 알림</p>
+                  <p className="text-sm text-stone-500">브라우저 푸시 알림 수신</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -223,20 +223,20 @@ const NotificationSettings: React.FC = () => {
                     checked={preferences?.push_enabled ?? true}
                     onChange={(e) => handlePushToggle(e.target.checked)}
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+                  <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
                 </label>
               </div>
             ) : pushPermission === 'denied' ? (
               <div className="text-center py-2">
-                <p className="text-sm text-gray-600 mb-2">푸시 알림이 차단되어 있습니다</p>
-                <p className="text-xs text-gray-400">브라우저 설정에서 알림을 허용해주세요</p>
+                <p className="text-sm text-stone-600 mb-2">푸시 알림이 차단되어 있습니다</p>
+                <p className="text-xs text-stone-400">브라우저 설정에서 알림을 허용해주세요</p>
               </div>
             ) : (
               <div className="text-center py-2">
-                <p className="text-sm text-gray-600 mb-3">푸시 알림을 받으시겠습니까?</p>
+                <p className="text-sm text-stone-600 mb-3">푸시 알림을 받으시겠습니까?</p>
                 <button
                   onClick={requestPushPermission}
-                  className="px-4 py-2 bg-rose-500 text-white rounded-lg text-sm font-medium hover:bg-rose-600 transition-colors"
+                  className="px-4 py-2 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl text-sm font-semibold shadow-button hover:shadow-button-hover transition-all"
                 >
                   푸시 알림 허용
                 </button>

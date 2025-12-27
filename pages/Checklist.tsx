@@ -142,12 +142,12 @@ const Checklist: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
       {/* 헤더 */}
-      <div className="bg-white px-4 py-6 shadow-sm sticky top-[60px] md:top-0 z-10">
+      <div className="bg-white/80 backdrop-blur-lg px-4 py-5 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold text-stone-800">체크리스트</h1>
           <button
             onClick={() => { setEditingItem(null); setShowEditModal(true); }}
-            className="bg-rose-500 text-white px-4 py-2 rounded-xl font-medium hover:bg-rose-600 transition-colors flex items-center gap-2"
+            className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all flex items-center gap-2 active:scale-[0.98]"
           >
             <Plus size={18} />
             항목 추가
@@ -156,20 +156,26 @@ const Checklist: React.FC = () => {
         
         {/* 진행률 */}
         {stats && (
-          <div className="mb-4">
+          <div className="mb-4 p-4 bg-gradient-to-r from-rose-50 to-rose-100/50 rounded-2xl border border-rose-100">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-stone-600">진행률</span>
-              <span className="font-bold text-rose-500">{stats.completionRate}%</span>
+              <span className="text-stone-600 font-medium">진행률</span>
+              <span className="font-bold text-rose-600">{stats.completionRate}%</span>
             </div>
-            <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-white/80 rounded-full overflow-hidden shadow-inner">
               <div 
-                className="h-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-500"
+                className="h-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-500 rounded-full"
                 style={{ width: `${stats.completionRate}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs text-stone-500 mt-1">
-              <span>{stats.completed}개 완료</span>
-              <span>{stats.pending}개 남음</span>
+            <div className="flex justify-between text-xs text-stone-500 mt-2">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 size={12} className="text-emerald-500" />
+                {stats.completed}개 완료
+              </span>
+              <span className="flex items-center gap-1">
+                <Circle size={12} className="text-stone-400" />
+                {stats.pending}개 남음
+              </span>
             </div>
           </div>
         )}
@@ -178,9 +184,9 @@ const Checklist: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all flex-shrink-0 font-medium ${
               !selectedCategory
-                ? 'bg-rose-500 text-white'
+                ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
                 : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
             }`}
           >
@@ -190,9 +196,9 @@ const Checklist: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm whitespace-nowrap transition-colors flex items-center gap-1 flex-shrink-0 ${
+              className={`px-4 py-2 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 font-medium ${
                 selectedCategory === cat.id
-                  ? 'bg-rose-500 text-white'
+                  ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
                   : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
               }`}
             >
@@ -222,14 +228,16 @@ const Checklist: React.FC = () => {
             const completedCount = periodItems.filter(i => i.is_completed).length;
 
             return (
-              <div key={period.value} className="space-y-2 animate-fade-in">
+              <div key={period.value} className="space-y-3 animate-fade-in">
                 {/* 그룹 헤더 */}
                 <div className="flex items-center justify-between">
                   <h2 className="font-bold text-stone-800 flex items-center gap-2">
-                    <Calendar size={16} className="text-rose-400" />
+                    <div className="w-7 h-7 bg-rose-100 rounded-lg flex items-center justify-center">
+                      <Calendar size={14} className="text-rose-500" />
+                    </div>
                     {period.label}
                   </h2>
-                  <span className="text-sm text-stone-500">
+                  <span className="text-sm text-stone-500 bg-stone-100 px-2.5 py-1 rounded-lg font-medium">
                     {completedCount}/{periodItems.length}
                   </span>
                 </div>
@@ -239,7 +247,7 @@ const Checklist: React.FC = () => {
                   {periodItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className={`bg-white rounded-xl p-4 shadow-sm flex items-center gap-3 transition-all hover:shadow-md stagger-item touch-feedback active:scale-[0.99] ${
+                      className={`bg-white rounded-2xl p-4 shadow-card border border-stone-100 flex items-center gap-3 transition-all hover:shadow-card-hover stagger-item touch-feedback active:scale-[0.99] ${
                         item.is_completed ? 'opacity-60' : ''
                       }`}
                       style={{ animationDelay: `${index * 30}ms` }}
@@ -250,9 +258,9 @@ const Checklist: React.FC = () => {
                         className="flex-shrink-0 transition-transform hover:scale-110"
                       >
                         {item.is_completed ? (
-                          <CheckCircle2 size={24} className="text-green-500" />
+                          <CheckCircle2 size={24} className="text-emerald-500" />
                         ) : (
-                          <Circle size={24} className="text-stone-300 hover:text-stone-400" />
+                          <Circle size={24} className="text-stone-300 hover:text-rose-400" />
                         )}
                       </button>
 
@@ -273,17 +281,17 @@ const Checklist: React.FC = () => {
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+                          className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
                           title="수정"
                         >
-                          <Edit2 size={16} className="text-stone-500" />
+                          <Edit2 size={16} className="text-stone-400" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-2 hover:bg-red-50 rounded-xl transition-colors"
                           title="삭제"
                         >
-                          <Trash2 size={16} className="text-red-500" />
+                          <Trash2 size={16} className="text-red-400" />
                         </button>
                       </div>
 

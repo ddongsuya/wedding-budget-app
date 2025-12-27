@@ -311,7 +311,7 @@ const Venues: React.FC = () => {
         </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap gap-3 bg-white p-3 rounded-xl border border-stone-200 shadow-sm items-center">
+        <div className="flex flex-wrap gap-3 bg-white/80 backdrop-blur-lg p-4 rounded-2xl border border-stone-100 shadow-card items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
             <input 
@@ -319,7 +319,7 @@ const Venues: React.FC = () => {
               placeholder="웨딩홀 검색" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-stone-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-rose-500/20 outline-none"
+              className="w-full pl-10 pr-4 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 outline-none transition-all"
             />
           </div>
           
@@ -328,7 +328,7 @@ const Venues: React.FC = () => {
             <select 
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
-              className="px-3 py-2 bg-stone-50 rounded-lg text-sm border-none outline-none text-stone-600 cursor-pointer hover:bg-stone-100"
+              className="px-3 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm outline-none text-stone-600 cursor-pointer hover:bg-stone-100 transition-colors"
             >
               <option value="">모든 지역</option>
               {uniqueLocations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
@@ -337,7 +337,7 @@ const Venues: React.FC = () => {
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
-              className="px-3 py-2 bg-stone-50 rounded-lg text-sm border-none outline-none text-stone-600 cursor-pointer hover:bg-stone-100"
+              className="px-3 py-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-sm outline-none text-stone-600 cursor-pointer hover:bg-stone-100 transition-colors"
             >
               <option value="all">모든 상태</option>
               <option value="pending">방문 예정</option>
@@ -349,14 +349,14 @@ const Venues: React.FC = () => {
 
             <button 
               onClick={() => toggleSort('price')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${sortBy === 'price' ? 'bg-rose-50 text-rose-600 font-medium' : 'bg-stone-50 text-stone-600 hover:bg-stone-100'}`}
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all font-medium ${sortBy === 'price' ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button' : 'bg-stone-50/50 border border-stone-200 text-stone-600 hover:bg-stone-100'}`}
             >
               예상견적순
               {sortBy === 'price' && <ArrowUpDown size={14} />}
             </button>
              <button 
               onClick={() => toggleSort('rating')}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${sortBy === 'rating' ? 'bg-rose-50 text-rose-600 font-medium' : 'bg-stone-50 text-stone-600 hover:bg-stone-100'}`}
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all font-medium ${sortBy === 'rating' ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button' : 'bg-stone-50/50 border border-stone-200 text-stone-600 hover:bg-stone-100'}`}
             >
               별점순
               {sortBy === 'rating' && <ArrowUpDown size={14} />}
@@ -365,17 +365,17 @@ const Venues: React.FC = () => {
             <div className="h-6 w-px bg-stone-200 mx-1"></div>
 
             {/* View Mode Toggle for Desktop */}
-            <div className="flex bg-stone-100 rounded-lg p-1">
+            <div className="flex bg-stone-100 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('table')}
-                className={`p-2 rounded-md transition-colors ${viewMode === 'table' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
                 title="테이블 뷰"
               >
                 <List size={18} />
               </button>
               <button
                 onClick={() => setViewMode('card')}
-                className={`p-2 rounded-md transition-colors ${viewMode === 'card' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
+                className={`p-2.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white shadow-sm text-rose-600' : 'text-stone-500 hover:text-stone-700'}`}
                 title="카드 뷰"
               >
                 <LayoutGrid size={18} />
@@ -385,7 +385,7 @@ const Venues: React.FC = () => {
 
           {/* Mobile Filter Trigger */}
           <button 
-            className="md:hidden p-2 bg-stone-50 rounded-lg text-stone-600 hover:bg-stone-100 relative"
+            className="md:hidden p-2.5 bg-stone-50/50 border border-stone-200 rounded-xl text-stone-600 hover:bg-stone-100 relative transition-colors"
             onClick={() => setIsFilterSheetOpen(true)}
           >
             <Filter size={20} />
@@ -403,7 +403,7 @@ const Venues: React.FC = () => {
           {/* Mobile Skeleton */}
           <div className="md:hidden space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-6 shadow-sm border border-stone-100">
+              <div key={i} className="bg-white rounded-2xl p-6 shadow-card border border-stone-100">
                 <div className="flex justify-between items-start mb-4">
                   <div className="space-y-2">
                     <Skeleton variant="text" width={180} height={24} />

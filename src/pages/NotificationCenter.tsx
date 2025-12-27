@@ -95,32 +95,32 @@ const NotificationCenter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* 헤더 */}
-      <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={20} className="text-stone-600" />
             </button>
-            <h1 className="text-lg font-semibold">알림</h1>
+            <h1 className="text-lg font-semibold text-stone-800">알림</h1>
             {unreadCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-rose-100 text-rose-600 rounded-full">
+              <span className="px-2.5 py-1 text-xs font-semibold bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-full shadow-sm">
                 {unreadCount}개 새 알림
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors"
                 title="모두 읽음 처리"
               >
-                <CheckCheck size={20} className="text-gray-600" />
+                <CheckCheck size={20} className="text-stone-600" />
               </button>
             )}
             {notifications.length > 0 && (
@@ -130,10 +130,10 @@ const NotificationCenter: React.FC = () => {
                     clearAll();
                   }
                 }}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors"
                 title="모두 삭제"
               >
-                <Trash2 size={20} className="text-gray-600" />
+                <Trash2 size={20} className="text-stone-600" />
               </button>
             )}
           </div>

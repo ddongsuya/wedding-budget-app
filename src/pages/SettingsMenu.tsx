@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft, Shield } from 'lucide-react';
+import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft, Shield, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,73 +19,93 @@ const SettingsMenu = () => {
       icon: User,
       label: '프로필 설정',
       path: '/settings',
-      color: 'text-blue-600',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-50',
     },
     {
       icon: Lock,
       label: '비밀번호 변경',
       path: '/settings/password',
-      color: 'text-gray-600',
+      color: 'text-stone-600',
+      bgColor: 'bg-stone-100',
     },
     {
       icon: Bell,
       label: '공지사항',
       path: '/announcements',
-      color: 'text-rose-600',
+      color: 'text-rose-500',
+      bgColor: 'bg-rose-50',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* 헤더 */}
-      <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10">
+      <header className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-0 z-10 border-b border-stone-100">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-stone-100 rounded-xl transition-colors"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={20} className="text-stone-600" />
           </button>
-          <h1 className="text-lg font-semibold">설정</h1>
+          <h1 className="text-lg font-semibold text-stone-800">설정</h1>
         </div>
       </header>
 
       <div className="p-4 space-y-4">
+        {/* 사용자 정보 카드 */}
+        <div className="bg-gradient-to-r from-rose-500 to-rose-600 rounded-2xl p-5 text-white shadow-button">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+              <Heart size={24} className="text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-lg">{user?.name || '사용자'}</p>
+              <p className="text-rose-100 text-sm">{user?.email}</p>
+            </div>
+          </div>
+        </div>
+
         {/* 관리자 메뉴 (관리자만 표시) */}
         {user?.is_admin && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-4 py-3 bg-rose-50 border-b border-rose-100">
+          <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 overflow-hidden">
+            <div className="px-4 py-3 bg-gradient-to-r from-rose-50 to-rose-100/50 border-b border-rose-100">
               <h2 className="text-sm font-semibold text-rose-600">관리자</h2>
             </div>
             <Link
               to="/admin"
-              className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Shield size={20} className="text-rose-600" />
-                <span className="text-gray-800 font-medium">관리자 대시보드</span>
+                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
+                  <Shield size={20} className="text-rose-600" />
+                </div>
+                <span className="text-stone-800 font-medium">관리자 대시보드</span>
               </div>
-              <ChevronRight size={20} className="text-gray-400" />
+              <ChevronRight size={20} className="text-stone-400" />
             </Link>
           </div>
         )}
 
         {/* 계정 설정 */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-gray-50 border-b">
-            <h2 className="text-sm font-semibold text-gray-600">계정 설정</h2>
+        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 overflow-hidden">
+          <div className="px-4 py-3 bg-stone-50/50 border-b border-stone-100">
+            <h2 className="text-sm font-semibold text-stone-600">계정 설정</h2>
           </div>
           {menuItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b last:border-b-0"
+              className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-b-0"
             >
               <div className="flex items-center gap-3">
-                <item.icon size={20} className={item.color} />
-                <span className="text-gray-800">{item.label}</span>
+                <div className={`w-10 h-10 ${item.bgColor} rounded-xl flex items-center justify-center`}>
+                  <item.icon size={20} className={item.color} />
+                </div>
+                <span className="text-stone-800 font-medium">{item.label}</span>
               </div>
-              <ChevronRight size={20} className="text-gray-400" />
+              <ChevronRight size={20} className="text-stone-400" />
             </Link>
           ))}
         </div>
@@ -93,10 +113,10 @@ const SettingsMenu = () => {
         {/* 로그아웃 */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 p-4 bg-white rounded-xl shadow-sm text-red-600 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center justify-center gap-2 p-4 bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 text-red-500 hover:bg-red-50 transition-colors font-medium"
         >
           <LogOut size={20} />
-          <span className="font-medium">로그아웃</span>
+          <span>로그아웃</span>
         </button>
       </div>
     </div>
