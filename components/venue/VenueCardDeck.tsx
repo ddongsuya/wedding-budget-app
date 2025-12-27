@@ -111,7 +111,7 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
       {/* Select Mode Banner */}
       {isSelectMode && (
         <div className="w-full bg-rose-500 text-white text-center py-2 px-4 text-sm font-medium mb-2 rounded-lg mx-4" style={{ width: 'calc(100% - 32px)' }}>
-          비교할 웨딩홀을 선택하세요 (최대 4개)
+          비교할 웨딩홀을 선택하세요 (최대 6개)
         </div>
       )}
 

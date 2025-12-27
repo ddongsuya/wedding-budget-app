@@ -233,8 +233,8 @@ const Venues: React.FC = () => {
     if (newSet.has(id)) {
       newSet.delete(id);
     } else {
-      if (newSet.size >= 4) {
-        alert('비교는 최대 4개까지만 가능합니다.');
+      if (newSet.size >= 6) {
+        alert('비교는 최대 6개까지만 가능합니다.');
         return;
       }
       newSet.add(id);
@@ -612,14 +612,15 @@ const Venues: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Compare Mode Button */}
+      {/* Mobile Compare Mode Button - 추가 버튼과 겹치지 않도록 위치 조정 */}
       {venues.length >= 2 && selectedIds.size === 0 && (
-        <div className="md:hidden fixed bottom-24 right-4 z-40">
+        <div className="md:hidden fixed bottom-40 right-4 z-40">
           <button
             onClick={() => setIsSelectMode(!isSelectMode)}
             className={`p-3 rounded-full shadow-lg transition-colors ${
               isSelectMode ? 'bg-stone-800 text-white' : 'bg-white text-stone-600 border border-stone-200'
             }`}
+            title="비교 모드"
           >
             <LayoutGrid size={20} />
           </button>
