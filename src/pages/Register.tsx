@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
-import { Eye, EyeOff, Check, X, Shield } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Shield, Heart, Sparkles, AlertTriangle } from 'lucide-react';
 
 // 비밀번호 강도 검증
 const validatePassword = (password: string) => {
@@ -84,26 +84,43 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-amber-50 px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Needless Wedding</h1>
-            <p className="text-gray-600">새 계정을 만들어보세요</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-white to-gold-50 px-4 py-8 relative overflow-hidden">
+      {/* 배경 장식 */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-rose-200/30 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-gold-200/30 rounded-full blur-3xl" />
+      <div className="absolute top-1/3 right-1/4 w-24 h-24 bg-pink-200/20 rounded-full blur-2xl" />
+      
+      <div className="max-w-md w-full relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-soft-xl border border-white/50 p-8">
+          {/* 로고 영역 */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl shadow-button mb-4">
+              <Heart className="text-white" size={28} fill="white" />
+            </div>
+            <h1 className="text-2xl font-bold text-stone-800 mb-1">Needless Wedding</h1>
+            <p className="text-stone-500 text-sm flex items-center justify-center gap-1">
+              <Sparkles size={14} className="text-gold-500" />
+              새 계정을 만들어보세요
+            </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm" role="alert" aria-live="assertive">
-              <p className="font-medium">{error}</p>
-              {errorDetails.length > 0 && (
-                <p className="text-xs mt-1">필요: {errorDetails.join(', ')}</p>
-              )}
+            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm" role="alert" aria-live="assertive">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
+                <div>
+                  <p className="font-medium">{error}</p>
+                  {errorDetails.length > 0 && (
+                    <p className="text-xs mt-1 text-red-500">필요: {errorDetails.join(', ')}</p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-stone-700 mb-1.5">
                 이름
               </label>
               <input
@@ -115,13 +132,13 @@ export default function Register() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full px-4 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
+                className="input-field"
                 placeholder="홍길동"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1.5">
                 이메일
               </label>
               <input
@@ -136,13 +153,13 @@ export default function Register() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
+                className="input-field"
                 placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-stone-700 mb-1.5">
                 비밀번호
               </label>
               <div className="relative">
@@ -154,13 +171,13 @@ export default function Register() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-12 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
+                  className="input-field pr-12"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 touch-feedback"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100 transition-colors touch-feedback"
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                 >
                   {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
@@ -169,20 +186,20 @@ export default function Register() {
               
               {/* 비밀번호 강도 표시 */}
               {password && (
-                <div className="mt-2 space-y-2" role="status" aria-live="polite" aria-label="비밀번호 강도">
+                <div className="mt-3 p-3 bg-stone-50/50 rounded-xl space-y-2" role="status" aria-live="polite" aria-label="비밀번호 강도">
                   {/* 강도 바 */}
                   <div className="flex gap-1" aria-hidden="true">
                     {[1, 2, 3, 4, 5].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded-full transition-colors ${
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
                           passwordValidation.score >= level
                             ? passwordValidation.strength === 'strong'
-                              ? 'bg-green-500'
+                              ? 'bg-emerald-500'
                               : passwordValidation.strength === 'medium'
-                              ? 'bg-yellow-500'
+                              ? 'bg-amber-500'
                               : 'bg-red-500'
-                            : 'bg-gray-200'
+                            : 'bg-stone-200'
                         }`}
                       />
                     ))}
@@ -191,20 +208,20 @@ export default function Register() {
                   {/* 강도 텍스트 */}
                   <div className="flex items-center justify-between text-xs">
                     <span className={`font-medium ${
-                      passwordValidation.strength === 'strong' ? 'text-green-600' :
-                      passwordValidation.strength === 'medium' ? 'text-yellow-600' : 'text-red-600'
+                      passwordValidation.strength === 'strong' ? 'text-emerald-600' :
+                      passwordValidation.strength === 'medium' ? 'text-amber-600' : 'text-red-600'
                     }`}>
                       {passwordValidation.strength === 'strong' ? '강함' :
                        passwordValidation.strength === 'medium' ? '보통' : '약함'}
                     </span>
-                    <div className="flex items-center gap-1 text-gray-500">
+                    <div className="flex items-center gap-1 text-stone-500">
                       <Shield size={12} aria-hidden="true" />
                       <span>보안 수준</span>
                     </div>
                   </div>
                   
                   {/* 체크리스트 */}
-                  <div className="grid grid-cols-2 gap-1 text-xs" role="list" aria-label="비밀번호 요구사항">
+                  <div className="grid grid-cols-2 gap-1.5 text-xs" role="list" aria-label="비밀번호 요구사항">
                     {[
                       { key: 'length', label: '8자 이상' },
                       { key: 'uppercase', label: '대문자' },
@@ -212,14 +229,18 @@ export default function Register() {
                       { key: 'number', label: '숫자' },
                       { key: 'special', label: '특수문자' },
                     ].map(({ key, label }) => (
-                      <div key={key} className="flex items-center gap-1" role="listitem">
+                      <div key={key} className="flex items-center gap-1.5" role="listitem">
                         {passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? (
-                          <Check size={12} className="text-green-500" aria-hidden="true" />
+                          <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <Check size={10} className="text-emerald-600" aria-hidden="true" />
+                          </div>
                         ) : (
-                          <X size={12} className="text-gray-300" aria-hidden="true" />
+                          <div className="w-4 h-4 rounded-full bg-stone-100 flex items-center justify-center">
+                            <X size={10} className="text-stone-400" aria-hidden="true" />
+                          </div>
                         )}
-                        <span className={passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? 'text-green-600' : 'text-gray-400'}>
-                          {label} {passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? '(충족)' : '(미충족)'}
+                        <span className={passwordValidation.checks[key as keyof typeof passwordValidation.checks] ? 'text-emerald-600' : 'text-stone-400'}>
+                          {label}
                         </span>
                       </div>
                     ))}
@@ -229,7 +250,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-stone-700 mb-1.5">
                 비밀번호 확인
               </label>
               <div className="relative">
@@ -241,29 +262,31 @@ export default function Register() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className={`w-full px-4 py-3 pr-12 min-h-[48px] border rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base ${
+                  className={`input-field pr-12 ${
                     confirmPassword && password !== confirmPassword
-                      ? 'border-red-300 bg-red-50'
+                      ? 'border-red-300 bg-red-50/50 focus:border-red-400 focus:ring-red-500/20'
                       : confirmPassword && password === confirmPassword
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-gray-300'
+                      ? 'border-emerald-300 bg-emerald-50/50 focus:border-emerald-400 focus:ring-emerald-500/20'
+                      : ''
                   }`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 touch-feedback"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100 transition-colors touch-feedback"
                   aria-label={showConfirmPassword ? '비밀번호 확인 숨기기' : '비밀번호 확인 보기'}
                 >
                   {showConfirmPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
                 </button>
               </div>
               {confirmPassword && password !== confirmPassword && (
-                <p className="text-xs text-red-500 mt-1" role="alert">비밀번호가 일치하지 않습니다</p>
+                <p className="text-xs text-red-500 mt-1.5 flex items-center gap-1" role="alert">
+                  <X size={12} aria-hidden="true" /> 비밀번호가 일치하지 않습니다
+                </p>
               )}
               {confirmPassword && password === confirmPassword && (
-                <p className="text-xs text-green-500 mt-1 flex items-center gap-1" role="status">
+                <p className="text-xs text-emerald-600 mt-1.5 flex items-center gap-1" role="status">
                   <Check size={12} aria-hidden="true" /> 비밀번호가 일치합니다
                 </p>
               )}
@@ -272,21 +295,34 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[48px] bg-gradient-to-r from-rose-400 to-pink-500 text-white py-3 rounded-lg font-medium hover:from-rose-500 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-feedback"
+              className="w-full min-h-[48px] bg-gradient-to-r from-rose-500 to-rose-600 text-white py-3 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none touch-feedback active:scale-[0.98]"
             >
-              {loading ? '가입 중...' : '회원가입'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  가입 중...
+                </span>
+              ) : '회원가입'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <div className="mt-6 pt-6 border-t border-stone-100 text-center">
+            <p className="text-stone-600 text-sm">
               이미 계정이 있으신가요?{' '}
-              <Link to="/login" className="text-rose-500 hover:text-rose-600 font-medium">
+              <Link to="/login" className="text-rose-500 hover:text-rose-600 font-semibold transition-colors">
                 로그인
               </Link>
             </p>
           </div>
         </div>
+        
+        {/* 하단 텍스트 */}
+        <p className="text-center text-xs text-stone-400 mt-4">
+          © 2024 Needless Wedding. All rights reserved.
+        </p>
       </div>
     </div>
   );

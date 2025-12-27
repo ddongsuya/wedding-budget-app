@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
-import { Eye, EyeOff, Shield, AlertTriangle } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle, Heart, Sparkles } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -55,16 +55,28 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 to-amber-50 px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-white to-gold-50 px-4 relative overflow-hidden">
+      {/* 배경 장식 */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-rose-200/30 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-gold-200/30 rounded-full blur-3xl" />
+      <div className="absolute top-1/3 right-1/4 w-24 h-24 bg-pink-200/20 rounded-full blur-2xl" />
+      
+      <div className="max-w-md w-full relative z-10">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-soft-xl border border-white/50 p-8">
+          {/* 로고 영역 */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Needless Wedding</h1>
-            <p className="text-gray-600">로그인하여 시작하세요</p>
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl shadow-button mb-4">
+              <Heart className="text-white" size={28} fill="white" />
+            </div>
+            <h1 className="text-2xl font-bold text-stone-800 mb-1">Needless Wedding</h1>
+            <p className="text-stone-500 text-sm flex items-center justify-center gap-1">
+              <Sparkles size={14} className="text-gold-500" />
+              우리만의 웨딩 플래너
+            </p>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm" role="alert" aria-live="assertive">
+            <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm" role="alert" aria-live="assertive">
               <div className="flex items-start gap-2">
                 <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" aria-hidden="true" />
                 <div>
@@ -86,7 +98,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-stone-700 mb-1.5">
                 이메일
               </label>
               <input
@@ -101,13 +113,13 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
+                className="input-field"
                 placeholder="your@email.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-stone-700 mb-1.5">
                 비밀번호
               </label>
               <div className="relative">
@@ -119,13 +131,13 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 pr-12 min-h-[48px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-400 focus:border-transparent text-base"
+                  className="input-field pr-12"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 touch-feedback"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2.5 text-stone-400 hover:text-stone-600 rounded-lg hover:bg-stone-100 transition-colors touch-feedback"
                   aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                 >
                   {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
@@ -136,30 +148,43 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full min-h-[48px] bg-gradient-to-r from-rose-400 to-pink-500 text-white py-3 rounded-lg font-medium hover:from-rose-500 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-feedback"
+              className="w-full min-h-[48px] bg-gradient-to-r from-rose-500 to-rose-600 text-white py-3 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none touch-feedback active:scale-[0.98]"
             >
-              {loading ? '로그인 중...' : '로그인'}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  로그인 중...
+                </span>
+              ) : '로그인'}
             </button>
           </form>
 
           <div className="mt-4 text-center">
             <Link 
               to="/forgot-password" 
-              className="text-sm text-rose-500 hover:text-rose-600"
+              className="text-sm text-stone-500 hover:text-rose-500 transition-colors"
             >
               비밀번호를 잊으셨나요?
             </Link>
           </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
+          <div className="mt-6 pt-6 border-t border-stone-100 text-center">
+            <p className="text-stone-600 text-sm">
               계정이 없으신가요?{' '}
-              <Link to="/register" className="text-rose-500 hover:text-rose-600 font-medium">
+              <Link to="/register" className="text-rose-500 hover:text-rose-600 font-semibold transition-colors">
                 회원가입
               </Link>
             </p>
           </div>
         </div>
+        
+        {/* 하단 텍스트 */}
+        <p className="text-center text-xs text-stone-400 mt-4">
+          © 2024 Needless Wedding. All rights reserved.
+        </p>
       </div>
     </div>
   );
