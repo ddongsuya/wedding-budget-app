@@ -3,11 +3,15 @@
 @tailwind utilities;
 
 /* ===== 기본 스타일 ===== */
+html {
+  background-color: #fafaf9; /* stone-50 - overscroll 시 배경색 */
+}
+
 body {
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-  background: linear-gradient(180deg, #fafaf9 0%, #f5f5f4 100%);
+  background-color: #fafaf9; /* stone-50 */
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: none; /* pull-to-refresh 바운스 비활성화 */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

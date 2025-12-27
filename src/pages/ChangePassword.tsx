@@ -77,8 +77,8 @@ const ChangePassword = () => {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {/* 헤더 */}
-      <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10">
+      {/* 헤더 - Safe Area 적용 */}
+      <header className="bg-white px-4 py-4 shadow-sm sticky top-0 z-10 safe-area-pt">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}

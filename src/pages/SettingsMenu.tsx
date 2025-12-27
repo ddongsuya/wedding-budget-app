@@ -40,8 +40,8 @@ const SettingsMenu = () => {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      {/* 헤더 */}
-      <header className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-0 z-10 border-b border-stone-100">
+      {/* 헤더 - Safe Area 적용 */}
+      <header className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-0 z-10 border-b border-stone-100 safe-area-pt">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
