@@ -70,10 +70,10 @@ export const validateUuidParam = param('id')
   .isUUID()
   .withMessage('유효한 ID 형식이 아닙니다');
 
-// Positive integer validation
+// Positive integer validation (allows empty)
 export const validatePositiveInt = (field: string) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // 빈 값 허용
     .isInt({ min: 0 })
     .withMessage(`${field}은(는) 0 이상의 정수여야 합니다`)
     .toInt();
@@ -85,10 +85,10 @@ export const validateRequiredPositiveInt = (field: string) =>
     .withMessage(`${field}은(는) 0 이상의 정수여야 합니다`)
     .toInt();
 
-// Date validation (ISO8601)
+// Date validation (ISO8601, allows empty)
 export const validateDate = (field: string) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // 빈 문자열, null, undefined 허용
     .isISO8601()
     .withMessage(`${field}은(는) 유효한 날짜 형식이어야 합니다`);
 
@@ -105,10 +105,10 @@ export const validateStringLength = (field: string, min: number, max: number) =>
     .isLength({ min, max })
     .withMessage(`${field}은(는) ${min}자 이상 ${max}자 이하여야 합니다`);
 
-// Optional string with max length
+// Optional string with max length (allows empty string)
 export const validateOptionalString = (field: string, maxLength: number) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // 빈 문자열, null, undefined 모두 허용
     .trim()
     .isLength({ max: maxLength })
     .withMessage(`${field}은(는) ${maxLength}자를 초과할 수 없습니다`);
@@ -122,10 +122,10 @@ export const validateRequiredString = (field: string, maxLength: number = 255) =
     .isLength({ max: maxLength })
     .withMessage(`${field}은(는) ${maxLength}자를 초과할 수 없습니다`);
 
-// Boolean validation
+// Boolean validation (allows undefined/null)
 export const validateBoolean = (field: string) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // undefined, null 허용
     .isBoolean()
     .withMessage(`${field}은(는) true 또는 false여야 합니다`);
 
@@ -135,26 +135,26 @@ export const validateEnum = (field: string, values: string[]) =>
     .isIn(values)
     .withMessage(`${field}은(는) ${values.join(', ')} 중 하나여야 합니다`);
 
-// Optional enum validation
+// Optional enum validation (allows empty string)
 export const validateOptionalEnum = (field: string, values: string[]) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // 빈 문자열, null, undefined 모두 허용
     .isIn(values)
     .withMessage(`${field}은(는) ${values.join(', ')} 중 하나여야 합니다`);
 
-// URL validation
+// URL validation (allows empty)
 export const validateUrl = (field: string) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // 빈 문자열, null, undefined 허용
     .isURL()
     .withMessage(`${field}은(는) 유효한 URL이어야 합니다`)
     .isLength({ max: 2048 })
     .withMessage(`${field}은(는) 2048자를 초과할 수 없습니다`);
 
-// Array validation
+// Array validation (allows empty array)
 export const validateArray = (field: string) =>
   body(field)
-    .optional()
+    .optional({ values: 'falsy' })  // undefined, null 허용
     .isArray()
     .withMessage(`${field}은(는) 배열이어야 합니다`);
 
