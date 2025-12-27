@@ -265,238 +265,143 @@ const SettingsNew: React.FC = () => {
       {/* Content */}
       <div className="animate-fade-in">
         {activeTab === 'profile' && (
-          <div className="space-y-6">
-            {/* 프로필 이미지 섹션 */}
-            <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">
-                <Camera size={20} className="text-rose-500" />
-                프로필 사진
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-4">
+            {/* 프로필 이미지 섹션 - 컴팩트하게 */}
+            <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-center gap-4 md:gap-8">
                 {/* 신랑 사진 */}
                 <div className="flex flex-col items-center">
-                  <div className="relative w-32 h-32 mb-3">
+                  <div className="relative w-20 h-20 md:w-24 md:h-24">
                     {profile.groom_image ? (
-                      <img
-                        src={profile.groom_image}
-                        alt="신랑"
-                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
-                      />
+                      <img src={profile.groom_image} alt="신랑" className="w-full h-full rounded-full object-cover border-3 border-white shadow-md" />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-blue-100 flex items-center justify-center border-4 border-white shadow-lg">
-                        <User size={48} className="text-blue-400" />
+                      <div className="w-full h-full rounded-full bg-blue-100 flex items-center justify-center border-3 border-white shadow-md">
+                        <User size={32} className="text-blue-400" />
                       </div>
                     )}
-                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
-                      <Camera size={16} />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, 'groom')}
-                      />
+                    <label className="absolute -bottom-1 -right-1 bg-rose-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow">
+                      <Camera size={12} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'groom')} />
                     </label>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">신랑 사진</p>
+                  <p className="text-xs font-medium text-gray-600 mt-1">신랑</p>
                 </div>
 
                 {/* 커플 사진 */}
                 <div className="flex flex-col items-center">
-                  <div className="relative w-32 h-32 mb-3">
+                  <div className="relative w-24 h-24 md:w-28 md:h-28">
                     {profile.couple_photo ? (
-                      <img
-                        src={profile.couple_photo}
-                        alt="커플"
-                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
-                      />
+                      <img src={profile.couple_photo} alt="커플" className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg" />
                     ) : (
                       <div className="w-full h-full rounded-full bg-rose-100 flex items-center justify-center border-4 border-white shadow-lg">
-                        <Heart size={48} className="text-rose-400" />
+                        <Heart size={36} className="text-rose-400" />
                       </div>
                     )}
-                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
-                      <Camera size={16} />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, 'couple')}
-                      />
+                    <label className="absolute -bottom-1 -right-1 bg-rose-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow">
+                      <Camera size={12} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'couple')} />
                     </label>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">커플 사진</p>
+                  <p className="text-xs font-medium text-gray-600 mt-1">커플</p>
                 </div>
 
                 {/* 신부 사진 */}
                 <div className="flex flex-col items-center">
-                  <div className="relative w-32 h-32 mb-3">
+                  <div className="relative w-20 h-20 md:w-24 md:h-24">
                     {profile.bride_image ? (
-                      <img
-                        src={profile.bride_image}
-                        alt="신부"
-                        className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
-                      />
+                      <img src={profile.bride_image} alt="신부" className="w-full h-full rounded-full object-cover border-3 border-white shadow-md" />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-pink-100 flex items-center justify-center border-4 border-white shadow-lg">
-                        <User size={48} className="text-pink-400" />
+                      <div className="w-full h-full rounded-full bg-pink-100 flex items-center justify-center border-3 border-white shadow-md">
+                        <User size={32} className="text-pink-400" />
                       </div>
                     )}
-                    <label className="absolute bottom-0 right-0 bg-rose-500 text-white p-2 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow-lg">
-                      <Camera size={16} />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(e, 'bride')}
-                      />
+                    <label className="absolute -bottom-1 -right-1 bg-rose-500 text-white p-1.5 rounded-full cursor-pointer hover:bg-rose-600 transition-colors shadow">
+                      <Camera size={12} />
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'bride')} />
                     </label>
                   </div>
-                  <p className="text-sm font-medium text-gray-700">신부 사진</p>
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 text-center mt-4">
-                사진을 클릭하여 업로드하세요 (최대 10MB)
-              </p>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-stone-800 mb-4">신랑 정보</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    이름 <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="groom_name"
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    value={profile.groom_name}
-                    onChange={(e) => handleProfileChange('groom_name', e.target.value)}
-                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
-                    placeholder="이름 입력"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
-                  <DatePicker
-                    value={profile.groom_birth_date}
-                    onChange={(date) => handleProfileChange('groom_birth_date', date)}
-                    placeholder="생년월일 선택"
-                    minYear={1950}
-                    maxYear={new Date().getFullYear()}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">연락처</label>
-                  <input
-                    type="tel"
-                    name="groom_contact"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    value={profile.groom_contact}
-                    onChange={(e) => handleProfileChange('groom_contact', e.target.value)}
-                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
-                    placeholder="010-0000-0000"
-                  />
+                  <p className="text-xs font-medium text-gray-600 mt-1">신부</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-stone-800 mb-4">신부 정보</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    이름 <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="bride_name"
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    value={profile.bride_name}
-                    onChange={(e) => handleProfileChange('bride_name', e.target.value)}
-                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
-                    placeholder="이름 입력"
-                  />
+            {/* 신랑/신부 정보 - 2열 그리드 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 신랑 정보 */}
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="text-base font-bold text-stone-800 mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User size={14} className="text-blue-500" />
+                  </div>
+                  신랑 정보
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">이름 *</label>
+                    <input type="text" name="groom_name" autoComplete="name" value={profile.groom_name} onChange={(e) => handleProfileChange('groom_name', e.target.value)} className="w-full px-3 py-2 min-h-[44px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-sm" placeholder="이름" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">생년월일</label>
+                    <DatePicker value={profile.groom_birth_date} onChange={(date) => handleProfileChange('groom_birth_date', date)} placeholder="생년월일" minYear={1950} maxYear={new Date().getFullYear()} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">연락처</label>
+                    <input type="tel" name="groom_contact" inputMode="tel" value={profile.groom_contact} onChange={(e) => handleProfileChange('groom_contact', e.target.value)} className="w-full px-3 py-2 min-h-[44px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-sm" placeholder="010-0000-0000" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">생년월일</label>
-                  <DatePicker
-                    value={profile.bride_birth_date}
-                    onChange={(date) => handleProfileChange('bride_birth_date', date)}
-                    placeholder="생년월일 선택"
-                    minYear={1950}
-                    maxYear={new Date().getFullYear()}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">연락처</label>
-                  <input
-                    type="tel"
-                    name="bride_contact"
-                    inputMode="tel"
-                    autoComplete="tel"
-                    value={profile.bride_contact}
-                    onChange={(e) => handleProfileChange('bride_contact', e.target.value)}
-                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
-                    placeholder="010-0000-0000"
-                  />
+              </div>
+
+              {/* 신부 정보 */}
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="text-base font-bold text-stone-800 mb-3 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center">
+                    <User size={14} className="text-pink-500" />
+                  </div>
+                  신부 정보
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">이름 *</label>
+                    <input type="text" name="bride_name" autoComplete="name" value={profile.bride_name} onChange={(e) => handleProfileChange('bride_name', e.target.value)} className="w-full px-3 py-2 min-h-[44px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-sm" placeholder="이름" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">생년월일</label>
+                    <DatePicker value={profile.bride_birth_date} onChange={(date) => handleProfileChange('bride_birth_date', date)} placeholder="생년월일" minYear={1950} maxYear={new Date().getFullYear()} />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">연락처</label>
+                    <input type="tel" name="bride_contact" inputMode="tel" value={profile.bride_contact} onChange={(e) => handleProfileChange('bride_contact', e.target.value)} className="w-full px-3 py-2 min-h-[44px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-sm" placeholder="010-0000-0000" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-stone-800 mb-4">커플 정보</h3>
-              <div className="space-y-4">
+            {/* 커플 정보 - 컴팩트 */}
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <h3 className="text-base font-bold text-stone-800 mb-3 flex items-center gap-2">
+                <Heart size={16} className="text-rose-500" />
+                커플 정보
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">우리의 애칭/별명</label>
-                  <input
-                    type="text"
-                    name="couple_nickname"
-                    autoCapitalize="words"
-                    value={profile.couple_nickname}
-                    onChange={(e) => handleProfileChange('couple_nickname', e.target.value)}
-                    className="w-full px-4 py-3 min-h-[48px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-base"
-                    placeholder="예: 알콩달콩 우리"
-                  />
+                  <label className="block text-xs font-medium text-gray-600 mb-1">우리의 애칭</label>
+                  <input type="text" name="couple_nickname" value={profile.couple_nickname} onChange={(e) => handleProfileChange('couple_nickname', e.target.value)} className="w-full px-3 py-2 min-h-[44px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-200 text-sm" placeholder="예: 알콩달콩" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">처음 만난 날</label>
-                  <DatePicker
-                    value={profile.first_met_date}
-                    onChange={(date) => handleProfileChange('first_met_date', date)}
-                    placeholder="처음 만난 날 선택"
-                    minYear={2000}
-                    maxYear={new Date().getFullYear()}
-                  />
+                  <label className="block text-xs font-medium text-gray-600 mb-1">처음 만난 날</label>
+                  <DatePicker value={profile.first_met_date} onChange={(date) => handleProfileChange('first_met_date', date)} placeholder="날짜 선택" minYear={2000} maxYear={new Date().getFullYear()} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">결혼 예정일</label>
-                  <DatePicker
-                    value={profile.wedding_date}
-                    onChange={(date) => handleProfileChange('wedding_date', date)}
-                    placeholder="결혼 예정일 선택"
-                    minYear={new Date().getFullYear()}
-                    maxYear={new Date().getFullYear() + 5}
-                  />
+                  <label className="block text-xs font-medium text-gray-600 mb-1">결혼 예정일</label>
+                  <DatePicker value={profile.wedding_date} onChange={(date) => handleProfileChange('wedding_date', date)} placeholder="날짜 선택" minYear={new Date().getFullYear()} maxYear={new Date().getFullYear() + 5} />
                 </div>
               </div>
             </div>
 
+            {/* 저장 버튼 */}
             <div className="flex justify-end">
-              <button
-                onClick={saveProfile}
-                disabled={isSaving}
-                className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 disabled:bg-gray-300 transition-colors flex items-center gap-2"
-              >
-                {isSaving ? '저장 중...' : (
-                  <>
-                    <Check size={18} />
-                    프로필 저장하기
-                  </>
-                )}
+              <button onClick={saveProfile} disabled={isSaving} className="px-5 py-2.5 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 disabled:bg-gray-300 transition-colors flex items-center gap-2 text-sm">
+                {isSaving ? '저장 중...' : (<><Check size={16} /> 저장하기</>)}
               </button>
             </div>
           </div>

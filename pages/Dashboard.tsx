@@ -263,25 +263,25 @@ const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Charts Row 1 - 컴팩트 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Budget vs Actual Chart */}
         <div className="lg:col-span-2">
-          <Card title="카테고리별 예산 대비 지출" className="h-full min-h-[350px]">
-            <div className="h-[300px] w-full mt-4">
+          <Card title="카테고리별 예산 대비 지출" className="h-full">
+            <div className="h-[220px] md:h-[260px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={budgetVsActualData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <BarChart data={budgetVsActualData} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#78716c', fontSize: 12}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#78716c', fontSize: 12}} tickFormatter={(val) => `${val/10000}만`} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#78716c', fontSize: 11}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#78716c', fontSize: 11}} tickFormatter={(val) => `${val/10000}만`} />
                   <Tooltip 
                     cursor={{fill: '#f5f5f4'}}
                     contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                     formatter={(value: number) => formatMoney(value)}
                   />
-                  <Legend iconType="circle" />
-                  <Bar name="예산" dataKey="budget" fill="#e7e5e4" radius={[4, 4, 0, 0]} barSize={20} />
-                  <Bar name="실지출" dataKey="actual" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={20} />
+                  <Legend iconType="circle" wrapperStyle={{fontSize: '12px'}} />
+                  <Bar name="예산" dataKey="budget" fill="#e7e5e4" radius={[4, 4, 0, 0]} barSize={16} />
+                  <Bar name="실지출" dataKey="actual" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={16} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -290,8 +290,8 @@ const Dashboard: React.FC = () => {
 
         {/* Category Distribution */}
         <div className="lg:col-span-1">
-          <Card title="지출 비중" className="h-full min-h-[350px]">
-            <div className="h-[300px] w-full flex flex-col items-center justify-center relative">
+          <Card title="지출 비중" className="h-full">
+            <div className="h-[220px] md:h-[260px] w-full flex flex-col items-center justify-center relative">
                {categoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -299,8 +299,8 @@ const Dashboard: React.FC = () => {
                       data={categoryData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={45}
+                      outerRadius={65}
                       paddingAngle={5}
                       dataKey="value"
                     >
@@ -309,7 +309,7 @@ const Dashboard: React.FC = () => {
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number) => formatMoney(value)} />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                    <Legend verticalAlign="bottom" height={30} iconType="circle" wrapperStyle={{fontSize: '11px'}} />
                   </PieChart>
                 </ResponsiveContainer>
                ) : (
@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
                    description="첫 지출을 기록해보세요"
                    actionLabel="지출 기록하기"
                    onAction={() => navigate('/expenses')}
-                   className="py-4"
+                   className="py-2"
                  />
                )}
             </div>
@@ -327,23 +327,23 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Charts Row 2 & Recent List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Row 2 & Recent List - 컴팩트 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         
         {/* Contribution Comparison */}
-        <Card title="신랑/신부 지출 분담 현황" className="h-full">
-           <div className="h-[250px] w-full mt-4">
+        <Card title="신랑/신부 지출 분담" className="h-full">
+           <div className="h-[180px] w-full mt-2">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={contributionData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={contributionData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e5e7eb" />
                   <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#57534e', fontSize: 14, fontWeight: 500}} />
+                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#57534e', fontSize: 13, fontWeight: 500}} />
                   <Tooltip 
                     cursor={{fill: 'transparent'}}
                     contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
                     formatter={(value: number) => formatMoney(value)}
                   />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={30}>
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
                     {contributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
                     ))}
@@ -351,15 +351,15 @@ const Dashboard: React.FC = () => {
                 </BarChart>
               </ResponsiveContainer>
            </div>
-           <div className="flex justify-center gap-6 mt-2 text-sm text-stone-500">
-              <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-blue-500"></div> 신랑 부담
+           <div className="flex justify-center gap-4 mt-1 text-xs text-stone-500">
+              <div className="flex items-center gap-1.5">
+                 <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div> 신랑
               </div>
-              <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-rose-500"></div> 신부 부담
+              <div className="flex items-center gap-1.5">
+                 <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div> 신부
               </div>
-              <div className="flex items-center gap-2">
-                 <div className="w-3 h-3 rounded-full bg-stone-400"></div> 공동 부담
+              <div className="flex items-center gap-1.5">
+                 <div className="w-2.5 h-2.5 rounded-full bg-stone-400"></div> 공동
               </div>
            </div>
         </Card>
@@ -373,26 +373,26 @@ const Dashboard: React.FC = () => {
             </NavLink>
           }
         >
-          <div className="space-y-4">
+          <div className="space-y-2 max-h-[240px] overflow-y-auto">
             {recentExpenses.length > 0 ? (
               recentExpenses.map((expense, index) => (
                 <div 
                   key={expense.id} 
-                  className="flex justify-between items-center p-3 bg-stone-50 rounded-xl hover:bg-stone-100 transition-all duration-200 stagger-item touch-feedback active:scale-[0.98]"
+                  className="flex justify-between items-center p-2.5 bg-stone-50 rounded-lg hover:bg-stone-100 transition-all duration-200 stagger-item touch-feedback active:scale-[0.98]"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-400">
-                      {expense.paymentMethod === 'card' ? <CreditCard size={18}/> : <Wallet size={18}/>}
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-400">
+                      {expense.paymentMethod === 'card' ? <CreditCard size={14}/> : <Wallet size={14}/>}
                     </div>
                     <div>
-                      <p className="font-bold text-stone-800 text-sm">{expense.title}</p>
-                      <p className="text-xs text-stone-500">{expense.paymentDate} · {expense.vendorName || '업체미정'}</p>
+                      <p className="font-bold text-stone-800 text-xs">{expense.title}</p>
+                      <p className="text-[10px] text-stone-500">{expense.paymentDate}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-stone-800 text-sm">{formatMoney(expense.amount)}</p>
-                    <p className="text-[10px] text-stone-400">
+                    <p className="font-bold text-stone-800 text-xs">{formatMoney(expense.amount)}</p>
+                    <p className="text-[9px] text-stone-400">
                       {expense.paidBy === 'groom' ? '신랑' : expense.paidBy === 'bride' ? '신부' : '공동'}
                     </p>
                   </div>
@@ -405,7 +405,7 @@ const Dashboard: React.FC = () => {
                 description="결혼 준비 비용을 기록해보세요"
                 actionLabel="지출 기록하기"
                 onAction={() => navigate('/expenses')}
-                className="py-4"
+                className="py-2"
               />
             )}
           </div>
