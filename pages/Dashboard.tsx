@@ -199,40 +199,42 @@ const Dashboard: React.FC = () => {
   if (loading) return <DashboardSkeleton />;
 
   return (
-    <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
+    <div className="space-y-4 animate-fade-in pb-20 md:pb-0">
       
-      {/* Couple Header Section */}
-      <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-stone-200 shadow-sm p-4 sm:p-6 md:p-8">
-         <div className="flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 relative z-10">
-            <div className="flex items-center gap-3 sm:gap-6">
-               <div className="flex -space-x-3 sm:-space-x-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden">
-                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt={`${profile.groom.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300" role="img" aria-label={`${profile.groom.name} 프로필`}><User size={24} aria-hidden="true" /></div>}
+      {/* Couple Header Section - 개선된 디자인 */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-white via-white to-rose-50/30 border border-stone-100/80 shadow-card p-4 sm:p-5">
+         <div className="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
+            <div className="flex items-center gap-4">
+               {/* 프로필 이미지 */}
+               <div className="flex -space-x-3">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-soft-md bg-gradient-to-br from-blue-50 to-blue-100 overflow-hidden ring-2 ring-blue-100">
+                    {profile.groom.avatarUrl ? <img src={profile.groom.avatarUrl} alt={`${profile.groom.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-blue-400" role="img" aria-label={`${profile.groom.name} 프로필`}><User size={22} aria-hidden="true" /></div>}
                   </div>
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full border-2 sm:border-4 border-white shadow-md bg-stone-100 overflow-hidden z-10">
-                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt={`${profile.bride.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-stone-300" role="img" aria-label={`${profile.bride.name} 프로필`}><User size={24} aria-hidden="true" /></div>}
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-3 border-white shadow-soft-md bg-gradient-to-br from-rose-50 to-rose-100 overflow-hidden z-10 ring-2 ring-rose-100">
+                    {profile.bride.avatarUrl ? <img src={profile.bride.avatarUrl} alt={`${profile.bride.name} 프로필 사진`} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-rose-400" role="img" aria-label={`${profile.bride.name} 프로필`}><User size={22} aria-hidden="true" /></div>}
                   </div>
                </div>
-               <div className="min-w-0 flex-1">
-                  <h2 className="text-lg sm:text-2xl md:text-3xl font-bold text-stone-800 flex items-center gap-2 truncate">
+               {/* 커플 정보 */}
+               <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-bold text-stone-800 flex items-center gap-1.5 truncate">
                      <span className="truncate">{profile.nickname || '우리 결혼해요'}</span>
-                     <Heart className="text-rose-500 fill-rose-500 animate-pulse flex-shrink-0" size={20}/>
+                     <Heart className="text-rose-500 fill-rose-500 flex-shrink-0" size={14}/>
                   </h2>
-                  <p className="text-stone-500 font-medium mt-1 text-sm sm:text-base truncate">
+                  <p className="text-stone-500 text-xs sm:text-sm truncate">
                      {profile.groom.name} & {profile.bride.name}
                   </p>
                </div>
             </div>
 
-            <div className="flex gap-4 sm:gap-6 md:gap-8 text-center bg-stone-50/80 backdrop-blur-sm p-3 sm:p-4 rounded-xl sm:rounded-2xl w-full md:w-auto justify-center">
-               <div>
-                  <p className="text-[10px] sm:text-xs text-stone-500 font-bold uppercase tracking-wide">만난 지</p>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">D+{dPlusDay}</p>
+            {/* D-day 카드 */}
+            <div className="flex gap-3 text-center w-full md:w-auto justify-center">
+               <div className="bg-gradient-to-br from-rose-50 to-rose-100/50 px-4 py-2.5 rounded-xl border border-rose-100">
+                  <p className="text-[10px] text-rose-600 font-semibold uppercase tracking-wider">만난 지</p>
+                  <p className="text-lg font-bold text-rose-600">D+{dPlusDay}</p>
                </div>
-               <div className="w-px bg-stone-200"></div>
-               <div>
-                  <p className="text-[10px] sm:text-xs text-stone-500 font-bold uppercase tracking-wide">결혼까지</p>
-                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-rose-500">
+               <div className="bg-gradient-to-br from-rose-500 to-rose-600 px-4 py-2.5 rounded-xl shadow-button">
+                  <p className="text-[10px] text-rose-100 font-semibold uppercase tracking-wider">결혼까지</p>
+                  <p className="text-lg font-bold text-white">
                     {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day!' : `D+${Math.abs(dDay)}`}
                   </p>
                </div>
@@ -240,22 +242,24 @@ const Dashboard: React.FC = () => {
          </div>
          
          {/* Background Decoration */}
+         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-100/30 to-transparent rounded-full -mr-10 -mt-10" aria-hidden="true" />
          {profile.couplePhotoUrl && (
-            <div className="absolute inset-0 z-0 opacity-10" aria-hidden="true">
+            <div className="absolute inset-0 z-0 opacity-5" aria-hidden="true">
                <img src={profile.couplePhotoUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
-               <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
             </div>
          )}
       </div>
 
-      {/* Alerts for Over Budget */}
+      {/* Alerts for Over Budget - 개선된 디자인 */}
       {overBudgetCategories.length > 0 && (
-        <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
-          <div>
-            <h4 className="font-bold text-red-700">예산 초과 경고</h4>
-            <p className="text-sm text-red-600 mt-1">
-              {overBudgetCategories.map(c => c.name).join(', ')} 항목이 예산을 초과했습니다.
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-3 flex items-center gap-3">
+          <div className="p-2 bg-red-100 rounded-lg">
+            <AlertTriangle className="text-red-500" size={18} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-red-700 text-sm">예산 초과</h4>
+            <p className="text-xs text-red-600 truncate">
+              {overBudgetCategories.map(c => c.name).join(', ')}
             </p>
           </div>
         </div>
