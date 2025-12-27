@@ -13,6 +13,12 @@ import { useOnlineStatus } from './src/hooks/useOnlineStatus';
 import { OfflinePage } from './src/pages/Offline';
 import { LoadingScreen } from './src/components/common/LoadingScreen/LoadingScreen';
 import { SplashScreen } from './src/components/common/SplashScreen';
+import { WelcomeOnboarding } from './components/onboarding/WelcomeOnboarding';
+import { SetupWizard } from './components/onboarding/SetupWizard';
+import { FeatureHints } from './components/onboarding/FeatureHints';
+import { MilestoneCelebration } from './components/celebration/MilestoneCelebration';
+import { useOnboarding } from './src/hooks/useOnboarding';
+import { useMilestone } from './src/hooks/useMilestone';
 
 // 페이지 지연 로딩 (Lazy Loading)
 const Login = lazy(() => import('./src/pages/Login'));
@@ -32,6 +38,50 @@ const Announcements = lazy(() => import('./src/pages/Announcements'));
 const NotificationCenter = lazy(() => import('./src/pages/NotificationCenter'));
 const NotificationSettings = lazy(() => import('./src/pages/NotificationSettings'));
 const PhotoReferences = lazy(() => import('./pages/PhotoReferences'));
+
+// 온보딩 및 마일스톤 래퍼 컴포넌트
+const AppContent: React.FC = () => {
+  const {
+    currentStep,
+    completeWelcome,
+    completeSetup,
+    completeHints,
+  } = useOnboarding();
+
+  // 마일스톤 데이터 (실제로는 API/Context에서 가져옴)
+  // TODO: 실제 데이터 연동 필요
+  const { currentMilestone, dismissMilestone } = useMilestone(
+    null, // dDay - 실제 데이터 연동 필요
+    0,    // checklistProgress
+    0     // budgetProgress
+  );
+
+  return (
+    <>
+      {/* 온보딩 플로우 */}
+      {currentStep === 'welcome' && (
+        <WelcomeOnboarding onComplete={completeWelcome} />
+      )}
+      {currentStep === 'setup' && (
+        <SetupWizard 
+          onComplete={completeSetup}
+          onSkip={() => completeSetup()}
+        />
+      )}
+      {currentStep === 'hints' && (
+        <FeatureHints onComplete={completeHints} />
+      )}
+
+      {/* 마일스톤 축하 모달 */}
+      {currentMilestone && currentStep === 'complete' && (
+        <MilestoneCelebration 
+          type={currentMilestone} 
+          onClose={dismissMilestone} 
+        />
+      )}
+    </>
+  );
+};
 
 function App() {
   const isOnline = useOnlineStatus();
@@ -203,6 +253,7 @@ function App() {
       </Router>
         <ToastContainer />
         <InstallPrompt />
+        <AppContent />
           </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
