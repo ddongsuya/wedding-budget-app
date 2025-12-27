@@ -1,7 +1,7 @@
 // 커스텀 Service Worker - 푸시 알림 및 캐싱 처리
 // Requirements: 2.1 - 정적 자산 캐싱 전략 개선
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2'; // 버전 업데이트
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
