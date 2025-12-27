@@ -23,7 +23,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete, duration = 2500
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white transition-opacity duration-500 safe-area-inset ${
         phase === 'exit' ? 'opacity-0' : 'opacity-100'
       }`}
     >

@@ -70,9 +70,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center p-0 md:p-4 bg-white md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center p-0 md:p-4 bg-white md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in safe-area-inset">
       <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl shadow-none md:shadow-2xl flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white shrink-0">
+        <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 safe-area-pt-min">
           <h3 className="text-xl font-bold text-stone-800">
             {initialData ? '지출 내역 수정' : '지출 내역 추가'}
           </h3>
@@ -224,7 +224,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
 
         </form>
 
-        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb">
+        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb-min">
           <Button variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
           <Button variant="primary" className="flex-1" onClick={handleSubmit} loading={isSaving} disabled={isSaving}>
             {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}

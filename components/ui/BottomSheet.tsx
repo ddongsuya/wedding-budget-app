@@ -129,7 +129,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {/* Action Footer */}
             {action && (
-              <div className="flex-none p-4 border-t border-stone-100 safe-area-pb bg-white shadow-[0_-5px_10px_rgba(0,0,0,0.02)]">
+              <div className="flex-none p-4 border-t border-stone-100 safe-area-pb-min bg-white shadow-[0_-5px_10px_rgba(0,0,0,0.02)]">
                 {action}
               </div>
             )}

@@ -179,7 +179,7 @@ export const BudgetSettingModal: React.FC<BudgetSettingModalProps> = ({ settings
             {formContent}
           </form>
 
-          <div className="p-4 border-t border-stone-100 safe-area-pb bg-white">
+          <div className="p-4 border-t border-stone-100 safe-area-pb-min bg-white">
             <Button type="button" className="w-full" onClick={handleSubmit} loading={isSaving} disabled={isSaving}>
               {isSaving ? '저장 중...' : '저장하기'}
             </Button>

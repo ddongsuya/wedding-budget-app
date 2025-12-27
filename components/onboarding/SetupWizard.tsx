@@ -210,9 +210,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete, onSkip }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 bg-white flex flex-col safe-area-inset">
       {/* 진행 바 */}
-      <div className="h-1 bg-stone-100">
+      <div className="h-1 bg-stone-100 safe-area-pt">
         <motion.div
           className="h-full bg-gradient-to-r from-rose-400 to-rose-500"
           initial={{ width: 0 }}
@@ -270,7 +270,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete, onSkip }) 
       </div>
 
       {/* 하단 버튼 */}
-      <div className="px-6 pb-8">
+      <div className="px-6 pb-8 safe-area-pb">
         <button
           onClick={handleNext}
           className="w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-r from-rose-500 to-rose-600 hover:shadow-lg hover:shadow-rose-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"

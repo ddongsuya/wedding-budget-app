@@ -335,7 +335,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Expandable FAB System */}
-      <div className="md:hidden fixed bottom-24 right-4 z-50 flex flex-col items-end gap-3 pointer-events-auto" role="group" aria-label="빠른 추가 메뉴">
+      <div 
+        className="md:hidden fixed right-4 z-50 flex flex-col items-end gap-3 pointer-events-auto" 
+        style={{ bottom: 'calc(96px + env(safe-area-inset-bottom, 0px))' }}
+        role="group" 
+        aria-label="빠른 추가 메뉴"
+      >
          <AnimatePresence>
             {isFabOpen && (
                <>
@@ -403,7 +408,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 xs:px-4 py-2 flex justify-around items-center z-50 safe-area-pb shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" role="navigation" aria-label="모바일 네비게이션">
+      <nav 
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 xs:px-4 py-2 flex justify-around items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" 
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
+        role="navigation" 
+        aria-label="모바일 네비게이션"
+      >
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.path}

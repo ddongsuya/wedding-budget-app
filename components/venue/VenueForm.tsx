@@ -625,7 +625,7 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
              </span>
         </div>
 
-        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 rounded-b-2xl">
+        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 rounded-b-2xl safe-area-pb-min">
           <Button variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
           <Button variant="primary" className="flex-1" onClick={handleSubmit} loading={isSaving} disabled={isSaving}>
             {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}

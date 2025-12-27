@@ -247,7 +247,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({ initialData, onSav
             {formContent}
           </form>
 
-          <div className="p-4 border-t border-stone-100 safe-area-pb bg-white">
+          <div className="p-4 border-t border-stone-100 safe-area-pb-min bg-white">
             {actionButtons}
           </div>
         </motion.div>

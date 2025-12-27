@@ -85,12 +85,12 @@ export const WelcomeOnboarding: React.FC<WelcomeOnboardingProps> = ({ onComplete
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-50 bg-white flex flex-col safe-area-inset">
       {/* Skip 버튼 */}
-      <div className="absolute top-4 right-4 z-10">
+      <div className="absolute top-4 right-4 z-10 safe-area-pt safe-area-pr">
         <button
           onClick={handleSkip}
-          className="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium"
+          className="px-4 py-2 text-stone-500 hover:text-stone-700 text-sm font-medium min-h-[44px]"
         >
           건너뛰기
         </button>
@@ -158,7 +158,7 @@ export const WelcomeOnboarding: React.FC<WelcomeOnboardingProps> = ({ onComplete
       </div>
 
       {/* 하단 네비게이션 */}
-      <div className="px-6 pb-8 space-y-6">
+      <div className="px-6 pb-8 space-y-6 safe-area-pb">
         {/* 도트 인디케이터 */}
         <div className="flex justify-center gap-2">
           {ONBOARDING_STEPS.map((_, index) => (
