@@ -342,20 +342,42 @@ export const createPhotoReferenceValidation = [
     .withMessage('이미지 URL은 필수입니다')
     .isLength({ max: 5000000 })
     .withMessage('이미지 데이터가 너무 큽니다 (최대 5MB)'),
-  validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
-  validateOptionalString('title', 200),
-  validateOptionalString('memo', 1000),
+  body('category')
+    .optional()
+    .custom((value) => {
+      if (!value || value === '') return true;
+      const validCategories = ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc'];
+      return validCategories.includes(value);
+    })
+    .withMessage('category는 outdoor, indoor, pose, props, dress, suit, makeup, etc 중 하나여야 합니다'),
+  body('title')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('title은 200자를 초과할 수 없습니다'),
+  body('memo')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('memo는 1000자를 초과할 수 없습니다'),
   body('tags')
     .optional()
     .custom((value) => {
-      if (value === undefined || value === null) return true;
-      if (!Array.isArray(value)) return false;
-      return true;
+      if (value === undefined || value === null || value === '') return true;
+      if (Array.isArray(value)) return true;
+      return false;
     })
     .withMessage('tags는 배열이어야 합니다'),
   body('source_url')
-    .optional({ values: 'falsy' })
-    .isURL()
+    .optional()
+    .custom((value) => {
+      if (!value || value === '') return true;
+      // URL 형식 검증
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    })
     .withMessage('source_url은 유효한 URL이어야 합니다'),
   body('is_favorite')
     .optional()
@@ -365,20 +387,41 @@ export const createPhotoReferenceValidation = [
 
 export const updatePhotoReferenceValidation = [
   validateIdParam,
-  validateOptionalEnum('category', ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc']),
-  validateOptionalString('title', 200),
-  validateOptionalString('memo', 1000),
+  body('category')
+    .optional()
+    .custom((value) => {
+      if (!value || value === '') return true;
+      const validCategories = ['outdoor', 'indoor', 'pose', 'props', 'dress', 'suit', 'makeup', 'etc'];
+      return validCategories.includes(value);
+    })
+    .withMessage('category는 outdoor, indoor, pose, props, dress, suit, makeup, etc 중 하나여야 합니다'),
+  body('title')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('title은 200자를 초과할 수 없습니다'),
+  body('memo')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('memo는 1000자를 초과할 수 없습니다'),
   body('tags')
     .optional()
     .custom((value) => {
-      if (value === undefined || value === null) return true;
-      if (!Array.isArray(value)) return false;
-      return true;
+      if (value === undefined || value === null || value === '') return true;
+      if (Array.isArray(value)) return true;
+      return false;
     })
     .withMessage('tags는 배열이어야 합니다'),
   body('source_url')
-    .optional({ values: 'falsy' })
-    .isURL()
+    .optional()
+    .custom((value) => {
+      if (!value || value === '') return true;
+      try {
+        new URL(value);
+        return true;
+      } catch {
+        return false;
+      }
+    })
     .withMessage('source_url은 유효한 URL이어야 합니다'),
   body('is_favorite')
     .optional()
