@@ -3,12 +3,12 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, Calendar, FileText, LogOut, Camera } from 'lucide-react';
 import { NotificationBadge } from '../src/components/common/NotificationBadge';
 import { ExpenseForm } from './expense/ExpenseForm';
-import { StorageService } from '../services/storage';
-import { CoupleProfile, Expense } from '../types';
+import { CoupleProfile, Expense, BudgetCategory } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useToast } from '../src/hooks/useToast';
 import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
+import { useBudget } from '../src/hooks/useBudget';
 import { expenseAPI, ExpenseCreateInput } from '../src/api/expenses';
 import { invalidateQueries } from '../src/lib/queryClient';
 
@@ -32,6 +32,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const { profile: apiProfile } = useCoupleProfile();
+  const { categories: apiCategories } = useBudget();
+  
+  // API 카테고리를 ExpenseForm에서 사용하는 형식으로 변환
+  const budgetCategories: BudgetCategory[] = apiCategories.map(c => ({
+    id: String(c.id),
+    name: c.name,
+    icon: c.icon || 'Circle',
+    parentId: null,
+    budgetAmount: c.budget_amount || 0,
+    spentAmount: c.spent_amount || 0,
+    color: c.color || '#f43f5e',
+  }));
   
   // API 프로필을 Layout에서 사용하는 형식으로 변환
   const profile: CoupleProfile | null = apiProfile ? {
@@ -412,7 +424,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Global Expense Modal for FAB */}
       {isExpenseModalOpen && (
         <ExpenseForm 
-          categories={StorageService.getBudget().categories}
+          categories={budgetCategories}
           onSubmit={handleSaveExpense}
           onCancel={() => setIsExpenseModalOpen(false)}
         />
