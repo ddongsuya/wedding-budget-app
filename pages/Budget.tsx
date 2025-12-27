@@ -4,7 +4,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { BudgetSettingModal } from '../components/budget/BudgetSettingModal';
 import { CategoryModal } from '../components/budget/CategoryModal';
-import { Plus, ChevronRight, Settings, Wallet, Heart } from 'lucide-react';
+import { BudgetListView } from '../components/budget/BudgetListView';
+import { Plus, Settings, Wallet, Heart } from 'lucide-react';
 import { getIconByName } from '../src/utils/iconMap';
 import { useToast } from '../src/hooks/useToast';
 import { BudgetSkeleton } from '../src/components/skeleton/BudgetSkeleton';
@@ -171,7 +172,7 @@ const Budget: React.FC = () => {
         </div>
       </Card>
 
-      {/* Categories List - 그리드 형태 */}
+      {/* Categories List - 리스트 뷰 */}
       {budget.categories.length === 0 ? (
         <EmptyState
           illustration="budget"
@@ -181,60 +182,10 @@ const Budget: React.FC = () => {
           onAction={() => { setEditingCategory(null); setIsCategoryModalOpen(true); }}
         />
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {budget.categories.map((category, index) => {
-            const progress = category.budgetAmount > 0 ? Math.min((category.spentAmount / category.budgetAmount) * 100, 100) : 0;
-            const isOverBudget = category.spentAmount > category.budgetAmount && category.budgetAmount > 0;
-            
-            return (
-              <div 
-                key={category.id} 
-                className="bg-white rounded-xl border border-stone-100 p-3 shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden stagger-item touch-feedback active:scale-[0.98]"
-                style={{ animationDelay: `${index * 30}ms` }}
-                onClick={() => { setEditingCategory(category); setIsCategoryModalOpen(true); }}
-              >
-                {/* Progress Bar */}
-                <div className="absolute left-0 bottom-0 h-1 w-full bg-stone-100">
-                  <div 
-                    className="h-full transition-all duration-500" 
-                    style={{ 
-                      width: `${progress}%`, 
-                      backgroundColor: isOverBudget ? '#ef4444' : category.color 
-                    }} 
-                  />
-                </div>
-                
-                <div className="flex flex-col items-center text-center relative z-10">
-                  {/* 아이콘 */}
-                  <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white mb-2"
-                    style={{ backgroundColor: category.color }}
-                  >
-                    {getIcon(category.icon)}
-                  </div>
-                  
-                  {/* 카테고리명 */}
-                  <h4 className="font-bold text-stone-800 text-sm truncate w-full">{category.name}</h4>
-                  
-                  {/* 금액 */}
-                  <p className={`text-xs font-semibold mt-1 ${isOverBudget ? 'text-red-500' : 'text-stone-600'}`}>
-                    {formatMoney(category.spentAmount)}
-                  </p>
-                  <p className="text-[10px] text-stone-400">
-                    / {formatMoney(category.budgetAmount)}
-                  </p>
-                  
-                  {/* 진행률 */}
-                  <span className={`text-[10px] mt-1 px-1.5 py-0.5 rounded-full ${
-                    isOverBudget ? 'bg-red-100 text-red-600' : 'bg-stone-100 text-stone-500'
-                  }`}>
-                    {Math.round(progress)}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <BudgetListView
+          categories={budget.categories}
+          onCategoryClick={(category) => { setEditingCategory(category); setIsCategoryModalOpen(true); }}
+        />
       )}
 
       {isSettingModalOpen && (

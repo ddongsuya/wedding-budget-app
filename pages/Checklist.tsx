@@ -5,6 +5,8 @@ import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '../
 import { useToast } from '../src/hooks/useToast';
 import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
 import { ChecklistSkeleton } from '../src/components/skeleton/ChecklistSkeleton';
+import { CategoryDropdown } from '../components/checklist/CategoryDropdown';
+import { CircularProgress } from '../components/checklist/CircularProgress';
 
 const DUE_PERIODS: { value: DuePeriod; label: string }[] = [
   { value: 'D-180', label: 'D-180 (6개월 전)' },
@@ -154,59 +156,37 @@ const Checklist: React.FC = () => {
           </button>
         </div>
         
-        {/* 진행률 */}
+        {/* 진행률 - 원형 프로그레스 */}
         {stats && (
           <div className="mb-4 p-4 bg-gradient-to-r from-rose-50 to-rose-100/50 rounded-2xl border border-rose-100">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-stone-600 font-medium">진행률</span>
-              <span className="font-bold text-rose-600">{stats.completionRate}%</span>
-            </div>
-            <div className="h-2.5 bg-white/80 rounded-full overflow-hidden shadow-inner">
-              <div 
-                className="h-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-500 rounded-full"
-                style={{ width: `${stats.completionRate}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-stone-500 mt-2">
-              <span className="flex items-center gap-1">
-                <CheckCircle2 size={12} className="text-emerald-500" />
-                {stats.completed}개 완료
-              </span>
-              <span className="flex items-center gap-1">
-                <Circle size={12} className="text-stone-400" />
-                {stats.pending}개 남음
-              </span>
+            <div className="flex items-center gap-4">
+              {/* 원형 진행률 */}
+              <CircularProgress percentage={stats.completionRate} size="md" />
+              
+              {/* 통계 정보 */}
+              <div className="flex-1">
+                <h3 className="font-bold text-stone-800 mb-2">체크리스트 진행률</h3>
+                <div className="flex gap-4 text-sm">
+                  <span className="flex items-center gap-1.5 text-emerald-600">
+                    <CheckCircle2 size={14} />
+                    {stats.completed}개 완료
+                  </span>
+                  <span className="flex items-center gap-1.5 text-stone-500">
+                    <Circle size={14} />
+                    {stats.pending}개 남음
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* 필터 */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all flex-shrink-0 font-medium ${
-              !selectedCategory
-                ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
-                : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-            }`}
-          >
-            전체
-          </button>
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 font-medium ${
-                selectedCategory === cat.id
-                  ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-              }`}
-            >
-              <span>{cat.icon}</span>
-              <span className="max-w-[60px] sm:max-w-none truncate">{cat.name}</span>
-            </button>
-          ))}
-        </div>
+        {/* 필터 - 드롭다운 */}
+        <CategoryDropdown
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelect={setSelectedCategory}
+        />
       </div>
 
       {/* 빈 상태 */}

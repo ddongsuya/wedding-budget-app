@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X, Calendar as CalendarIcon } from 'lucide-react';
 import { eventAPI } from '../src/api/events';
 import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '../src/types/event';
 import { useToast } from '../src/hooks/useToast';
 import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
 import { ScheduleSkeleton } from '../src/components/skeleton/ScheduleSkeleton';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
+import { WeekView } from '../components/schedule/WeekView';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addWeeks, subWeeks } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 const Schedule: React.FC = () => {
@@ -15,6 +16,7 @@ const Schedule: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const { toast } = useToast();
 
   const year = currentDate.getFullYear();
@@ -49,6 +51,11 @@ const Schedule: React.FC = () => {
   const goToToday = () => {
     setCurrentDate(new Date());
     setSelectedDate(new Date());
+  };
+
+  // 주간 뷰 네비게이션
+  const handleWeekChange = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => direction === 'prev' ? subWeeks(prev, 1) : addWeeks(prev, 1));
   };
 
   // 일정 추가 모달 열기
@@ -136,30 +143,68 @@ const Schedule: React.FC = () => {
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
+          {viewMode === 'month' ? (
+            <>
+              <button
+                onClick={goToPrevMonth}
+                className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
+              >
+                <ChevronLeft size={22} className="text-stone-600" />
+              </button>
+              
+              <div className="text-center">
+                <h1 className="text-xl font-bold text-stone-800">
+                  {format(currentDate, 'yyyy년 M월', { locale: ko })}
+                </h1>
+                <button
+                  onClick={goToToday}
+                  className="text-sm text-rose-500 font-medium hover:text-rose-600 transition-colors"
+                >
+                  오늘
+                </button>
+              </div>
+              
+              <button
+                onClick={goToNextMonth}
+                className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
+              >
+                <ChevronRight size={22} className="text-stone-600" />
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-bold text-stone-800">일정</h1>
+              <button
+                onClick={goToToday}
+                className="text-sm text-rose-500 font-medium hover:text-rose-600 transition-colors"
+              >
+                오늘
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* 뷰 모드 토글 */}
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={goToPrevMonth}
-            className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
+            onClick={() => setViewMode('week')}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              viewMode === 'week'
+                ? 'bg-rose-500 text-white shadow-button'
+                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
           >
-            <ChevronLeft size={22} className="text-stone-600" />
+            주간
           </button>
-          
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-stone-800">
-              {format(currentDate, 'yyyy년 M월', { locale: ko })}
-            </h1>
-            <button
-              onClick={goToToday}
-              className="text-sm text-rose-500 font-medium hover:text-rose-600 transition-colors"
-            >
-              오늘
-            </button>
-          </div>
-          
           <button
-            onClick={goToNextMonth}
-            className="p-2.5 hover:bg-stone-100 rounded-xl transition-colors touch-feedback"
+            onClick={() => setViewMode('month')}
+            className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all ${
+              viewMode === 'month'
+                ? 'bg-rose-500 text-white shadow-button'
+                : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            }`}
           >
-            <ChevronRight size={22} className="text-stone-600" />
+            월간
           </button>
         </div>
 
@@ -172,20 +217,36 @@ const Schedule: React.FC = () => {
           일정 추가
         </button>
 
-        {/* 요일 헤더 */}
-        <div className="grid grid-cols-7 text-center text-sm mt-4">
-          {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
-            <div
-              key={day}
-              className={`py-2 font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-stone-500'}`}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
+        {/* 요일 헤더 - 월간 뷰에서만 */}
+        {viewMode === 'month' && (
+          <div className="grid grid-cols-7 text-center text-sm mt-4">
+            {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+              <div
+                key={day}
+                className={`py-2 font-bold ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-stone-500'}`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* 캘린더 그리드 */}
+      {/* 주간 뷰 */}
+      {viewMode === 'week' && (
+        <div className="mx-4 mt-4">
+          <WeekView
+            currentDate={currentDate}
+            events={events}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onWeekChange={handleWeekChange}
+          />
+        </div>
+      )}
+
+      {/* 월간 캘린더 그리드 */}
+      {viewMode === 'month' && (
       <div className="bg-white mx-4 mt-4 rounded-2xl shadow-card overflow-hidden border border-stone-100">
         <div className="grid grid-cols-7">
           {calendarDays.map((day, index) => {
@@ -237,6 +298,7 @@ const Schedule: React.FC = () => {
           })}
         </div>
       </div>
+      )}
 
       {/* 선택된 날짜의 이벤트 목록 */}
       {selectedDate && (
