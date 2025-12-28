@@ -29,7 +29,7 @@ router.get(
   '/category/:category',
   [
     param('category')
-      .isIn(['venue', 'dress', 'photo', 'honeymoon', 'etc'])
+      .isIn(['venue_visit', 'fitting', 'meeting', 'payment', 'other'])
       .withMessage('유효한 카테고리를 입력해주세요'),
   ],
   validate,

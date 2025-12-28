@@ -275,47 +275,70 @@ export const createChecklistCategoryValidation = [
   validateRequiredString('name', 100),
   validatePositiveInt('order'),
   validateOptionalString('color', 20),
+  validateOptionalString('icon', 50),
 ];
 
 export const createChecklistItemValidation = [
   validateRequiredString('title', 200),
-  body('category_id').optional().isInt({ min: 1 }).toInt(),
+  body('category_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
   validateDate('due_date'),
-  validateOptionalString('memo', 1000),
-  validatePositiveInt('priority'),
-  validateBoolean('completed'),
+  validateOptionalString('description', 1000),
+  validateOptionalEnum('due_period', ['D-180', 'D-150', 'D-120', 'D-90', 'D-60', 'D-30', 'D-14', 'D-7', 'D-1', 'D-DAY', 'AFTER']),
+  validateOptionalEnum('assigned_to', ['groom', 'bride', 'both']),
+  validateOptionalEnum('priority', ['high', 'medium', 'low']),
+  validateBoolean('is_completed'),
 ];
 
 export const updateChecklistItemValidation = [
   validateIdParam,
   validateOptionalString('title', 200),
-  body('category_id').optional().isInt({ min: 1 }).toInt(),
+  body('category_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
   validateDate('due_date'),
-  validateOptionalString('memo', 1000),
-  validatePositiveInt('priority'),
-  validateBoolean('completed'),
+  validateOptionalString('description', 1000),
+  validateOptionalEnum('due_period', ['D-180', 'D-150', 'D-120', 'D-90', 'D-60', 'D-30', 'D-14', 'D-7', 'D-1', 'D-DAY', 'AFTER']),
+  validateOptionalEnum('assigned_to', ['groom', 'bride', 'both']),
+  validateOptionalEnum('priority', ['high', 'medium', 'low']),
+  validateBoolean('is_completed'),
 ];
 
 // Event validators
 export const createEventValidation = [
   validateRequiredString('title', 200),
-  validateRequiredDate('date'),
-  validateOptionalString('time', 10),
+  validateRequiredDate('start_date'),
+  validateOptionalString('start_time', 10),
+  validateDate('end_date'),
+  validateOptionalString('end_time', 10),
+  validateBoolean('is_all_day'),
+  validateOptionalEnum('category', ['venue_visit', 'fitting', 'meeting', 'payment', 'other']),
+  validateOptionalString('color', 20),
+  validateOptionalString('icon', 50),
   validateOptionalString('location', 500),
-  validateOptionalString('memo', 2000),
-  validateOptionalEnum('category', ['venue', 'dress', 'photo', 'honeymoon', 'etc']),
-  validateBoolean('is_important'),
+  validateUrl('location_url'),
+  validateOptionalString('description', 2000),
+  validatePositiveInt('reminder_minutes'),
+  body('linked_venue_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  body('linked_checklist_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  validateOptionalEnum('assigned_to', ['groom', 'bride', 'both']),
 ];
 
 export const updateEventValidation = [
   validateIdParam,
   validateOptionalString('title', 200),
-  validateDate('date'),
-  validateOptionalString('time', 10),
+  validateDate('start_date'),
+  validateOptionalString('start_time', 10),
+  validateDate('end_date'),
+  validateOptionalString('end_time', 10),
+  validateBoolean('is_all_day'),
+  validateOptionalEnum('category', ['venue_visit', 'fitting', 'meeting', 'payment', 'other']),
+  validateOptionalString('color', 20),
+  validateOptionalString('icon', 50),
   validateOptionalString('location', 500),
-  validateOptionalString('memo', 2000),
-  validateOptionalEnum('category', ['venue', 'dress', 'photo', 'honeymoon', 'etc']),
-  validateBoolean('is_important'),
+  validateUrl('location_url'),
+  validateOptionalString('description', 2000),
+  validatePositiveInt('reminder_minutes'),
+  body('linked_venue_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  body('linked_checklist_id').optional({ values: 'falsy' }).isInt({ min: 1 }).toInt(),
+  validateOptionalEnum('assigned_to', ['groom', 'bride', 'both']),
 ];
 
 // Notification validators
