@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput, ExpenseListParams } from '../api/expenses';
-import type { Expense } from '../../types';
+import type { Expense } from '@/types/types';
 
 export const useExpenses = (params?: ExpenseListParams) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -26,9 +26,15 @@ export const useExpenses = (params?: ExpenseListParams) => {
       const errorMsg = err.response?.data?.error || '지출 목록을 불러오는데 실패했습니다';
       setError(errorMsg);
       
-      const cached = localStorage.getItem('expenses_cache');
-      if (cached) {
-        setExpenses(JSON.parse(cached));
+      // 캐시 폴백 - JSON 파싱 에러 처리
+      try {
+        const cached = localStorage.getItem('expenses_cache');
+        if (cached) {
+          setExpenses(JSON.parse(cached));
+        }
+      } catch (parseError) {
+        console.error('Failed to parse cached expenses:', parseError);
+        localStorage.removeItem('expenses_cache');
       }
     } finally {
       setLoading(false);

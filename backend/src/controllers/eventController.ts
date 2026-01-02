@@ -54,6 +54,7 @@ export const getEvents = async (req: Request, res: Response) => {
   }
 };
 
+
 // 단일 이벤트 조회
 export const getEvent = async (req: Request, res: Response) => {
   try {
@@ -143,6 +144,7 @@ export const getUpcomingEvents = async (req: Request, res: Response) => {
   }
 };
 
+
 // 이벤트 생성
 export const createEvent = async (req: Request, res: Response) => {
   try {
@@ -221,7 +223,8 @@ export const createEvent = async (req: Request, res: Response) => {
   }
 };
 
-// 이벤트 수정
+
+// 이벤트 수정 (SQL 인젝션 방지를 위한 화이트리스트 적용)
 export const updateEvent = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -229,8 +232,22 @@ export const updateEvent = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const updates = req.body;
 
-    const fields = Object.keys(updates);
-    const values = Object.values(updates);
+    // 허용된 필드만 업데이트 (SQL 인젝션 방지)
+    const allowedFields = [
+      'title', 'description', 'start_date', 'start_time', 'end_date', 'end_time',
+      'is_all_day', 'category', 'color', 'icon', 'location', 'location_url',
+      'reminder_minutes', 'linked_venue_id', 'linked_checklist_id', 'assigned_to'
+    ];
+
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key)) {
+        fields.push(key);
+        values.push(value === '' ? null : value);
+      }
+    }
 
     if (fields.length === 0) {
       return res.status(400).json({ success: false, message: '수정할 내용이 없습니다' });
@@ -267,6 +284,7 @@ export const updateEvent = async (req: Request, res: Response) => {
   }
 };
 
+
 // 이벤트 삭제
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
@@ -286,7 +304,7 @@ export const deleteEvent = async (req: Request, res: Response) => {
 
     const eventTitle = eventResult.rows[0].title;
 
-    const result = await pool.query(
+    await pool.query(
       'DELETE FROM events WHERE id = $1 AND couple_id = $2 RETURNING id',
       [id, coupleId]
     );
