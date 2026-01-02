@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { Expense, BudgetCategory } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Expense, BudgetCategory } from '@/types/types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
-import { X, DollarSign, Tag, CreditCard, User, FileText, Briefcase } from 'lucide-react';
+import { X, DollarSign, Tag, CreditCard, User, FileText, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ExpenseFormProps {
   initialData?: Expense | null;
@@ -14,6 +14,8 @@ interface ExpenseFormProps {
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categories, onSubmit, onCancel }) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [formData, setFormData] = useState<Partial<Expense>>({
     title: '',
     amount: 0,
@@ -29,9 +31,22 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     ...initialData
   });
 
+  // 폼 변경 감지
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setHasUnsavedChanges(true);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,6 +56,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
       if (isNaN(parseInt(value, 10))) value = '';
     }
     setFormData(prev => ({ ...prev, amount: value === '' ? 0 : parseInt(value, 10) }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      if (confirm('작성 중인 내용이 있습니다. 정말 나가시겠습니까?')) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +83,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     setIsSaving(true);
     try {
       const expense: Expense = {
-        id: initialData?.id || Math.random().toString(36).substr(2, 9),
+        id: initialData?.id || crypto.randomUUID(),
         createdAt: initialData?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         title: formData.title || '',
@@ -73,6 +99,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
         memo: formData.memo || ''
       };
       await onSubmit(expense);
+      setHasUnsavedChanges(false);
     } finally {
       setIsSaving(false);
     }
@@ -92,7 +119,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
           <h3 className="text-xl font-bold text-stone-800">
             {initialData ? '지출 내역 수정' : '지출 내역 추가'}
           </h3>
-          <button onClick={onCancel} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
+          <button onClick={handleCancel} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
             <X size={20} className="text-stone-500" />
           </button>
         </div>
@@ -147,100 +174,104 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
                 label="결제일"
                 required
                 value={formData.paymentDate || ''}
-                onChange={(date) => setFormData(prev => ({ ...prev, paymentDate: date }))}
+                onChange={(date) => { setFormData(prev => ({ ...prev, paymentDate: date })); setHasUnsavedChanges(true); }}
+              />
+            </div>
+
+            <div className="space-y-1.5 col-span-2 md:col-span-1">
+              <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><User size={14}/> 분담</label>
+              <select name="paidBy" value={formData.paidBy} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
+                <option value="shared">공동 부담</option>
+                <option value="groom">신랑 부담</option>
+                <option value="bride">신부 부담</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5 col-span-2 md:col-span-1">
+              <label className="text-sm font-medium text-stone-700">메모</label>
+              <input 
+                name="memo" 
+                type="text"
+                autoCapitalize="sentences"
+                value={formData.memo} 
+                onChange={handleChange} 
+                className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none text-base" 
+                placeholder="특이사항 (선택)" 
               />
             </div>
           </section>
 
-          {/* Payment Details */}
-          <section className="bg-stone-50 p-5 rounded-2xl border border-stone-100 space-y-4">
-             <h4 className="text-sm font-bold text-rose-500 uppercase tracking-wider">결제 상세 정보</h4>
+          {/* Payment Details - 토글 가능한 고급 옵션 */}
+          <section className="bg-stone-50 rounded-2xl border border-stone-100 overflow-hidden">
+             <button
+               type="button"
+               onClick={() => setShowAdvanced(!showAdvanced)}
+               className="w-full px-5 py-4 flex items-center justify-between hover:bg-stone-100 transition-colors"
+             >
+               <h4 className="text-sm font-bold text-stone-600 flex items-center gap-2">
+                 <CreditCard size={16} />
+                 결제 상세 정보 (선택)
+               </h4>
+               {showAdvanced ? <ChevronUp size={18} className="text-stone-400" /> : <ChevronDown size={18} className="text-stone-400" />}
+             </button>
              
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="space-y-1.5">
-                 <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><CreditCard size={14}/> 결제 수단</label>
-                 <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
-                   <option value="card">카드</option>
-                   <option value="cash">현금</option>
-                   <option value="transfer">계좌이체</option>
-                 </select>
-               </div>
-               
-               <div className="space-y-1.5">
-                 <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><User size={14}/> 분담</label>
-                 <select name="paidBy" value={formData.paidBy} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
-                   <option value="shared">공동 부담</option>
-                   <option value="groom">신랑 부담</option>
-                   <option value="bride">신부 부담</option>
-                 </select>
-               </div>
+             {showAdvanced && (
+               <div className="px-5 pb-5 space-y-4 border-t border-stone-200">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                   <div className="space-y-1.5">
+                     <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><CreditCard size={14}/> 결제 수단</label>
+                     <select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
+                       <option value="card">카드</option>
+                       <option value="cash">현금</option>
+                       <option value="transfer">계좌이체</option>
+                     </select>
+                   </div>
 
-               <div className="space-y-1.5">
-                 <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><Briefcase size={14}/> 업체명</label>
-                 <input 
-                   name="vendorName" 
-                   type="text"
-                   autoComplete="organization"
-                   autoCapitalize="words"
-                   value={formData.vendorName} 
-                   onChange={handleChange} 
-                   className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none text-base" 
-                   placeholder="업체 이름" 
-                 />
-               </div>
+                   <div className="space-y-1.5">
+                     <label className="text-sm font-medium text-stone-700 flex items-center gap-1.5"><Briefcase size={14}/> 업체명</label>
+                     <input 
+                       name="vendorName" 
+                       type="text"
+                       autoComplete="organization"
+                       autoCapitalize="words"
+                       value={formData.vendorName} 
+                       onChange={handleChange} 
+                       className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none text-base" 
+                       placeholder="업체 이름" 
+                     />
+                   </div>
 
-               <div className="space-y-1.5">
-                 <label className="text-sm font-medium text-stone-700">결제 유형</label>
-                 <select name="paymentType" value={formData.paymentType} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
-                   <option value="full">전액 결제</option>
-                   <option value="deposit">계약금</option>
-                   <option value="interim">중도금</option>
-                   <option value="balance">잔금</option>
-                 </select>
-               </div>
-               
-               <div className="space-y-1.5">
-                 <label className="text-sm font-medium text-stone-700">상태</label>
-                 <div className="flex gap-4 pt-2 min-h-[48px] items-center">
-                    <label className="flex items-center gap-2 cursor-pointer min-h-[44px] px-2">
-                      <input type="radio" name="status" value="completed" checked={formData.status === 'completed'} onChange={handleChange} className="accent-rose-500 w-5 h-5" />
-                      <span className="text-sm text-stone-700">결제 완료</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer min-h-[44px] px-2">
-                      <input type="radio" name="status" value="planned" checked={formData.status === 'planned'} onChange={handleChange} className="accent-rose-500 w-5 h-5" />
-                      <span className="text-sm text-stone-700">결제 예정</span>
-                    </label>
+                   <div className="space-y-1.5">
+                     <label className="text-sm font-medium text-stone-700">결제 유형</label>
+                     <select name="paymentType" value={formData.paymentType} onChange={handleChange} className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none bg-white text-base">
+                       <option value="full">전액 결제</option>
+                       <option value="deposit">계약금</option>
+                       <option value="interim">중도금</option>
+                       <option value="balance">잔금</option>
+                     </select>
+                   </div>
+                   
+                   <div className="space-y-1.5">
+                     <label className="text-sm font-medium text-stone-700">상태</label>
+                     <div className="flex gap-4 pt-2 min-h-[48px] items-center">
+                        <label className="flex items-center gap-2 cursor-pointer min-h-[44px] px-2">
+                          <input type="radio" name="status" value="completed" checked={formData.status === 'completed'} onChange={handleChange} className="accent-rose-500 w-5 h-5" />
+                          <span className="text-sm text-stone-700">결제 완료</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer min-h-[44px] px-2">
+                          <input type="radio" name="status" value="planned" checked={formData.status === 'planned'} onChange={handleChange} className="accent-rose-500 w-5 h-5" />
+                          <span className="text-sm text-stone-700">결제 예정</span>
+                        </label>
+                     </div>
+                   </div>
                  </div>
                </div>
-             </div>
-          </section>
-
-          {/* Additional Info */}
-          <section className="space-y-4">
-             <div className="space-y-1.5">
-                <label className="text-sm font-medium text-stone-700">영수증 첨부 (이미지)</label>
-                <div className="border-2 border-dashed border-stone-200 rounded-xl p-4 min-h-[48px] text-center hover:border-rose-300 transition-colors cursor-pointer bg-stone-50">
-                   <p className="text-xs text-stone-500">클릭하여 이미지를 업로드하세요 (준비중)</p>
-                   <input type="file" accept="image/*" className="hidden" />
-                </div>
-             </div>
-             <div className="space-y-1.5">
-               <label className="text-sm font-medium text-stone-700">메모</label>
-               <textarea 
-                 name="memo" 
-                 autoCapitalize="sentences"
-                 value={formData.memo} 
-                 onChange={handleChange} 
-                 rows={2} 
-                 className="w-full px-4 py-3 min-h-[80px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none resize-none text-base" 
-                 placeholder="특이사항을 입력하세요" 
-               />
-             </div>
+             )}
           </section>
 
           {/* 버튼을 form 내부로 이동 */}
           <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb-min -mx-6 -mb-8 mt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={handleCancel} disabled={isSaving}>취소</Button>
             <Button type="submit" variant="primary" className="flex-1" loading={isSaving} disabled={isSaving}>
               {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}
             </Button>

@@ -16,6 +16,7 @@ interface LayoutProps {
   children: ReactNode;
 }
 
+// 데스크톱용 전체 메뉴
 const NAV_ITEMS = [
   { path: '/', label: '홈', icon: LayoutDashboard },
   { path: '/budget', label: '예산', icon: Wallet },
@@ -25,6 +26,15 @@ const NAV_ITEMS = [
   { path: '/venues', label: '식장', icon: Store },
   { path: '/photo-references', label: '포토', icon: Camera },
   { path: '/settings', label: '설정', icon: Settings },
+];
+
+// 모바일용 주요 메뉴 (5개로 제한하여 터치 타겟 확보)
+const MOBILE_NAV_ITEMS = [
+  { path: '/', label: '홈', icon: LayoutDashboard },
+  { path: '/budget', label: '예산', icon: Wallet },
+  { path: '/schedule', label: '일정', icon: Calendar },
+  { path: '/venues', label: '식장', icon: Store },
+  { path: '/settings', label: '더보기', icon: Menu },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -407,27 +417,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - 5개 메뉴로 최적화 */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 xs:px-4 py-2 flex justify-around items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" 
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-4 py-2 flex justify-around items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" 
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
         role="navigation" 
         aria-label="모바일 네비게이션"
       >
-        {NAV_ITEMS.map((item) => (
+        {MOBILE_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 xs:gap-1 min-w-[44px] min-h-[44px] p-1.5 xs:p-2 rounded-lg transition-all touch-feedback active:scale-95 ${
+              `flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] p-2 rounded-lg transition-all touch-feedback active:scale-95 ${
                 isActive ? 'text-rose-500' : 'text-stone-400'
               }`
             }
             aria-current={location.pathname === item.path ? 'page' : undefined}
             aria-label={item.label}
           >
-            <item.icon size={20} className="xs:w-6 xs:h-6" strokeWidth={item.path === location.pathname ? 2.5 : 2} aria-hidden="true" />
-            <span className="text-[9px] xs:text-[10px] font-medium truncate max-w-[48px]">{item.label}</span>
+            <item.icon size={22} strokeWidth={item.path === location.pathname ? 2.5 : 2} aria-hidden="true" />
+            <span className="text-[10px] font-medium">{item.label}</span>
           </NavLink>
         ))}
       </nav>
