@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Heart, Trash2, X, Grid, List, ExternalLink } from 'lucide-react';
-import { photoReferenceAPI, PhotoReference, PhotoCategory } from '../src/api/photoReferences';
-import { compressImage } from '../src/utils/imageCompression';
-import { useToast } from '../src/hooks/useToast';
-import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
-import { PhotoReferencesGridSkeleton } from '../src/components/skeleton/PhotoReferencesSkeleton';
-import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
+import { photoReferenceAPI, PhotoReference, PhotoCategory } from '@/api/photoReferences';
+import { compressImage } from '@/utils/imageCompression';
+import { useToast } from '@/hooks/useToast';
+import { EmptyState } from '@/components/common/EmptyState/EmptyState';
+import { PhotoReferencesGridSkeleton } from '@/components/skeleton/PhotoReferencesSkeleton';
+import { Skeleton } from '@/components/common/Skeleton/Skeleton';
 
 const CATEGORIES: PhotoCategory[] = [
   { id: 'outdoor', name: '야외', icon: '🌳' },

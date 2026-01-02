@@ -3,7 +3,7 @@ import { Venue, VenueImage } from '../../types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
 import { X, Calculator, Camera, Star, Trash2, GripVertical, Image as ImageIcon } from 'lucide-react';
-import { compressImage } from '../../src/utils/imageCompression';
+import { compressImage } from '@/utils/imageCompression';
 
 interface VenueFormProps {
   initialData?: Venue | null;

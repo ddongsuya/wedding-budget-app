@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, Plus, Calendar, AlertCircle, Edit2, Trash2, X } from 'lucide-react';
-import { checklistAPI } from '../src/api/checklist';
-import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '../src/types/checklist';
-import { useToast } from '../src/hooks/useToast';
-import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
-import { ChecklistSkeleton } from '../src/components/skeleton/ChecklistSkeleton';
+import { checklistAPI } from '@/api/checklist';
+import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '@/types/checklist';
+import { useToast } from '@/hooks/useToast';
+import { EmptyState } from '@/components/common/EmptyState/EmptyState';
+import { ChecklistSkeleton } from '@/components/skeleton/ChecklistSkeleton';
 import { CategoryDropdown } from '../components/checklist/CategoryDropdown';
 import { CircularProgress } from '../components/checklist/CircularProgress';
 

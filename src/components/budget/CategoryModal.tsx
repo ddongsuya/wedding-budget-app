@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BudgetCategory } from '../../types';
 import { Button } from '../ui/Button';
 import { X } from 'lucide-react';
-import { iconMap, ICON_CATEGORIES } from '../../src/utils/iconMap';
+import { iconMap, ICON_CATEGORIES } from '@/utils/iconMap';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 
 interface CategoryModalProps {

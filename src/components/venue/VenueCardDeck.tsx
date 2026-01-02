@@ -4,7 +4,7 @@ import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Venue } from '../../types';
 import { MapPin, Star, Minus, Check, Edit2, Trash2, Image as ImageIcon, Plus, MoreVertical } from 'lucide-react';
 import { Button } from '../ui/Button';
-import { EmptyState } from '../../src/components/common/EmptyState';
+import { EmptyState } from '@/components/common/EmptyState';
 
 interface VenueCalculated extends Venue {
   totalEstimate: number;

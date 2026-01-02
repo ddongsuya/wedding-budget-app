@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Settings as SettingsIcon, Info, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield } from 'lucide-react';
-import { useToastContext } from '../src/contexts/ToastContext';
-import { coupleAPI } from '../src/api/couple';
-import { useAuth } from '../src/contexts/AuthContext';
-import DatePicker from '../src/components/common/DatePicker/DatePicker';
-import { compressImage } from '../src/utils/imageCompression';
-import { SettingsSkeleton } from '../src/components/skeleton/SettingsSkeleton';
+import { useToastContext } from '@/contexts/ToastContext';
+import { coupleAPI } from '@/api/couple';
+import { useAuth } from '@/contexts/AuthContext';
+import DatePicker from '@/components/common/DatePicker/DatePicker';
+import { compressImage } from '@/utils/imageCompression';
+import { SettingsSkeleton } from '@/components/skeleton/SettingsSkeleton';
 
 type Tab = 'profile' | 'app' | 'account' | 'info';
 

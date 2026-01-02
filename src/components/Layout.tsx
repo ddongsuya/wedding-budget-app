@@ -1,16 +1,16 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, Calendar, FileText, LogOut, Camera } from 'lucide-react';
-import { NotificationBadge } from '../src/components/common/NotificationBadge';
+import { NotificationBadge } from '@/components/common/NotificationBadge';
 import { ExpenseForm } from './expense/ExpenseForm';
 import { CoupleProfile, Expense, BudgetCategory } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../src/contexts/AuthContext';
-import { useToast } from '../src/hooks/useToast';
-import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
-import { useBudget } from '../src/hooks/useBudget';
-import { expenseAPI, ExpenseCreateInput } from '../src/api/expenses';
-import { invalidateQueries } from '../src/lib/queryClient';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
+import { useCoupleProfile } from '@/hooks/useCoupleProfile';
+import { useBudget } from '@/hooks/useBudget';
+import { expenseAPI, ExpenseCreateInput } from '@/api/expenses';
+import { invalidateQueries } from '@/lib/queryClient';
 
 interface LayoutProps {
   children: ReactNode;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Venue, ViewMode } from '../types';
-import { venueAPI } from '../src/api/venues';
+import { venueAPI } from '@/api/venues';
 import { Button } from '../components/ui/Button';
 import { VenueForm } from '../components/venue/VenueForm';
 import { VenueCompare } from '../components/venue/VenueCompare';
@@ -9,9 +9,9 @@ import { BottomSheet } from '../components/ui/BottomSheet';
 import { GalleryViewer } from '../components/ui/GalleryViewer';
 import { Plus, Star, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, X, Image as ImageIcon } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { useToast } from '../src/hooks/useToast';
-import { Skeleton } from '../src/components/common/Skeleton/Skeleton';
-import { EmptyState, NoSearchResults } from '../src/components/common/EmptyState';
+import { useToast } from '@/hooks/useToast';
+import { Skeleton } from '@/components/common/Skeleton/Skeleton';
+import { EmptyState, NoSearchResults } from '@/components/common/EmptyState';
 
 type SortKey = 'rating' | 'price' | 'createdAt' | 'minGuests';
 type FilterStatus = 'all' | 'visited' | 'pending' | 'contracted';

@@ -6,11 +6,11 @@ import { BudgetSettingModal } from '../components/budget/BudgetSettingModal';
 import { CategoryModal } from '../components/budget/CategoryModal';
 import { BudgetListView } from '../components/budget/BudgetListView';
 import { Plus, Settings, Wallet, Heart } from 'lucide-react';
-import { getIconByName } from '../src/utils/iconMap';
-import { useToast } from '../src/hooks/useToast';
-import { BudgetSkeleton } from '../src/components/skeleton/BudgetSkeleton';
-import { EmptyState } from '../src/components/common/EmptyState';
-import { useBudget } from '../src/hooks/useBudget';
+import { getIconByName } from '@/utils/iconMap';
+import { useToast } from '@/hooks/useToast';
+import { BudgetSkeleton } from '@/components/skeleton/BudgetSkeleton';
+import { EmptyState } from '@/components/common/EmptyState';
+import { useBudget } from '@/hooks/useBudget';
 
 const Budget: React.FC = () => {
   const { toast } = useToast();

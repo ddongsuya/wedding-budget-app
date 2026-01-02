@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X, Calendar as CalendarIcon } from 'lucide-react';
-import { eventAPI } from '../src/api/events';
-import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '../src/types/event';
-import { useToast } from '../src/hooks/useToast';
-import { EmptyState } from '../src/components/common/EmptyState/EmptyState';
-import { ScheduleSkeleton } from '../src/components/skeleton/ScheduleSkeleton';
+import { eventAPI } from '@/api/events';
+import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '@/types/event';
+import { useToast } from '@/hooks/useToast';
+import { EmptyState } from '@/components/common/EmptyState/EmptyState';
+import { ScheduleSkeleton } from '@/components/skeleton/ScheduleSkeleton';
 import { WeekView } from '../components/schedule/WeekView';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addWeeks, subWeeks } from 'date-fns';
 import { ko } from 'date-fns/locale';

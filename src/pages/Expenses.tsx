@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, Filter, CreditCard, Wallet, Trash2, Edit2, ChevronDown, Calendar } from 'lucide-react';
-import { useExpenses } from '../src/hooks/useExpenses';
-import { useBudget } from '../src/hooks/useBudget';
-import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput } from '../src/api/expenses';
-import { useToast } from '../src/hooks/useToast';
-import { EmptyState } from '../src/components/common/EmptyState';
-import { ExpensesSkeleton } from '../src/components/skeleton/ExpensesSkeleton';
+import { useExpenses } from '@/hooks/useExpenses';
+import { useBudget } from '@/hooks/useBudget';
+import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput } from '@/api/expenses';
+import { useToast } from '@/hooks/useToast';
+import { EmptyState } from '@/components/common/EmptyState';
+import { ExpensesSkeleton } from '@/components/skeleton/ExpensesSkeleton';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { Expense, BudgetCategory } from '../types';
-import { invalidateQueries } from '../src/lib/queryClient';
+import { invalidateQueries } from '@/lib/queryClient';
 
 type FilterPayer = 'all' | 'groom' | 'bride' | 'shared';
 type SortBy = 'date' | 'amount';

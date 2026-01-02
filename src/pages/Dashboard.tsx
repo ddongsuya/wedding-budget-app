@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { BudgetSettings, Expense } from '../types';
-import { DashboardSkeleton } from '../src/components/skeleton/DashboardSkeleton';
-import { useCoupleProfile } from '../src/hooks/useCoupleProfile';
-import { useBudget } from '../src/hooks/useBudget';
-import { useExpenses } from '../src/hooks/useExpenses';
+import { DashboardSkeleton } from '@/components/skeleton/DashboardSkeleton';
+import { useCoupleProfile } from '@/hooks/useCoupleProfile';
+import { useBudget } from '@/hooks/useBudget';
+import { useExpenses } from '@/hooks/useExpenses';
 
 // 프로페셔널 대시보드 컴포넌트
 import { CompactHeader } from '../components/dashboard/CompactHeader';
