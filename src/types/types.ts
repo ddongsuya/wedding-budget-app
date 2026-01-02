@@ -8,6 +8,82 @@ export interface VenueImage {
   createdAt: string;
 }
 
+// 예식장 장비 옵션
+export interface VenueEquipment {
+  lighting: boolean;        // 조명
+  videoProduction: boolean; // 영상연출
+  bgmService: boolean;      // BGM 서비스
+  confetti: boolean;        // 축포
+  lightingMemo?: string;
+  videoProductionMemo?: string;
+  bgmServiceMemo?: string;
+  confettiMemo?: string;
+}
+
+// 계약 특전
+export interface VenueBenefits {
+  hotelRoom: boolean;       // 호텔룸 제공
+  hotelRoomMemo?: string;
+  meals: boolean;           // 식사 제공
+  mealsMemo?: string;
+  weddingCake: boolean;     // 웨딩 케익
+  weddingCakeMemo?: string;
+  other?: string;           // 기타 특전
+}
+
+// 계약 정보
+export interface VenueContract {
+  // 행사 정보
+  eventDateTime: string | null;     // 행사일시
+  eventDateTimeMemo?: string;
+  receptionHall: string;            // 피로연장
+  receptionHallMemo?: string;
+  
+  // 인원 정보
+  guaranteedGuests: number;         // 식사보증인원
+  guaranteedGuestsMemo?: string;
+  
+  // 신랑/신부 정보
+  groomName: string;
+  groomContact: string;
+  brideName: string;
+  brideContact: string;
+  coupleInfoMemo?: string;
+  
+  // 식사 정보
+  mealCourseName: string;           // 식사 코스명
+  mealCoursePrice: number;          // 식사 코스 가격
+  mealCourseMemo?: string;
+  
+  // 주류 서비스
+  alcoholServiceIncluded: boolean;  // 주류 서비스 제공 여부
+  alcoholServicePrice: number;      // 주류 서비스 가격 (미포함 시)
+  alcoholServiceMemo?: string;
+  
+  // 홀 대관료
+  hallRentalFee: number;
+  hallRentalFeeMemo?: string;
+  
+  // 혼구용품
+  weddingSupplies: string;
+  weddingSuppliesMemo?: string;
+  
+  // 식권
+  mealTicketCount: number;          // 식권 개수
+  mealTicketMemo?: string;
+  
+  // 예식장비
+  equipment: VenueEquipment;
+  
+  // 폐백
+  pyebaekIncluded: boolean;
+  pyebaekPrice: number;
+  pyebaekMemo?: string;
+  
+  // 특전
+  benefits: VenueBenefits;
+}
+
 export interface Venue {
   id: string;
   name: string;
@@ -36,6 +112,8 @@ export interface Venue {
   status: 'pending' | 'visited' | 'contracted' | 'excluded';
   images: VenueImage[];          // Array of venue images
   thumbnailImage: string | null; // ID of the thumbnail image
+  // 계약 정보 (계약 완료 시)
+  contract?: VenueContract;
   createdAt: string;
   updatedAt: string;
 }

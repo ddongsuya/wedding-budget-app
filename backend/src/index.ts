@@ -19,6 +19,7 @@ import adminRoutes from './routes/admin';
 import notificationRoutes from './routes/notifications';
 import pushRoutes from './routes/push';
 import photoReferenceRoutes from './routes/photoReferences';
+import venueContractRoutes from './routes/venueContracts';
 import { initSentry } from './lib/sentry';
 import { securityHeaders, validateRequestBody, corsOptions } from './middleware/security';
 import { apiRateLimiter } from './middleware/rateLimiter';
@@ -84,6 +85,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/photo-references', photoReferenceRoutes);
+app.use('/api/venue-contracts', venueContractRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {
@@ -330,6 +332,100 @@ const runMigrations = async () => {
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS wedding_robe_fee BIGINT DEFAULT 0`);
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS outdoor_venue_fee BIGINT DEFAULT 0`);
     await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS fresh_flower_fee BIGINT DEFAULT 0`);
+    
+    // venue_contracts 테이블 생성 (식장 계약 정보)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS venue_contracts (
+        id SERIAL PRIMARY KEY,
+        venue_id INTEGER NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+        couple_id INTEGER NOT NULL REFERENCES couples(id) ON DELETE CASCADE,
+        event_datetime TIMESTAMP WITH TIME ZONE,
+        event_datetime_memo TEXT,
+        event_location VARCHAR(200),
+        event_location_memo TEXT,
+        reception_hall VARCHAR(200),
+        reception_hall_memo TEXT,
+        guaranteed_guests INTEGER DEFAULT 0,
+        guaranteed_guests_memo TEXT,
+        meal_ticket_count INTEGER DEFAULT 0,
+        meal_ticket_memo TEXT,
+        groom_name VARCHAR(100),
+        groom_contact VARCHAR(50),
+        bride_name VARCHAR(100),
+        bride_contact VARCHAR(50),
+        couple_info_memo TEXT,
+        meal_course_name VARCHAR(200),
+        meal_course_price BIGINT DEFAULT 0,
+        meal_total_price BIGINT DEFAULT 0,
+        meal_course_memo TEXT,
+        alcohol_service_included BOOLEAN DEFAULT FALSE,
+        alcohol_service_price BIGINT DEFAULT 0,
+        alcohol_service_memo TEXT,
+        hall_rental_fee BIGINT DEFAULT 0,
+        hall_rental_fee_memo TEXT,
+        hall_rental_fee_status VARCHAR(20) DEFAULT 'pending',
+        wedding_supplies TEXT,
+        wedding_supplies_fee BIGINT DEFAULT 0,
+        wedding_supplies_memo TEXT,
+        wedding_supplies_status VARCHAR(20) DEFAULT 'pending',
+        equipment_lighting BOOLEAN DEFAULT FALSE,
+        equipment_lighting_fee BIGINT DEFAULT 0,
+        equipment_lighting_memo TEXT,
+        equipment_video BOOLEAN DEFAULT FALSE,
+        equipment_video_fee BIGINT DEFAULT 0,
+        equipment_video_memo TEXT,
+        equipment_bgm BOOLEAN DEFAULT FALSE,
+        equipment_bgm_fee BIGINT DEFAULT 0,
+        equipment_bgm_memo TEXT,
+        equipment_confetti BOOLEAN DEFAULT FALSE,
+        equipment_confetti_fee BIGINT DEFAULT 0,
+        equipment_confetti_memo TEXT,
+        equipment_status VARCHAR(20) DEFAULT 'pending',
+        pyebaek_included BOOLEAN DEFAULT FALSE,
+        pyebaek_fee BIGINT DEFAULT 0,
+        pyebaek_memo TEXT,
+        pyebaek_status VARCHAR(20) DEFAULT 'pending',
+        benefit_hotel_room BOOLEAN DEFAULT FALSE,
+        benefit_hotel_room_memo TEXT,
+        benefit_meals BOOLEAN DEFAULT FALSE,
+        benefit_meals_memo TEXT,
+        benefit_wedding_cake BOOLEAN DEFAULT FALSE,
+        benefit_wedding_cake_memo TEXT,
+        benefit_other TEXT,
+        deposit_amount BIGINT DEFAULT 0,
+        deposit_paid BOOLEAN DEFAULT FALSE,
+        deposit_paid_date DATE,
+        deposit_memo TEXT,
+        date_change_condition TEXT,
+        cancellation_penalty TEXT,
+        contract_memo TEXT,
+        total_contract_amount BIGINT DEFAULT 0,
+        total_paid_amount BIGINT DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(venue_id)
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_venue_contracts_venue ON venue_contracts(venue_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_venue_contracts_couple ON venue_contracts(couple_id)`);
+    
+    // venue_contract_expenses 테이블 생성 (계약 지출 연동)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS venue_contract_expenses (
+        id SERIAL PRIMARY KEY,
+        contract_id INTEGER NOT NULL REFERENCES venue_contracts(id) ON DELETE CASCADE,
+        expense_id INTEGER REFERENCES expenses(id) ON DELETE SET NULL,
+        expense_type VARCHAR(50) NOT NULL,
+        amount BIGINT DEFAULT 0,
+        status VARCHAR(20) DEFAULT 'pending',
+        due_date DATE,
+        paid_date DATE,
+        memo TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_venue_contract_expenses_contract ON venue_contract_expenses(contract_id)`);
     
     console.log('Migrations completed successfully!');
   } catch (error) {

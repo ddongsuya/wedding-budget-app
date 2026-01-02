@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { VenueForm } from '../components/venue/VenueForm';
 import { VenueCompare } from '../components/venue/VenueCompare';
 import { VenueCardDeck } from '../components/venue/VenueCardDeck';
+import { VenueContractForm } from '../components/venue/VenueContractForm';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { GalleryViewer } from '../components/ui/GalleryViewer';
 import { Plus, Star, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, X, Image as ImageIcon } from 'lucide-react';
@@ -48,6 +49,9 @@ const Venues: React.FC = () => {
   
   // Mobile Filter Sheet
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  
+  // Contract Form State
+  const [contractVenue, setContractVenue] = useState<Venue | null>(null);
 
   const location = useLocation();
 
@@ -460,6 +464,7 @@ const Venues: React.FC = () => {
                 onDelete={handleDelete}
                 onOpenGallery={openGallery}
                 onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
+                onOpenContract={(venue) => setContractVenue(venue)}
                 isSelectMode={isSelectMode}
                 selectedIds={selectedIds}
                 onToggleSelect={toggleSelection}
@@ -490,6 +495,7 @@ const Venues: React.FC = () => {
                 onDelete={handleDelete}
                 onOpenGallery={openGallery}
                 onAdd={() => { setEditingVenue(null); setIsFormOpen(true); }}
+                onOpenContract={(venue) => setContractVenue(venue)}
               />
             ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-x-auto">
@@ -714,6 +720,19 @@ const Venues: React.FC = () => {
           initialData={editingVenue} 
           onSubmit={handleSaveVenue} 
           onCancel={() => { setIsFormOpen(false); setEditingVenue(null); }} 
+        />
+      )}
+
+      {/* Contract Form Modal */}
+      {contractVenue && (
+        <VenueContractForm
+          venueId={contractVenue.id}
+          venueName={contractVenue.name}
+          onClose={() => setContractVenue(null)}
+          onSaved={() => {
+            setContractVenue(null);
+            loadVenues();
+          }}
         />
       )}
     </div>

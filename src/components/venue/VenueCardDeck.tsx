@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Venue } from '../../types';
-import { MapPin, Star, Minus, Check, Edit2, Trash2, Image as ImageIcon, Plus, MoreVertical } from 'lucide-react';
+import { MapPin, Star, Minus, Check, Edit2, Trash2, Image as ImageIcon, Plus, MoreVertical, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { EmptyState } from '@/components/common/EmptyState';
 
@@ -16,6 +16,7 @@ interface VenueCardDeckProps {
   onDelete: (id: string) => void;
   onOpenGallery: (venue: Venue) => void;
   onAdd: () => void;
+  onOpenContract?: (venue: Venue) => void;
   isSelectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
@@ -27,6 +28,7 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
   onDelete, 
   onOpenGallery,
   onAdd,
+  onOpenContract,
   isSelectMode = false,
   selectedIds = new Set(),
   onToggleSelect
@@ -241,6 +243,14 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                         transition={{ duration: 0.1 }}
                         className="absolute right-0 top-11 bg-white rounded-xl shadow-xl border border-stone-100 overflow-hidden min-w-[140px] flex flex-col origin-top-right"
                       >
+                        {onOpenContract && (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); onOpenContract(currentVenue); }}
+                            className="flex items-center gap-3 px-4 py-3 text-sm text-rose-600 hover:bg-rose-50 text-left w-full border-b border-stone-50 active:bg-rose-100 font-medium"
+                          >
+                            <FileText size={16}/> 계약 관리
+                          </button>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); setIsMenuOpen(false); onEdit(currentVenue); }}
                           className="flex items-center gap-3 px-4 py-3 text-sm text-stone-700 hover:bg-stone-50 text-left w-full border-b border-stone-50 active:bg-stone-100"
