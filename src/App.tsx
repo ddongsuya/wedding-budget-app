@@ -70,7 +70,7 @@ function App() {
   };
 
   if (!isOnline) return <OfflinePage />;
-  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} duration={2500} />;
+  if (showSplash) return <SplashScreen onComplete={handleSplashComplete} duration={1500} />;
 
   return (
     <ErrorBoundary>

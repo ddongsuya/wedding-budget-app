@@ -8,8 +8,9 @@ import { useToast } from '@/hooks/useToast';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ExpensesSkeleton } from '@/components/skeleton/ExpensesSkeleton';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
-import { Expense, BudgetCategory } from '../types';
+import { Expense, BudgetCategory } from '@/types/types';
 import { invalidateQueries } from '@/lib/queryClient';
+import { getIconByName } from '@/utils/iconMap';
 
 type FilterPayer = 'all' | 'groom' | 'bride' | 'shared';
 type SortBy = 'date' | 'amount';
@@ -30,7 +31,7 @@ const Expenses: React.FC = () => {
   const budgetCategories: BudgetCategory[] = apiCategories.map(c => ({
     id: String(c.id),
     name: c.name,
-    icon: c.icon || '📦',
+    icon: c.icon || 'Package',
     parentId: null,
     budgetAmount: c.budget_amount || 0,
     spentAmount: c.spent_amount || 0,
@@ -90,7 +91,8 @@ const Expenses: React.FC = () => {
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
 
   const getCategoryName = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.name || '미분류';
-  const getCategoryIcon = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.icon || '📦';
+  const getCategoryIconName = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.icon || 'Package';
+  const getCategoryColor = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.color || '#f43f5e';
 
   const handleSaveExpense = async (expense: Expense) => {
     try {
@@ -243,7 +245,7 @@ const Expenses: React.FC = () => {
       {/* 지출 목록 */}
       {filteredExpenses.length === 0 ? (
         <EmptyState
-          type="expenses"
+          illustration="expense"
           title="지출 내역이 없습니다"
           description={searchQuery || filterPayer !== 'all' || filterCategory !== 'all' ? "검색 조건에 맞는 지출이 없습니다" : "첫 번째 지출을 등록해보세요"}
           actionLabel="지출 추가"
@@ -255,7 +257,17 @@ const Expenses: React.FC = () => {
             <motion.div key={expense.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl p-4 border border-stone-100 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-lg shrink-0">{getCategoryIcon(expense.categoryId)}</div>
+                  {(() => {
+                    const IconComponent = getIconByName(getCategoryIconName(expense.categoryId));
+                    return (
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0"
+                        style={{ backgroundColor: getCategoryColor(expense.categoryId) }}
+                      >
+                        <IconComponent size={18} />
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-medium text-stone-800 truncate">{expense.title}</h3>

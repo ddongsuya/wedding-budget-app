@@ -65,26 +65,43 @@ const PhotoReferences: React.FC = () => {
     try {
       setUploading(true);
       
-      // 이미지 압축 (WebP 포맷 자동 변환)
+      // 이미지 압축 (WebP 포맷 자동 변환) - 더 강한 압축 적용
       const compressed = await compressImage(file, {
-        maxWidth: 1200,
-        maxHeight: 1200,
-        quality: 0.8,
-        maxSizeMB: 0.8,
+        maxWidth: 1000,
+        maxHeight: 1000,
+        quality: 0.7,
+        maxSizeMB: 0.5,
         format: 'auto', // WebP 지원 시 자동 변환
       });
 
       // Base64로 변환
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUploadData(prev => ({ ...prev, image_url: reader.result as string }));
+        const base64 = reader.result as string;
+        // Base64 크기 체크 (약 7MB 제한 - 서버 10MB 제한의 안전 마진)
+        if (base64.length > 7000000) {
+          toast.error('이미지가 너무 큽니다. 더 작은 이미지를 선택해주세요.');
+          setUploading(false);
+          return;
+        }
+        setUploadData(prev => ({ ...prev, image_url: base64 }));
         setShowUploadModal(true);
+        setUploading(false);
+      };
+      reader.onerror = () => {
+        toast.error('이미지 읽기에 실패했습니다');
         setUploading(false);
       };
       reader.readAsDataURL(compressed);
     } catch (error) {
+      console.error('Image compression error:', error);
       toast.error('이미지 처리에 실패했습니다');
       setUploading(false);
+    }
+    
+    // input 초기화 (같은 파일 재선택 가능하도록)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -101,8 +118,10 @@ const PhotoReferences: React.FC = () => {
       setShowUploadModal(false);
       setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
       loadPhotos();
-    } catch (error) {
-      toast.error('업로드에 실패했습니다');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || '업로드에 실패했습니다';
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }

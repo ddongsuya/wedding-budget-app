@@ -363,8 +363,8 @@ export const createPhotoReferenceValidation = [
   body('image_url')
     .notEmpty()
     .withMessage('이미지 URL은 필수입니다')
-    .isLength({ max: 5000000 })
-    .withMessage('이미지 데이터가 너무 큽니다 (최대 5MB)'),
+    .isLength({ max: 10000000 })
+    .withMessage('이미지 데이터가 너무 큽니다 (최대 10MB)'),
   body('category')
     .optional()
     .custom((value) => {
