@@ -45,6 +45,15 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 필수 필드 검증
+    if (!formData.title?.trim()) {
+      return;
+    }
+    if (!formData.amount || formData.amount <= 0) {
+      return;
+    }
+    
     setIsSaving(true);
     try {
       const expense: Expense = {
@@ -69,6 +78,13 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     }
   };
 
+  // Enter 키로 인한 의도치 않은 form submit 방지
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center p-0 md:p-4 bg-white md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in safe-area-inset">
       <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl shadow-none md:shadow-2xl flex flex-col overflow-hidden">
@@ -81,7 +97,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8 safe-area-pb">
+        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex-1 overflow-y-auto p-6 space-y-8 safe-area-pb">
           
           {/* Main Info */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -222,14 +238,15 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
              </div>
           </section>
 
-        </form>
+          {/* 버튼을 form 내부로 이동 */}
+          <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb-min -mx-6 -mb-8 mt-4">
+            <Button type="button" variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
+            <Button type="submit" variant="primary" className="flex-1" loading={isSaving} disabled={isSaving}>
+              {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}
+            </Button>
+          </div>
 
-        <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb-min">
-          <Button variant="outline" className="flex-1" onClick={onCancel} disabled={isSaving}>취소</Button>
-          <Button variant="primary" className="flex-1" onClick={handleSubmit} loading={isSaving} disabled={isSaving}>
-            {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}
-          </Button>
-        </div>
+        </form>
       </div>
     </div>
   );
