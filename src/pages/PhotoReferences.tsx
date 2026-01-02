@@ -113,7 +113,17 @@ const PhotoReferences: React.FC = () => {
 
     try {
       setUploading(true);
-      await photoReferenceAPI.create(uploadData);
+      
+      // 빈 값 정리
+      const cleanData = {
+        image_url: uploadData.image_url,
+        category: uploadData.category || 'etc',
+        title: uploadData.title?.trim() || undefined,
+        memo: uploadData.memo?.trim() || undefined,
+        tags: uploadData.tags && uploadData.tags.length > 0 ? uploadData.tags : undefined,
+      };
+      
+      await photoReferenceAPI.create(cleanData);
       toast.success('사진이 추가되었습니다');
       setShowUploadModal(false);
       setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });

@@ -63,9 +63,15 @@ export const createPhotoReference = async (req: AuthRequest, res: Response) => {
 
     // 빈 문자열을 null로 변환
     const cleanSourceUrl = source_url && source_url.trim() ? source_url.trim() : null;
-    const cleanTitle = title && title.trim() ? title.trim() : '';
-    const cleanMemo = memo && memo.trim() ? memo.trim() : '';
-    const cleanTags = Array.isArray(tags) ? tags.filter((t: string) => t && t.trim()) : [];
+    const cleanTitle = title && title.trim() ? title.trim() : null;
+    const cleanMemo = memo && memo.trim() ? memo.trim() : null;
+    
+    // tags 배열 처리 - PostgreSQL TEXT[] 형식으로 변환
+    let cleanTags: string[] | null = null;
+    if (Array.isArray(tags) && tags.length > 0) {
+      cleanTags = tags.filter((t: string) => t && t.trim()).map((t: string) => t.trim());
+      if (cleanTags.length === 0) cleanTags = null;
+    }
 
     const result = await pool.query(
       `INSERT INTO photo_references (couple_id, image_url, category, title, memo, tags, source_url, created_by)
@@ -78,9 +84,10 @@ export const createPhotoReference = async (req: AuthRequest, res: Response) => {
       success: true,
       data: result.rows[0],
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create photo reference error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', error.message, error.detail);
+    res.status(500).json({ error: 'Internal server error', message: error.message });
   }
 };
 
