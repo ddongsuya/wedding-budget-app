@@ -7,6 +7,8 @@ import { DashboardSkeleton } from '@/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '@/hooks/useCoupleProfile';
 import { useBudget } from '@/hooks/useBudget';
 import { useExpenses } from '@/hooks/useExpenses';
+import { checklistAPI } from '@/api/checklist';
+import { eventAPI } from '@/api/events';
 
 // 프로페셔널 대시보드 컴포넌트
 import { CompactHeader } from '../components/dashboard/CompactHeader';
@@ -20,6 +22,54 @@ const Dashboard: React.FC = () => {
   const { profile: apiProfile, loading: profileLoading } = useCoupleProfile();
   const { settings: budgetSettings, categories, loading: budgetLoading } = useBudget();
   const { expenses: apiExpenses, loading: expensesLoading } = useExpenses();
+  
+  // 체크리스트 진행률 상태
+  const [checklistProgress, setChecklistProgress] = useState(0);
+  const [checklistLoading, setChecklistLoading] = useState(true);
+  
+  // 다가오는 일정 상태
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  
+  // 체크리스트 통계 로드
+  useEffect(() => {
+    const loadChecklistStats = async () => {
+      try {
+        const response = await checklistAPI.getStats();
+        setChecklistProgress(response.data.data?.completionRate || 0);
+      } catch (error) {
+        console.error('Failed to load checklist stats:', error);
+        setChecklistProgress(0);
+      } finally {
+        setChecklistLoading(false);
+      }
+    };
+    loadChecklistStats();
+  }, []);
+  
+  // 다가오는 일정 로드
+  useEffect(() => {
+    const loadUpcomingEvents = async () => {
+      try {
+        const response = await eventAPI.getUpcoming();
+        const events = (response.data.data || []).slice(0, 3).map((e: any) => ({
+          id: e.id,
+          title: e.title,
+          date: e.start_date,
+          time: e.start_time,
+          category: e.category,
+          color: e.color,
+        }));
+        setUpcomingEvents(events);
+      } catch (error) {
+        console.error('Failed to load upcoming events:', error);
+        setUpcomingEvents([]);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    loadUpcomingEvents();
+  }, []);
   
   // API 프로필을 대시보드에서 사용하는 형식으로 변환
   const profile = apiProfile ? {
@@ -85,7 +135,7 @@ const Dashboard: React.FC = () => {
     updatedAt: e.updated_at || new Date().toISOString(),
   })) || [];
 
-  const loading = profileLoading || budgetLoading || expensesLoading;
+  const loading = profileLoading || budgetLoading || expensesLoading || checklistLoading || eventsLoading;
 
   // 날짜 계산 함수
   const calculateDays = useCallback((targetDate: string) => {
@@ -123,12 +173,6 @@ const Dashboard: React.FC = () => {
 
   // D-day calculation
   const dDay = useMemo(() => calculateDays(profile.weddingDate), [profile.weddingDate, calculateDays]);
-
-  // 체크리스트 진행률 (TODO: 실제 API 연동)
-  const checklistProgress = 32;
-
-  // 다가오는 일정 (TODO: 실제 API 연동)
-  const upcomingEvents: any[] = [];
 
   // 카테고리 데이터 변환
   const categoryData = useMemo(() => 

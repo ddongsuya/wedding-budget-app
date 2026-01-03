@@ -125,7 +125,6 @@ const Schedule: React.FC = () => {
       if (!map[dateKey]) map[dateKey] = [];
       map[dateKey].push(event);
     });
-    console.log('Events by date:', map); // 디버깅용
     return map;
   }, [events]);
 
