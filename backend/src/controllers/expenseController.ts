@@ -121,13 +121,15 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
       payment_method,
       vendor,
       notes,
+      status,
+      due_date,
     } = req.body;
 
     const result = await pool.query(
       `INSERT INTO expenses (
         couple_id, category_id, title, amount, date, payer,
-        payment_method, vendor, notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        payment_method, vendor, notes, status, due_date
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *`,
       [
         coupleId,
@@ -139,6 +141,8 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
         payment_method,
         vendor,
         notes,
+        status || 'completed',
+        due_date || null,
       ]
     );
 
@@ -202,6 +206,8 @@ export const updateExpense = async (req: AuthRequest, res: Response) => {
       payment_method,
       vendor,
       notes,
+      status,
+      due_date,
     } = req.body;
 
     const result = await pool.query(
@@ -214,6 +220,8 @@ export const updateExpense = async (req: AuthRequest, res: Response) => {
         payment_method = COALESCE($8, payment_method),
         vendor = COALESCE($9, vendor),
         notes = COALESCE($10, notes),
+        status = COALESCE($11, status),
+        due_date = $12,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1 AND couple_id = $2
       RETURNING *`,
@@ -228,6 +236,8 @@ export const updateExpense = async (req: AuthRequest, res: Response) => {
         payment_method,
         vendor,
         notes,
+        status,
+        due_date !== undefined ? due_date : null,
       ]
     );
 

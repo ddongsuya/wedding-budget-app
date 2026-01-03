@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Filter, CreditCard, Wallet, Trash2, Edit2, ChevronDown, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard, Wallet, Trash2, Edit2, ChevronDown, Calendar, Clock, CheckCircle2 } from 'lucide-react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useBudget } from '@/hooks/useBudget';
 import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput } from '@/api/expenses';
@@ -45,7 +45,8 @@ const Expenses: React.FC = () => {
     amount: Number(e.amount) || 0,
     paymentDate: e.date,
     paidBy: (e.payer || 'shared') as 'groom' | 'bride' | 'shared',
-    status: 'completed' as const,
+    status: (e.status || 'completed') as 'completed' | 'planned',
+    dueDate: e.due_date || null,
     paymentMethod: (e.payment_method || 'card') as 'cash' | 'card' | 'transfer',
     paymentType: 'full' as const,
     vendorName: e.vendor || '',
@@ -105,6 +106,7 @@ const Expenses: React.FC = () => {
           payer: expense.paidBy === 'shared' ? 'groom' : expense.paidBy,
           category_id: validCategoryId, payment_method: expense.paymentMethod,
           vendor: expense.vendorName || undefined, notes: expense.memo || undefined,
+          status: expense.status, due_date: expense.dueDate || undefined,
         };
         await expenseAPI.update(editingExpense.id, updateData);
         toast.success('지출이 수정되었습니다');
@@ -114,6 +116,7 @@ const Expenses: React.FC = () => {
           payer: expense.paidBy === 'shared' ? 'groom' : expense.paidBy,
           category_id: validCategoryId, payment_method: expense.paymentMethod,
           vendor: expense.vendorName || undefined, notes: expense.memo || undefined,
+          status: expense.status, due_date: expense.dueDate || undefined,
         };
         await expenseAPI.create(createData);
         toast.success('지출이 등록되었습니다');
@@ -285,17 +288,34 @@ const Expenses: React.FC = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-medium text-stone-800 truncate">{expense.title}</h3>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${getPayerColor(expense.paidBy)}`}>{getPayerLabel(expense.paidBy)}</span>
+                      {/* 결제 상태 뱃지 */}
+                      {expense.status === 'planned' ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
+                          <Clock size={10} />예정
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                          <CheckCircle2 size={10} />완료
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
                       <span className="flex items-center gap-1"><Calendar size={12} />{new Date(expense.paymentDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', '')}</span>
                       <span className="flex items-center gap-1">{getPaymentMethodIcon(expense.paymentMethod)}{expense.paymentMethod === 'card' ? '카드' : expense.paymentMethod === 'cash' ? '현금' : '이체'}</span>
                       <span>{getCategoryName(expense.categoryId)}</span>
                     </div>
+                    {/* 결제 예정일 표시 */}
+                    {expense.status === 'planned' && expense.dueDate && (
+                      <div className="flex items-center gap-1 mt-1.5 text-xs text-amber-600">
+                        <Clock size={12} />
+                        <span>결제 예정일: {new Date(expense.dueDate).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      </div>
+                    )}
                     {expense.vendorName && <p className="text-xs text-stone-400 mt-1">{expense.vendorName}</p>}
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <p className="font-bold text-stone-800 whitespace-nowrap">{formatMoney(expense.amount)}</p>
+                  <p className={`font-bold whitespace-nowrap ${expense.status === 'planned' ? 'text-amber-600' : 'text-stone-800'}`}>{formatMoney(expense.amount)}</p>
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleEditExpense(expense)} className="p-1.5 hover:bg-stone-100 rounded-lg transition-colors" aria-label="수정"><Edit2 size={16} className="text-stone-400" /></button>
                     <button onClick={() => handleDeleteExpense(expense.id)} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors" aria-label="삭제"><Trash2 size={16} className="text-red-400" /></button>

@@ -141,6 +141,7 @@ export interface Expense {
   vendorName: string;
   paymentType: 'deposit' | 'interim' | 'balance' | 'full';
   status: 'planned' | 'completed';
+  dueDate: string | null;  // 결제 예정일
   receiptUrl: string | null;
   memo: string;
   createdAt: string;

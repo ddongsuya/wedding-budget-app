@@ -22,6 +22,8 @@ export interface ExpenseCreateInput {
   payment_method?: string;
   vendor?: string;
   notes?: string;
+  status?: 'completed' | 'planned';
+  due_date?: string;
 }
 
 export type ExpenseUpdateInput = Partial<ExpenseCreateInput>;

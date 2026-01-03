@@ -26,6 +26,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     vendorName: '',
     paymentType: 'full',
     status: 'completed',
+    dueDate: null,
     memo: '',
     receiptUrl: null,
     ...initialData
@@ -95,6 +96,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
         vendorName: formData.vendorName || '',
         paymentType: formData.paymentType as 'full' | 'deposit' | 'interim' | 'balance',
         status: formData.status as 'completed' | 'planned',
+        dueDate: formData.status === 'planned' ? (formData.dueDate || null) : null,
         receiptUrl: formData.receiptUrl || null,
         memo: formData.memo || ''
       };
@@ -264,6 +266,16 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
                         </label>
                      </div>
                    </div>
+                   
+                   {formData.status === 'planned' && (
+                     <div className="space-y-1.5">
+                       <DatePicker
+                         label="결제 예정일"
+                         value={formData.dueDate || ''}
+                         onChange={(date) => { setFormData(prev => ({ ...prev, dueDate: date || null })); setHasUnsavedChanges(true); }}
+                       />
+                     </div>
+                   )}
                  </div>
                </div>
              )}

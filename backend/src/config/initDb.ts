@@ -41,10 +41,13 @@ export async function runMigrations(): Promise<void> {
     // 8. Venues 테이블 확장
     await migrateVenuesTable();
     
-    // 9. Venue Contracts 테이블
+    // 9. Expenses 테이블 확장
+    await migrateExpensesTable();
+    
+    // 10. Venue Contracts 테이블
     await migrateVenueContractsTable();
     
-    // 10. 정리 작업
+    // 11. 정리 작업
     await cleanupOldData();
     
     console.log('Migrations completed successfully!');
@@ -298,6 +301,21 @@ async function migrateVenuesTable(): Promise<void> {
   await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS fresh_flower_fee BIGINT DEFAULT 0`);
 }
 
+
+/**
+ * Expenses 테이블 확장 마이그레이션
+ */
+async function migrateExpensesTable(): Promise<void> {
+  // 결제 상태 컬럼 추가 (completed: 결제완료, planned: 결제예정)
+  await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'completed'`);
+  
+  // 결제 예정일 컬럼 추가
+  await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS due_date DATE`);
+  
+  // 인덱스 추가
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_expenses_status ON expenses(status)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_expenses_due_date ON expenses(due_date)`);
+}
 
 /**
  * Venue Contracts 테이블 마이그레이션
