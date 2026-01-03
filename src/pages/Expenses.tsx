@@ -42,7 +42,7 @@ const Expenses: React.FC = () => {
     id: String(e.id),
     categoryId: String(e.category_id || ''),
     title: e.title,
-    amount: e.amount,
+    amount: Number(e.amount) || 0,
     paymentDate: e.date,
     paidBy: (e.payer || 'shared') as 'groom' | 'bride' | 'shared',
     status: 'completed' as const,
