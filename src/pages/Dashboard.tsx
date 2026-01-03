@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ArrowRight, PieChart, List, Clock } from 'lucide-react';
 import { BudgetSettings, Expense } from '@/types/types';
 import { DashboardSkeleton } from '@/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '@/hooks/useCoupleProfile';
@@ -17,11 +17,17 @@ import { BudgetDonutChart } from '../components/dashboard/BudgetInsights';
 import { CategoryBars } from '../components/dashboard/CategoryBars';
 import { RecentActivityGrid } from '../components/dashboard/RecentActivity';
 
+// 탭 타입 정의
+type DashboardTab = 'overview' | 'category' | 'activity';
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { profile: apiProfile, loading: profileLoading } = useCoupleProfile();
   const { settings: budgetSettings, categories, loading: budgetLoading } = useBudget();
   const { expenses: apiExpenses, loading: expensesLoading } = useExpenses();
+  
+  // 모바일 탭 상태
+  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
   
   // 체크리스트 진행률 상태
   const [checklistProgress, setChecklistProgress] = useState(0);
@@ -187,6 +193,13 @@ const Dashboard: React.FC = () => {
 
   if (coreLoading) return <DashboardSkeleton />;
 
+  // 탭 설정
+  const tabs = [
+    { id: 'overview' as const, label: '요약', icon: PieChart },
+    { id: 'category' as const, label: '카테고리', icon: List },
+    { id: 'activity' as const, label: '활동', icon: Clock },
+  ];
+
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -227,7 +240,7 @@ const Dashboard: React.FC = () => {
             </motion.div>
           )}
 
-          {/* KPI 카드 그리드 */}
+          {/* KPI 카드 그리드 - 항상 표시 */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -242,42 +255,120 @@ const Dashboard: React.FC = () => {
             />
           </motion.section>
 
-          {/* 예산 시각화 (2열) */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6"
-          >
-            {/* 도넛 차트 (2칸) */}
-            <div className="lg:col-span-2">
-              <BudgetDonutChart 
-                categories={categoryData}
-                totalBudget={budget.totalBudget}
-                totalSpent={totalSpent}
-              />
+          {/* 모바일 탭 네비게이션 */}
+          <div className="lg:hidden">
+            <div className="flex bg-white rounded-xl border border-stone-200/60 p-1 shadow-sm">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-rose-500 text-white shadow-sm'
+                        : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'
+                    }`}
+                  >
+                    <Icon size={14} />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* 카테고리 바 (3칸) */}
-            <div className="lg:col-span-3">
-              <CategoryBars 
-                categories={categoryData}
-                onCategoryClick={(name) => navigate(`/budget?category=${name}`)}
+          {/* 모바일: 탭 콘텐츠 */}
+          <div className="lg:hidden">
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <BudgetDonutChart 
+                    categories={categoryData}
+                    totalBudget={budget.totalBudget}
+                    totalSpent={totalSpent}
+                  />
+                </motion.div>
+              )}
+              
+              {activeTab === 'category' && (
+                <motion.div
+                  key="category"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CategoryBars 
+                    categories={categoryData}
+                    onCategoryClick={(name) => navigate(`/budget?category=${name}`)}
+                  />
+                </motion.div>
+              )}
+              
+              {activeTab === 'activity' && (
+                <motion.div
+                  key="activity"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <RecentActivityGrid 
+                    expenses={recentExpenses}
+                    events={upcomingEvents}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* 데스크톱: 기존 레이아웃 유지 */}
+          <div className="hidden lg:block space-y-6">
+            {/* 예산 시각화 (2열) */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="grid grid-cols-5 gap-6"
+            >
+              {/* 도넛 차트 (2칸) */}
+              <div className="col-span-2">
+                <BudgetDonutChart 
+                  categories={categoryData}
+                  totalBudget={budget.totalBudget}
+                  totalSpent={totalSpent}
+                />
+              </div>
+
+              {/* 카테고리 바 (3칸) */}
+              <div className="col-span-3">
+                <CategoryBars 
+                  categories={categoryData}
+                  onCategoryClick={(name) => navigate(`/budget?category=${name}`)}
+                />
+              </div>
+            </motion.section>
+
+            {/* 최근 활동 & 일정 */}
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <RecentActivityGrid 
+                expenses={recentExpenses}
+                events={upcomingEvents}
               />
-            </div>
-          </motion.section>
-
-          {/* 최근 활동 & 일정 (2열) */}
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <RecentActivityGrid 
-              expenses={recentExpenses}
-              events={upcomingEvents}
-            />
-          </motion.section>
+            </motion.section>
+          </div>
 
         </div>
       </div>

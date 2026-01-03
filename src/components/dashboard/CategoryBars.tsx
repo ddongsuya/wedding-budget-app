@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getIconByName } from '@/utils/iconMap';
 
 interface CategoryBarProps {
   categories: Array<{
@@ -58,7 +59,10 @@ export const CategoryBars: React.FC<CategoryBarProps> = ({ categories, onCategor
             >
               <div className="flex items-center justify-between mb-1 md:mb-1.5">
                 <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
-                  <span className="text-sm md:text-lg flex-shrink-0">{cat.icon}</span>
+                  {(() => {
+                    const IconComponent = getIconByName(cat.icon);
+                    return <IconComponent className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" style={{ color: cat.color }} />;
+                  })()}
                   <span className="text-xs md:text-sm font-medium text-stone-700 group-hover:text-stone-900 truncate">
                     {cat.name}
                   </span>
