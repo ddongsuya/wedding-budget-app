@@ -252,6 +252,8 @@ const Dashboard: React.FC = () => {
               checklistProgress={checklistProgress}
               overBudgetCount={overBudgetCategories.length}
               checklistLoading={checklistLoading}
+              groomRatio={budget.groomRatio}
+              brideRatio={budget.brideRatio}
             />
           </motion.section>
 
