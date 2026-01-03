@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Venue, ViewMode } from '../types';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Venue, ViewMode } from '@/types/types';
 import { venueAPI } from '@/api/venues';
 import { Button } from '../components/ui/Button';
 import { VenueForm } from '../components/venue/VenueForm';
 import { VenueCompare } from '../components/venue/VenueCompare';
 import { VenueCardDeck } from '../components/venue/VenueCardDeck';
 import { VenueContractForm } from '../components/venue/VenueContractForm';
+import { SelectedVenueDetail } from '../components/venue/SelectedVenueDetail';
 import { BottomSheet } from '../components/ui/BottomSheet';
 import { GalleryViewer } from '../components/ui/GalleryViewer';
 import { Plus, Star, LayoutGrid, List, Search, ArrowUpDown, Filter, CheckSquare, X, Image as ImageIcon } from 'lucide-react';
@@ -298,15 +299,51 @@ const Venues: React.FC = () => {
 
   const uniqueLocations = Array.from(new Set(venues.map(v => v.location.split(' ')[0])));
 
+  // 계약 완료된 식장 찾기
+  const contractedVenue = useMemo(() => {
+    return venues.find(v => v.status === 'contracted') || null;
+  }, [venues]);
+
+  // 계약 완료된 식장을 제외한 나머지 식장들
+  const otherVenues = useMemo(() => {
+    return processedVenues.filter(v => v.status !== 'contracted');
+  }, [processedVenues]);
+
+  // 예식장 선택 해제 (상태를 visited로 변경)
+  const handleDeselectVenue = async () => {
+    if (!contractedVenue) return;
+    try {
+      await venueAPI.update(contractedVenue.id, { status: 'visited' });
+      toast.success('예식장 선택이 해제되었습니다');
+      loadVenues();
+    } catch (error) {
+      toast.error('선택 해제에 실패했습니다');
+    }
+  };
+
   return (
     <div className="space-y-6 pb-24 md:pb-0 h-full flex flex-col">
+      {/* 선택된 예식장 (계약 완료) */}
+      {contractedVenue && (
+        <SelectedVenueDetail
+          venue={contractedVenue}
+          onEdit={handleEdit}
+          onDeselect={handleDeselectVenue}
+        />
+      )}
+
       {/* Header & Controls */}
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-start md:items-center">
           <div>
-            <h2 className="text-2xl font-bold text-stone-800">웨딩홀 비교</h2>
+            <h2 className="text-2xl font-bold text-stone-800">
+              {contractedVenue ? '후보 웨딩홀' : '웨딩홀 비교'}
+            </h2>
             <p className="text-stone-500 text-sm mt-1">
-              등록된 <span className="text-rose-500 font-bold">{venues.length}</span>개의 웨딩홀을 비교 분석하세요.
+              {contractedVenue 
+                ? `${otherVenues.length}개의 후보 웨딩홀`
+                : <>등록된 <span className="text-rose-500 font-bold">{venues.length}</span>개의 웨딩홀을 비교 분석하세요.</>
+              }
             </p>
           </div>
           <Button icon={<Plus size={18} />} onClick={() => { setEditingVenue(null); setIsFormOpen(true); }} className="hidden md:flex">

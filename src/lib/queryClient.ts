@@ -122,6 +122,7 @@ export const invalidateQueries = {
   checklist: () => queryClient.invalidateQueries({ queryKey: queryKeys.checklist.all }),
   stats: () => queryClient.invalidateQueries({ queryKey: queryKeys.stats.all }),
   couple: () => queryClient.invalidateQueries({ queryKey: queryKeys.couple.all }),
+  profile: () => queryClient.invalidateQueries({ queryKey: queryKeys.couple.profile() }),
   notifications: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all }),
   photoReferences: () => queryClient.invalidateQueries({ queryKey: queryKeys.photoReferences.all }),
   announcements: () => queryClient.invalidateQueries({ queryKey: queryKeys.announcements.all }),

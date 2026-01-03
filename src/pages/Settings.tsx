@@ -132,6 +132,8 @@ const SettingsNew: React.FC = () => {
     try {
       setIsSaving(true);
       await coupleAPI.updateProfile(profile);
+      // 프로필 변경 이벤트 발생 - 다른 컴포넌트들이 새 데이터를 가져오도록
+      window.dispatchEvent(new CustomEvent('profile-updated'));
       showToast('success', '프로필이 저장되었습니다! 💕');
     } catch (error) {
       console.error('Save profile error:', error);

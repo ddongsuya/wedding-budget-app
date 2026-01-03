@@ -142,6 +142,16 @@ export const useCoupleProfile = () => {
   useEffect(() => {
     fetchProfile();
     fetchCouple();
+    
+    // 프로필 업데이트 이벤트 수신
+    const handleProfileUpdate = () => {
+      fetchProfile();
+    };
+    
+    window.addEventListener('profile-updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profile-updated', handleProfileUpdate);
+    };
   }, [fetchProfile, fetchCouple]);
 
   return {
