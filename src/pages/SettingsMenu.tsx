@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft, Shield, Heart, Receipt, FileText, Camera } from 'lucide-react';
+import { Lock, ChevronRight, User, Bell, LogOut, ArrowLeft, Shield, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -13,34 +13,6 @@ const SettingsMenu = () => {
       navigate('/login');
     }
   };
-
-  // 모바일에서 하단 탭에 없는 메뉴들
-  const quickMenuItems = [
-    {
-      icon: Receipt,
-      label: '지출 관리',
-      path: '/expenses',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      description: '지출 내역 확인 및 관리',
-    },
-    {
-      icon: FileText,
-      label: '체크리스트',
-      path: '/checklist',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      description: '결혼 준비 체크리스트',
-    },
-    {
-      icon: Camera,
-      label: '포토 레퍼런스',
-      path: '/photo-references',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      description: '웨딩 사진 아이디어 모음',
-    },
-  ];
 
   const menuItems = [
     {
@@ -93,31 +65,6 @@ const SettingsMenu = () => {
               <p className="text-rose-100 text-sm">{user?.email}</p>
             </div>
           </div>
-        </div>
-
-        {/* 빠른 메뉴 (모바일 하단 탭에 없는 메뉴들) */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-2xl shadow-card border border-stone-100 overflow-hidden md:hidden">
-          <div className="px-4 py-3 bg-gradient-to-r from-stone-50 to-stone-100/50 border-b border-stone-100">
-            <h2 className="text-sm font-semibold text-stone-600">빠른 메뉴</h2>
-          </div>
-          {quickMenuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="flex items-center justify-between p-4 hover:bg-stone-50 transition-colors border-b border-stone-100 last:border-b-0"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 ${item.bgColor} rounded-xl flex items-center justify-center`}>
-                  <item.icon size={20} className={item.color} />
-                </div>
-                <div>
-                  <span className="text-stone-800 font-medium block">{item.label}</span>
-                  <span className="text-stone-500 text-xs">{item.description}</span>
-                </div>
-              </div>
-              <ChevronRight size={20} className="text-stone-400" />
-            </Link>
-          ))}
         </div>
 
         {/* 관리자 메뉴 (관리자만 표시) */}

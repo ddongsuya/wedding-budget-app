@@ -3,7 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, Calendar, FileText, LogOut, Camera } from 'lucide-react';
 import { NotificationBadge } from '@/components/common/NotificationBadge';
 import { ExpenseForm } from './expense/ExpenseForm';
-import { CoupleProfile, Expense, BudgetCategory } from '../types';
+import { CoupleProfile, Expense, BudgetCategory } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -28,13 +28,20 @@ const NAV_ITEMS = [
   { path: '/settings', label: '설정', icon: Settings },
 ];
 
-// 모바일용 주요 메뉴 (5개로 제한하여 터치 타겟 확보)
-const MOBILE_NAV_ITEMS = [
+// 모바일 하단 탭 주요 메뉴 (4개 + 더보기)
+const MOBILE_MAIN_NAV = [
   { path: '/', label: '홈', icon: LayoutDashboard },
   { path: '/budget', label: '예산', icon: Wallet },
   { path: '/schedule', label: '일정', icon: Calendar },
   { path: '/venues', label: '식장', icon: Store },
-  { path: '/settings', label: '더보기', icon: Menu },
+];
+
+// 모바일 "더보기" 메뉴에 포함될 항목들
+const MOBILE_MORE_NAV = [
+  { path: '/expenses', label: '지출 관리', icon: Receipt, color: 'text-green-600', bgColor: 'bg-green-50' },
+  { path: '/checklist', label: '체크리스트', icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+  { path: '/photo-references', label: '포토 레퍼런스', icon: Camera, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+  { path: '/settings', label: '설정', icon: Settings, color: 'text-stone-600', bgColor: 'bg-stone-100' },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -87,6 +94,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // User Menu
   const [showUserMenu, setShowUserMenu] = useState(false);
+  
+  // More Menu (모바일 더보기 메뉴)
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -96,6 +106,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   useEffect(() => {
     setIsFabOpen(false); // Close FAB on route change
+    setShowMoreMenu(false); // Close More menu on route change
   }, [location]);
 
   useEffect(() => {
@@ -417,14 +428,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         />
       )}
 
-      {/* Mobile Bottom Navigation - 5개 메뉴로 최적화 */}
+      {/* Mobile Bottom Navigation - 4개 메뉴 + 더보기 */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-4 py-2 flex justify-around items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" 
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-2 py-2 flex justify-around items-center z-50 shadow-[0_-5px_15px_rgba(0,0,0,0.03)]" 
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 8px)' }}
         role="navigation" 
         aria-label="모바일 네비게이션"
       >
-        {MOBILE_NAV_ITEMS.map((item) => (
+        {MOBILE_MAIN_NAV.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
@@ -440,7 +451,98 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <span className="text-[10px] font-medium">{item.label}</span>
           </NavLink>
         ))}
+        
+        {/* 더보기 버튼 */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[56px] min-h-[48px] p-2 rounded-lg transition-all touch-feedback active:scale-95 ${
+              showMoreMenu || MOBILE_MORE_NAV.some(item => item.path === location.pathname) 
+                ? 'text-rose-500' 
+                : 'text-stone-400'
+            }`}
+            aria-label="더보기 메뉴"
+            aria-expanded={showMoreMenu}
+            aria-haspopup="menu"
+          >
+            <Menu size={22} strokeWidth={showMoreMenu ? 2.5 : 2} aria-hidden="true" />
+            <span className="text-[10px] font-medium">더보기</span>
+          </button>
+        </div>
       </nav>
+      
+      {/* 더보기 메뉴 팝업 */}
+      <AnimatePresence>
+        {showMoreMenu && (
+          <>
+            {/* 배경 오버레이 */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/30 z-[55] md:hidden"
+              onClick={() => setShowMoreMenu(false)}
+              aria-hidden="true"
+            />
+            
+            {/* 메뉴 패널 */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-[60] md:hidden shadow-2xl"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)' }}
+              role="menu"
+              aria-label="더보기 메뉴"
+            >
+              {/* 핸들 바 */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 bg-stone-300 rounded-full" />
+              </div>
+              
+              {/* 메뉴 헤더 */}
+              <div className="px-5 pb-3 border-b border-stone-100">
+                <h3 className="text-lg font-bold text-stone-800">더보기</h3>
+              </div>
+              
+              {/* 메뉴 항목들 */}
+              <div className="p-4 space-y-2">
+                {MOBILE_MORE_NAV.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setShowMoreMenu(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-4 p-4 rounded-xl transition-all ${
+                        isActive 
+                          ? 'bg-rose-50 border border-rose-200' 
+                          : 'hover:bg-stone-50 border border-transparent'
+                      }`
+                    }
+                    role="menuitem"
+                  >
+                    <div className={`w-11 h-11 ${item.bgColor} rounded-xl flex items-center justify-center`}>
+                      <item.icon size={22} className={item.color} aria-hidden="true" />
+                    </div>
+                    <span className="text-base font-medium text-stone-800">{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+              
+              {/* 닫기 버튼 */}
+              <div className="px-4 pb-2">
+                <button
+                  onClick={() => setShowMoreMenu(false)}
+                  className="w-full py-3 text-stone-500 font-medium text-sm hover:bg-stone-50 rounded-xl transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Global Expense Modal for FAB */}
       {isExpenseModalOpen && (
