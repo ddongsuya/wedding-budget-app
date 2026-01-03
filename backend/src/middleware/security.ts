@@ -10,7 +10,15 @@ const getAllowedOrigins = (): string[] => {
     'http://localhost:3000',
     'https://wedding-budget-app.vercel.app',
     'https://wedding-budget-app-2.vercel.app',
+    'https://wedding-budget-app-git-main-ddongsus-projects.vercel.app',
   ];
+};
+
+// Vercel 도메인 패턴 체크 (브랜치별 프리뷰 URL 허용)
+const isVercelDomain = (origin: string): boolean => {
+  // Vercel 프리뷰 도메인 패턴: *.vercel.app
+  return /^https:\/\/wedding-budget-app.*\.vercel\.app$/.test(origin) ||
+         /^https:\/\/.*-ddongsus-projects\.vercel\.app$/.test(origin);
 };
 
 // CORS 설정 강화
@@ -24,12 +32,13 @@ export const corsOptions: CorsOptions = {
       return callback(null, true);
     }
     
-    // 프로덕션에서는 허용된 origin만 허용
-    if (origin && allowedOrigins.includes(origin)) {
+    // 허용된 origin 목록에 있거나 Vercel 도메인 패턴에 맞으면 허용
+    if (origin && (allowedOrigins.includes(origin) || isVercelDomain(origin))) {
       return callback(null, true);
     }
     
     // 허용되지 않은 origin
+    console.log('CORS blocked origin:', origin);
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true, // 쿠키 전송 허용
@@ -49,7 +58,7 @@ export const corsOptions: CorsOptions = {
 // CORS origin 검증 유틸리티 함수
 export const isAllowedOrigin = (origin: string | undefined): boolean => {
   if (!origin) return process.env.NODE_ENV !== 'production';
-  return getAllowedOrigins().includes(origin);
+  return getAllowedOrigins().includes(origin) || isVercelDomain(origin);
 };
 
 // Helmet 보안 헤더 설정
