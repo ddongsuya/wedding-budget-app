@@ -122,6 +122,7 @@ interface KPIGridProps {
   spent: number;
   checklistProgress: number;
   overBudgetCount: number;
+  checklistLoading?: boolean;
 }
 
 export const KPIGrid: React.FC<KPIGridProps> = ({ 
@@ -129,7 +130,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
   totalBudget, 
   spent, 
   checklistProgress, 
-  overBudgetCount 
+  overBudgetCount,
+  checklistLoading = false,
 }) => {
   const formatMoney = (n: number) => 
     new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
@@ -167,9 +169,9 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
 
       <KPICard
         label="준비 진행률"
-        value={`${checklistProgress}%`}
-        subValue="완료"
-        trend={{
+        value={checklistLoading ? '-' : `${checklistProgress}%`}
+        subValue={checklistLoading ? '로딩 중' : '완료'}
+        trend={checklistLoading ? undefined : {
           value: 5,
           label: '지난주 대비',
           direction: 'up',

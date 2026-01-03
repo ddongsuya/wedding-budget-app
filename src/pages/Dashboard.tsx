@@ -2,7 +2,7 @@ import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowRight } from 'lucide-react';
-import { BudgetSettings, Expense } from '../types';
+import { BudgetSettings, Expense } from '@/types/types';
 import { DashboardSkeleton } from '@/components/skeleton/DashboardSkeleton';
 import { useCoupleProfile } from '@/hooks/useCoupleProfile';
 import { useBudget } from '@/hooks/useBudget';
@@ -29,30 +29,29 @@ const Dashboard: React.FC = () => {
   
   // 다가오는 일정 상태
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
+  const [_eventsLoading, setEventsLoading] = useState(true);
   
-  // 체크리스트 통계 로드
+  // 체크리스트와 일정을 병렬로 로드
   useEffect(() => {
-    const loadChecklistStats = async () => {
-      try {
-        const response = await checklistAPI.getStats();
-        setChecklistProgress(response.data.data?.completionRate || 0);
-      } catch (error) {
-        console.error('Failed to load checklist stats:', error);
+    const loadAdditionalData = async () => {
+      // 병렬로 두 API 호출
+      const [checklistResult, eventsResult] = await Promise.allSettled([
+        checklistAPI.getStats(),
+        eventAPI.getUpcoming(),
+      ]);
+      
+      // 체크리스트 결과 처리
+      if (checklistResult.status === 'fulfilled') {
+        setChecklistProgress(checklistResult.value.data.data?.completionRate || 0);
+      } else {
+        console.error('Failed to load checklist stats:', checklistResult.reason);
         setChecklistProgress(0);
-      } finally {
-        setChecklistLoading(false);
       }
-    };
-    loadChecklistStats();
-  }, []);
-  
-  // 다가오는 일정 로드
-  useEffect(() => {
-    const loadUpcomingEvents = async () => {
-      try {
-        const response = await eventAPI.getUpcoming();
-        const events = (response.data.data || []).slice(0, 3).map((e: any) => ({
+      setChecklistLoading(false);
+      
+      // 일정 결과 처리
+      if (eventsResult.status === 'fulfilled') {
+        const events = (eventsResult.value.data.data || []).slice(0, 3).map((e: any) => ({
           id: e.id,
           title: e.title,
           date: e.start_date,
@@ -61,14 +60,14 @@ const Dashboard: React.FC = () => {
           color: e.color,
         }));
         setUpcomingEvents(events);
-      } catch (error) {
-        console.error('Failed to load upcoming events:', error);
+      } else {
+        console.error('Failed to load upcoming events:', eventsResult.reason);
         setUpcomingEvents([]);
-      } finally {
-        setEventsLoading(false);
       }
+      setEventsLoading(false);
     };
-    loadUpcomingEvents();
+    
+    loadAdditionalData();
   }, []);
   
   // API 프로필을 대시보드에서 사용하는 형식으로 변환
@@ -135,7 +134,8 @@ const Dashboard: React.FC = () => {
     updatedAt: e.updated_at || new Date().toISOString(),
   })) || [];
 
-  const loading = profileLoading || budgetLoading || expensesLoading || checklistLoading || eventsLoading;
+  // 핵심 데이터만 로드되면 화면 표시 (체크리스트, 일정은 나중에 로드)
+  const coreLoading = profileLoading || budgetLoading || expensesLoading;
 
   // 날짜 계산 함수
   const calculateDays = useCallback((targetDate: string) => {
@@ -148,12 +148,11 @@ const Dashboard: React.FC = () => {
   }, []);
 
   // Memoized Calculations
-  const { totalSpent, progress, overBudgetCategories } = useMemo(() => {
-    const total = budget.categories.reduce((acc, cat) => acc + cat.spentAmount, 0);
-    const prog = budget.totalBudget > 0 ? (total / budget.totalBudget) * 100 : 0;
-    const overBudget = budget.categories.filter(c => c.spentAmount > c.budgetAmount && c.budgetAmount > 0);
-    return { totalSpent: total, progress: prog, overBudgetCategories: overBudget };
-  }, [budget.categories, budget.totalBudget]);
+  const { totalSpent, overBudgetCategories } = useMemo(() => {
+    const total = budget.categories.reduce((acc: number, cat: { spentAmount: number }) => acc + cat.spentAmount, 0);
+    const overBudget = budget.categories.filter((c: { spentAmount: number; budgetAmount: number; name: string }) => c.spentAmount > c.budgetAmount && c.budgetAmount > 0);
+    return { totalSpent: total, overBudgetCategories: overBudget };
+  }, [budget.categories]);
 
   // Recent Expenses
   const recentExpenses = useMemo(() => 
@@ -176,7 +175,7 @@ const Dashboard: React.FC = () => {
 
   // 카테고리 데이터 변환
   const categoryData = useMemo(() => 
-    budget.categories.map(cat => ({
+    budget.categories.map((cat: { name: string; budgetAmount: number; spentAmount: number; color: string; icon: string }) => ({
       name: cat.name,
       budget: cat.budgetAmount,
       spent: cat.spentAmount,
@@ -186,7 +185,7 @@ const Dashboard: React.FC = () => {
     [budget.categories]
   );
 
-  if (loading) return <DashboardSkeleton />;
+  if (coreLoading) return <DashboardSkeleton />;
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-8">
@@ -239,6 +238,7 @@ const Dashboard: React.FC = () => {
               spent={totalSpent}
               checklistProgress={checklistProgress}
               overBudgetCount={overBudgetCategories.length}
+              checklistLoading={checklistLoading}
             />
           </motion.section>
 
