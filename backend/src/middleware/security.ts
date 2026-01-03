@@ -193,20 +193,42 @@ export const containsSqlInjection = (input: string): boolean => {
   return sqlPatterns.some(pattern => pattern.test(input));
 };
 
+// Base64 데이터인지 확인
+const isBase64Data = (value: string): boolean => {
+  // data:image/... 형식의 Base64 이미지 데이터 확인
+  return value.startsWith('data:image/') || value.startsWith('data:application/');
+};
+
+// SQL Injection 검사에서 제외할 필드 목록
+const SKIP_SQL_CHECK_FIELDS = [
+  'image_url',
+  'image',
+  'photo',
+  'groom_image',
+  'bride_image',
+  'couple_photo',
+  'receipt_url',
+  'thumbnail',
+];
+
 // 요청 본문 검증 미들웨어
 export const validateRequestBody = (req: Request, res: Response, next: NextFunction) => {
   const body = req.body;
   
   // 재귀적으로 모든 문자열 필드 검사
-  const checkObject = (obj: any): boolean => {
+  const checkObject = (obj: any, parentKey: string = ''): boolean => {
     for (const key in obj) {
       const value = obj[key];
       if (typeof value === 'string') {
+        // Base64 이미지 데이터나 특정 필드는 SQL Injection 검사 제외
+        if (SKIP_SQL_CHECK_FIELDS.includes(key) || isBase64Data(value)) {
+          continue;
+        }
         if (containsSqlInjection(value)) {
           return false;
         }
       } else if (typeof value === 'object' && value !== null) {
-        if (!checkObject(value)) {
+        if (!checkObject(value, key)) {
           return false;
         }
       }
