@@ -5,8 +5,11 @@ import { useExpenses } from '@/hooks/useExpenses';
 import { useBudget } from '@/hooks/useBudget';
 import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput } from '@/api/expenses';
 import { useToast } from '@/hooks/useToast';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useHaptic } from '@/hooks/useHaptic';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ExpensesSkeleton } from '@/components/skeleton/ExpensesSkeleton';
+import { PullToRefresh } from '@/components/common/PullToRefresh';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { Expense, BudgetCategory } from '@/types/types';
 import { invalidateQueries } from '@/lib/queryClient';
@@ -17,16 +20,23 @@ type SortBy = 'date' | 'amount';
 
 const Expenses: React.FC = () => {
   const { toast } = useToast();
+  const { haptic } = useHaptic();
   const { expenses: apiExpenses, loading, fetchExpenses } = useExpenses();
   const { categories: apiCategories } = useBudget();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [filterPayer, setFilterPayer] = useState<FilterPayer>('all');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [showFilters, setShowFilters] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
+  // Pull-to-Refresh 핸들러
+  const handleRefresh = async () => {
+    await fetchExpenses();
+  };
 
   const budgetCategories: BudgetCategory[] = apiCategories.map(c => ({
     id: String(c.id),
@@ -58,8 +68,8 @@ const Expenses: React.FC = () => {
 
   const filteredExpenses = useMemo(() => {
     let result = [...expenses];
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearch) {
+      const query = debouncedSearch.toLowerCase();
       result = result.filter(e => 
         e.title.toLowerCase().includes(query) ||
         e.vendorName?.toLowerCase().includes(query) ||
@@ -136,6 +146,7 @@ const Expenses: React.FC = () => {
 
   const handleDeleteExpense = async (id: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
+    haptic('warning');
     try {
       await expenseAPI.delete(id);
       toast.success('지출이 삭제되었습니다');
@@ -168,6 +179,7 @@ const Expenses: React.FC = () => {
   if (loading) return <ExpensesSkeleton />;
 
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-6">
       {/* 헤더 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -338,6 +350,7 @@ const Expenses: React.FC = () => {
         />
       )}
     </div>
+    </PullToRefresh>
   );
 };
 

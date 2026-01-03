@@ -2,11 +2,13 @@ import React, { ReactNode, useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Store, Wallet, Receipt, Settings, Menu, Plus, User, Heart, Calendar, FileText, LogOut, Camera } from 'lucide-react';
 import { NotificationBadge } from '@/components/common/NotificationBadge';
+import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { ExpenseForm } from './expense/ExpenseForm';
 import { CoupleProfile, Expense, BudgetCategory } from '@/types/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { useHaptic } from '@/hooks/useHaptic';
 import { useCoupleProfile } from '@/hooks/useCoupleProfile';
 import { useBudget } from '@/hooks/useBudget';
 import { expenseAPI, ExpenseCreateInput } from '@/api/expenses';
@@ -49,6 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { haptic } = useHaptic();
   const { profile: apiProfile } = useCoupleProfile();
   const { categories: apiCategories } = useBudget();
   
@@ -171,7 +174,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const handleFabAction = (e: React.MouseEvent | React.TouchEvent, action: string) => {
     e.stopPropagation();
-    // e.preventDefault(); // Removed to allow scrolling if user drags, but for clicks we want to be explicit
+    haptic('light');
     
     // Close FAB first
     setIsFabOpen(false);
@@ -353,6 +356,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
            {children}
         </div>
+        
+        {/* 맨 위로 가기 버튼 */}
+        <ScrollToTop threshold={400} bottom={180} />
       </main>
 
       {/* Expandable FAB System */}
