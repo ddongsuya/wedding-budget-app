@@ -170,7 +170,7 @@ const Expenses: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-stone-800">지출 목록</h1>
-          <p className="text-sm text-stone-500 mt-1">총 {stats.count}건 · {formatMoney(stats.total)}</p>
+          <p className="text-sm text-stone-500 mt-1">총 {stats.count}건의 지출 내역</p>
         </div>
         <button
           onClick={() => { setEditingExpense(null); setShowExpenseForm(true); }}
@@ -180,19 +180,28 @@ const Expenses: React.FC = () => {
         </button>
       </div>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl p-4 border border-stone-100">
-          <p className="text-xs text-stone-500 mb-1">총 지출</p>
-          <p className="text-lg font-bold text-stone-800">{formatMoney(stats.total)}</p>
-        </div>
-        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-          <p className="text-xs text-blue-600 mb-1">신랑 부담</p>
-          <p className="text-lg font-bold text-blue-700">{formatMoney(stats.groomTotal)}</p>
-        </div>
-        <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
-          <p className="text-xs text-pink-600 mb-1">신부 부담</p>
-          <p className="text-lg font-bold text-pink-700">{formatMoney(stats.brideTotal)}</p>
+      {/* 통계 카드 - 클릭하면 상세 보기 */}
+      <div className="bg-white rounded-xl p-4 border border-stone-100 shadow-sm">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
+          <div className="text-center p-3 rounded-xl bg-stone-50">
+            <p className="text-xs text-stone-500 mb-1">총 지출</p>
+            <p className="text-lg md:text-xl font-bold text-stone-800">{formatMoney(stats.total)}</p>
+            <p className="text-[10px] text-stone-400 mt-1">{stats.count}건</p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-blue-50">
+            <p className="text-xs text-blue-600 mb-1">신랑 부담</p>
+            <p className="text-lg md:text-xl font-bold text-blue-700">{formatMoney(stats.groomTotal)}</p>
+            <p className="text-[10px] text-blue-400 mt-1">
+              {expenses.filter(e => e.paidBy === 'groom').length}건
+            </p>
+          </div>
+          <div className="text-center p-3 rounded-xl bg-pink-50">
+            <p className="text-xs text-pink-600 mb-1">신부 부담</p>
+            <p className="text-lg md:text-xl font-bold text-pink-700">{formatMoney(stats.brideTotal)}</p>
+            <p className="text-[10px] text-pink-400 mt-1">
+              {expenses.filter(e => e.paidBy === 'bride').length}건
+            </p>
+          </div>
         </div>
       </div>
 
@@ -274,7 +283,7 @@ const Expenses: React.FC = () => {
                       <span className={`text-xs px-2 py-0.5 rounded-full ${getPayerColor(expense.paidBy)}`}>{getPayerLabel(expense.paidBy)}</span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
-                      <span className="flex items-center gap-1"><Calendar size={12} />{new Date(expense.paymentDate).toLocaleDateString('ko-KR')}</span>
+                      <span className="flex items-center gap-1"><Calendar size={12} />{new Date(expense.paymentDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '.').replace('.', '')}</span>
                       <span className="flex items-center gap-1">{getPaymentMethodIcon(expense.paymentMethod)}{expense.paymentMethod === 'card' ? '카드' : expense.paymentMethod === 'cash' ? '현금' : '이체'}</span>
                       <span>{getCategoryName(expense.categoryId)}</span>
                     </div>

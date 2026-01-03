@@ -29,6 +29,15 @@ interface RecentActivityGridProps {
 const formatMoney = (n: number) => 
   new Intl.NumberFormat('ko-KR', { notation: 'compact', maximumFractionDigits: 0 }).format(n);
 
+// 날짜를 "2026.01.02" 형식으로 포맷
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}.${month}.${day}`;
+};
+
 const getMonth = (dateStr: string) => {
   const date = new Date(dateStr);
   return (date.getMonth() + 1) + '월';
@@ -81,7 +90,7 @@ export const RecentActivityGrid: React.FC<RecentActivityGridProps> = ({ expenses
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-stone-800 text-xs md:text-sm truncate">{expense.title}</p>
-                <p className="text-[10px] md:text-xs text-stone-400">{expense.date}</p>
+                <p className="text-[10px] md:text-xs text-stone-400">{formatDate(expense.date)}</p>
               </div>
               <span className="font-mono font-semibold text-stone-800 text-xs md:text-sm flex-shrink-0">
                 {formatMoney(expense.amount)}
