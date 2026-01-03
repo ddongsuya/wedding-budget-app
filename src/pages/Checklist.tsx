@@ -3,8 +3,10 @@ import { CheckCircle2, Circle, Plus, Calendar, AlertCircle, Edit2, Trash2, X } f
 import { checklistAPI } from '@/api/checklist';
 import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '@/types/checklist';
 import { useToast } from '@/hooks/useToast';
+import { useHaptic } from '@/hooks/useHaptic';
 import { EmptyState } from '@/components/common/EmptyState/EmptyState';
 import { ChecklistSkeleton } from '@/components/skeleton/ChecklistSkeleton';
+import { SwipeToDelete } from '@/components/common/SwipeToDelete';
 import { CategoryDropdown } from '../components/checklist/CategoryDropdown';
 import { CircularProgress } from '../components/checklist/CircularProgress';
 
@@ -32,6 +34,7 @@ const Checklist: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const { toast } = useToast();
+  const { haptic } = useHaptic();
 
   // 데이터 로드
   useEffect(() => {
@@ -101,8 +104,9 @@ const Checklist: React.FC = () => {
   };
 
   // 아이템 삭제
-  const handleDelete = async (id: string) => {
-    if (!confirm('이 항목을 삭제하시겠습니까?')) return;
+  const handleDelete = async (id: string, skipConfirm = false) => {
+    if (!skipConfirm && !confirm('이 항목을 삭제하시겠습니까?')) return;
+    haptic('warning');
 
     try {
       await checklistAPI.deleteItem(id);
@@ -225,8 +229,8 @@ const Checklist: React.FC = () => {
                 {/* 아이템 목록 */}
                 <div className="space-y-2">
                   {periodItems.map((item, index) => (
+                    <SwipeToDelete key={item.id} onDelete={() => handleDelete(item.id, true)}>
                     <div
-                      key={item.id}
                       className={`bg-white rounded-2xl p-4 shadow-card border border-stone-100 flex items-center gap-3 transition-all hover:shadow-card-hover stagger-item touch-feedback active:scale-[0.99] ${
                         item.is_completed ? 'opacity-60' : ''
                       }`}
@@ -280,6 +284,7 @@ const Checklist: React.FC = () => {
                         <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
                       )}
                     </div>
+                    </SwipeToDelete>
                   ))}
                 </div>
               </div>

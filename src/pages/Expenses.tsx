@@ -10,6 +10,7 @@ import { useHaptic } from '@/hooks/useHaptic';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ExpensesSkeleton } from '@/components/skeleton/ExpensesSkeleton';
 import { PullToRefresh } from '@/components/common/PullToRefresh';
+import { SwipeToDelete } from '@/components/common/SwipeToDelete';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { Expense, BudgetCategory } from '@/types/types';
 import { invalidateQueries } from '@/lib/queryClient';
@@ -144,8 +145,8 @@ const Expenses: React.FC = () => {
     }
   };
 
-  const handleDeleteExpense = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+  const handleDeleteExpense = async (id: string, skipConfirm = false) => {
+    if (!skipConfirm && !confirm('정말 삭제하시겠습니까?')) return;
     haptic('warning');
     try {
       await expenseAPI.delete(id);
@@ -282,7 +283,8 @@ const Expenses: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {filteredExpenses.map((expense) => (
-            <motion.div key={expense.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl p-4 border border-stone-100 hover:shadow-md transition-shadow">
+            <SwipeToDelete key={expense.id} onDelete={() => handleDeleteExpense(expense.id, true)}>
+            <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl p-4 border border-stone-100 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {(() => {
@@ -336,6 +338,7 @@ const Expenses: React.FC = () => {
               </div>
               {expense.memo && <p className="mt-2 pt-2 border-t border-stone-50 text-sm text-stone-500">{expense.memo}</p>}
             </motion.div>
+            </SwipeToDelete>
           ))}
         </div>
       )}

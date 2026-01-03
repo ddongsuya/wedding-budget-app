@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Expense, BudgetCategory } from '@/types/types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { X, DollarSign, Tag, CreditCard, User, FileText, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ExpenseFormProps {
@@ -16,6 +17,14 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
   const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  
+  // ref 동기화
+  useEffect(() => {
+    hasUnsavedChangesRef.current = hasUnsavedChanges;
+  }, [hasUnsavedChanges]);
+
   const [formData, setFormData] = useState<Partial<Expense>>({
     title: '',
     amount: 0,
@@ -30,6 +39,28 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     memo: '',
     receiptUrl: null,
     ...initialData
+  });
+
+  // handleCancel을 useCallback으로 먼저 정의
+  const handleCancelAction = useCallback(() => {
+    if (hasUnsavedChangesRef.current) {
+      if (confirm('작성 중인 내용이 있습니다. 정말 나가시겠습니까?')) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
+  }, [onCancel]);
+
+  // 키보드 단축키: Ctrl+S 저장, Esc 닫기
+  useKeyboardShortcuts({
+    onSave: () => {
+      if (!isSaving && formData.title?.trim() && formData.amount && formData.amount > 0) {
+        formRef.current?.requestSubmit();
+      }
+    },
+    onClose: handleCancelAction,
+    enabled: true,
   });
 
   // 폼 변경 감지
@@ -58,16 +89,6 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     }
     setFormData(prev => ({ ...prev, amount: value === '' ? 0 : parseInt(value, 10) }));
     setHasUnsavedChanges(true);
-  };
-
-  const handleCancel = () => {
-    if (hasUnsavedChanges) {
-      if (confirm('작성 중인 내용이 있습니다. 정말 나가시겠습니까?')) {
-        onCancel();
-      }
-    } else {
-      onCancel();
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,12 +142,12 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
           <h3 className="text-xl font-bold text-stone-800">
             {initialData ? '지출 내역 수정' : '지출 내역 추가'}
           </h3>
-          <button onClick={handleCancel} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
+          <button onClick={handleCancelAction} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
             <X size={20} className="text-stone-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex-1 overflow-y-auto p-6 space-y-8 safe-area-pb">
+        <form ref={formRef} onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="flex-1 overflow-y-auto p-6 space-y-8 safe-area-pb">
           
           {/* Main Info */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -283,7 +304,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
 
           {/* 버튼을 form 내부로 이동 */}
           <div className="p-4 border-t border-stone-100 flex gap-3 bg-white shrink-0 safe-area-pb-min -mx-6 -mb-8 mt-4">
-            <Button type="button" variant="outline" className="flex-1" onClick={handleCancel} disabled={isSaving}>취소</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={handleCancelAction} disabled={isSaving}>취소</Button>
             <Button type="submit" variant="primary" className="flex-1" loading={isSaving} disabled={isSaving}>
               {isSaving ? '저장 중...' : (initialData ? '수정 완료' : '등록하기')}
             </Button>
