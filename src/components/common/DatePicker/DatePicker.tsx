@@ -57,10 +57,12 @@ const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
     setViewDate(new Date(parseInt(e.target.value), viewDate.getMonth(), 1));
   };
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
     setViewDate(new Date(viewDate.getFullYear(), parseInt(e.target.value), 1));
   };
 
@@ -128,7 +130,7 @@ const DatePicker: React.FC<DatePickerProps> = ({
   const years = Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
 
   return (
-    <div ref={containerRef} className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`} onKeyDown={(e) => e.stopPropagation()}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
