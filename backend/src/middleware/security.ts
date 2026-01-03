@@ -182,12 +182,23 @@ export const validatePassword = (password: string): PasswordValidation => {
   };
 };
 
-// SQL Injection 방지 (기본적인 체크)
+// SQL Injection 방지 (실제 공격 패턴만 탐지)
 export const containsSqlInjection = (input: string): boolean => {
+  // 너무 짧은 입력은 검사 불필요
+  if (input.length < 5) return false;
+  
+  // 실제 SQL Injection 공격 패턴만 탐지 (더 구체적인 패턴)
   const sqlPatterns = [
-    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b)/i,
-    /(--|;|\/\*|\*\/)/,
-    /(\bOR\b|\bAND\b).*=/i,
+    // SQL 문법과 함께 사용되는 위험한 패턴
+    /'\s*(OR|AND)\s+['"]?\d+['"]?\s*=\s*['"]?\d+/i,  // ' OR '1'='1
+    /'\s*(OR|AND)\s+\w+\s*=\s*\w+/i,                  // ' OR x=x
+    /;\s*(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE)\s+/i,  // ; DROP TABLE
+    /UNION\s+(ALL\s+)?SELECT/i,                       // UNION SELECT
+    /\/\*.*\*\//,                                      // /* comment */
+    /'\s*;\s*--/,                                      // '; --
+    /'\s*OR\s+'[^']*'\s*=\s*'/i,                      // ' OR ''='
+    /1\s*=\s*1/,                                       // 1=1
+    /'\s*=\s*'/,                                       // '='
   ];
   
   return sqlPatterns.some(pattern => pattern.test(input));
