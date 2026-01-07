@@ -15,6 +15,7 @@ import { ExpenseForm } from '../components/expense/ExpenseForm';
 import { Expense, BudgetCategory } from '@/types/types';
 import { invalidateQueries } from '@/lib/queryClient';
 import { getIconByName } from '@/utils/iconMap';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 type FilterPayer = 'all' | 'groom' | 'bride' | 'shared';
 type SortBy = 'date' | 'amount';
@@ -101,6 +102,9 @@ const Expenses: React.FC = () => {
 
   const formatMoney = (amount: number) => 
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
+
+  // 모바일용 축약 금액 포맷
+  const formatMoneyCompact = (amount: number) => formatMoneyShort(amount);
 
   const getCategoryName = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.name || '미분류';
   const getCategoryIconName = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.icon || 'Package';
@@ -197,27 +201,36 @@ const Expenses: React.FC = () => {
       </div>
 
       {/* 통계 카드 - 합계 표시 */}
-      <div className="bg-white rounded-xl p-5 border border-stone-100 shadow-sm">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-stone-50 to-stone-100">
-            <p className="text-xs text-stone-500 mb-2">총 지출</p>
-            <p className="text-xl md:text-2xl font-bold text-stone-800">{formatMoney(stats.total)}</p>
+      <div className="bg-white rounded-xl p-4 md:p-5 border border-stone-100 shadow-sm">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
+          <div className="text-center p-3 md:p-4 rounded-xl bg-gradient-to-br from-stone-50 to-stone-100">
+            <p className="text-xs text-stone-500 mb-1 md:mb-2">총 지출</p>
+            <p className="text-base md:text-2xl font-bold text-stone-800 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(stats.total)}</span>
+              <span className="hidden md:inline">{formatMoney(stats.total)}</span>
+            </p>
             <p className="text-xs text-stone-400 mt-1">{stats.count}건</p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100">
-            <p className="text-xs text-blue-600 mb-2 flex items-center justify-center gap-1">
-              <span>💙</span> 신랑 부담
+          <div className="text-center p-3 md:p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100">
+            <p className="text-xs text-blue-600 mb-1 md:mb-2 flex items-center justify-center gap-1">
+              <span>💙</span> <span className="hidden sm:inline">신랑 부담</span><span className="sm:hidden">신랑</span>
             </p>
-            <p className="text-xl md:text-2xl font-bold text-blue-700">{formatMoney(stats.groomTotal)}</p>
+            <p className="text-base md:text-2xl font-bold text-blue-700 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(stats.groomTotal)}</span>
+              <span className="hidden md:inline">{formatMoney(stats.groomTotal)}</span>
+            </p>
             <p className="text-xs text-blue-400 mt-1">
               {expenses.filter(e => e.paidBy === 'groom').length}건
             </p>
           </div>
-          <div className="text-center p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100">
-            <p className="text-xs text-pink-600 mb-2 flex items-center justify-center gap-1">
-              <span>💗</span> 신부 부담
+          <div className="text-center p-3 md:p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100">
+            <p className="text-xs text-pink-600 mb-1 md:mb-2 flex items-center justify-center gap-1">
+              <span>💗</span> <span className="hidden sm:inline">신부 부담</span><span className="sm:hidden">신부</span>
             </p>
-            <p className="text-xl md:text-2xl font-bold text-pink-700">{formatMoney(stats.brideTotal)}</p>
+            <p className="text-base md:text-2xl font-bold text-pink-700 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(stats.brideTotal)}</span>
+              <span className="hidden md:inline">{formatMoney(stats.brideTotal)}</span>
+            </p>
             <p className="text-xs text-pink-400 mt-1">
               {expenses.filter(e => e.paidBy === 'bride').length}건
             </p>

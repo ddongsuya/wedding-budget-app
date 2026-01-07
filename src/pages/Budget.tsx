@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast';
 import { BudgetSkeleton } from '@/components/skeleton/BudgetSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useBudget } from '@/hooks/useBudget';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 const Budget: React.FC = () => {
   const { toast } = useToast();
@@ -41,6 +42,9 @@ const Budget: React.FC = () => {
 
   const formatMoney = (amount: number) => 
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
+
+  // 모바일용 축약 금액 포맷
+  const formatMoneyCompact = (amount: number) => formatMoneyShort(amount);
 
   const calculateTotalAllocated = () => budget.categories.reduce((acc, c) => acc + c.budgetAmount, 0);
   const totalAllocated = calculateTotalAllocated();
@@ -120,28 +124,34 @@ const Budget: React.FC = () => {
 
       {/* Main Budget Status - 밝은 테마 */}
       <Card className="bg-white border border-stone-200 relative overflow-hidden">
-        <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5">
           <div>
             <p className="text-xs text-stone-500 mb-1">총 예산</p>
-            <p className="text-sm text-stone-400">설정된 총 예산</p>
+            <p className="text-sm text-stone-400 hidden md:block">설정된 총 예산</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-stone-500 mb-1">배정됨</p>
-            <p className="text-2xl md:text-3xl font-bold text-rose-600">{formatMoney(totalAllocated)}</p>
+            <p className="text-lg md:text-3xl font-bold text-rose-600 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(totalAllocated)}</span>
+              <span className="hidden md:inline">{formatMoney(totalAllocated)}</span>
+            </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-stone-500 mb-1">지출액</p>
-            <p className="text-xl md:text-2xl font-semibold text-stone-600">{formatMoney(totalSpent)}</p>
+            <p className="text-base md:text-2xl font-semibold text-stone-600 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(totalSpent)}</span>
+              <span className="hidden md:inline">{formatMoney(totalSpent)}</span>
+            </p>
           </div>
         </div>
         
         {/* Allocation Alert */}
         <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-emerald-50">
-          <div className={`w-2 h-2 rounded-full ${unallocated < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
+          <div className={`w-2 h-2 rounded-full shrink-0 ${unallocated < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
           <span className="text-sm text-emerald-700">
             {unallocated < 0 
-              ? <span>예산이 <span className="font-bold">{formatMoney(Math.abs(unallocated))}</span> 초과되었습니다</span>
-              : <span>아직 <span className="font-bold">{formatMoney(unallocated)}</span> 배정 가능합니다</span>
+              ? <span>예산이 <span className="font-bold">{formatMoneyCompact(Math.abs(unallocated))}</span> 초과</span>
+              : <span>아직 <span className="font-bold">{formatMoneyCompact(unallocated)}</span> 배정 가능</span>
             }
           </span>
         </div>
@@ -165,8 +175,10 @@ const Budget: React.FC = () => {
           </div>
           
           <div className="flex justify-between text-xs text-stone-500">
-            <span>{formatMoney(groomAmount)}</span>
-            <span>{formatMoney(brideAmount)}</span>
+            <span className="md:hidden">{formatMoneyCompact(groomAmount)}</span>
+            <span className="hidden md:inline">{formatMoney(groomAmount)}</span>
+            <span className="md:hidden">{formatMoneyCompact(brideAmount)}</span>
+            <span className="hidden md:inline">{formatMoney(brideAmount)}</span>
           </div>
         </div>
       </Card>
