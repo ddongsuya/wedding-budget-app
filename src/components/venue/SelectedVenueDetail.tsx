@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Venue } from '@/types/types';
 import { 
-  Check, ChevronRight, MapPin, Calendar, Star, 
+  Check, MapPin, Calendar, Star, 
   Wallet, Users, Car, Sparkles, FileText, Camera,
   Edit2, X
 } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 interface SelectedVenueDetailProps {
   venue: Venue;
@@ -32,6 +33,9 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
 
   const formatMoney = (amount: number) =>
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
+
+  // 모바일용 축약 금액 포맷
+  const formatMoneyCompact = (amount: number) => formatMoneyShort(amount);
 
   const calculateTotal = () => {
     let total = venue.rentalFee + (venue.mealCostPerPerson * venue.minimumGuests);
@@ -119,34 +123,34 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
           >
             <div className="bg-rose-50 rounded-xl p-4 border border-rose-100">
               <p className="text-xs text-rose-600 mb-1">총 예상 견적</p>
-              <p className="text-2xl font-bold text-rose-600">{formatMoney(calculateTotal())}</p>
+              <p className="text-xl font-bold text-rose-600 whitespace-nowrap">{formatMoneyCompact(calculateTotal())}</p>
             </div>
             
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-stone-100">
                 <span className="text-stone-600">대관료</span>
-                <span className="font-medium text-stone-800">{formatMoney(venue.rentalFee)}</span>
+                <span className="font-medium text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.rentalFee)}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-stone-100">
-                <span className="text-stone-600">식대 ({venue.minimumGuests}명 × {formatMoney(venue.mealCostPerPerson)})</span>
-                <span className="font-medium text-stone-800">{formatMoney(venue.mealCostPerPerson * venue.minimumGuests)}</span>
+                <span className="text-stone-600 text-sm">식대 ({venue.minimumGuests}명)</span>
+                <span className="font-medium text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.mealCostPerPerson * venue.minimumGuests)}</span>
               </div>
               {!venue.sdmIncluded && (
                 <div className="flex justify-between items-center py-2 border-b border-stone-100">
                   <span className="text-stone-600">스드메</span>
-                  <span className="font-medium text-stone-800">{formatMoney(venue.studioFee + venue.dressFee + venue.makeupFee)}</span>
+                  <span className="font-medium text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.studioFee + venue.dressFee + venue.makeupFee)}</span>
                 </div>
               )}
               {!venue.bouquetIncluded && venue.bouquetFee > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-stone-100">
                   <span className="text-stone-600">부케</span>
-                  <span className="font-medium text-stone-800">{formatMoney(venue.bouquetFee)}</span>
+                  <span className="font-medium text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.bouquetFee)}</span>
                 </div>
               )}
               {!venue.rehearsalMakeupIncluded && venue.rehearsalMakeupFee > 0 && (
                 <div className="flex justify-between items-center py-2 border-b border-stone-100">
                   <span className="text-stone-600">리허설 메이크업</span>
-                  <span className="font-medium text-stone-800">{formatMoney(venue.rehearsalMakeupFee)}</span>
+                  <span className="font-medium text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.rehearsalMakeupFee)}</span>
                 </div>
               )}
             </div>
@@ -179,7 +183,7 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
                   <Check size={16} /> 포함
                 </span>
               ) : (
-                <span className="text-stone-500">별도 ({formatMoney(venue.bouquetFee)})</span>
+                <span className="text-stone-500 whitespace-nowrap">별도 ({formatMoneyCompact(venue.bouquetFee)})</span>
               )}
             </div>
             <div className={`flex items-center justify-between p-3 rounded-xl ${venue.rehearsalMakeupIncluded ? 'bg-green-50 border border-green-100' : 'bg-stone-50'}`}>
@@ -189,7 +193,7 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
                   <Check size={16} /> 포함
                 </span>
               ) : (
-                <span className="text-stone-500">별도 ({formatMoney(venue.rehearsalMakeupFee)})</span>
+                <span className="text-stone-500 whitespace-nowrap">별도 ({formatMoneyCompact(venue.rehearsalMakeupFee)})</span>
               )}
             </div>
             
@@ -201,25 +205,25 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
                   {venue.extraFittingFee > 0 && (
                     <div className="bg-stone-50 p-2 rounded-lg text-sm">
                       <span className="text-stone-500">추가피팅</span>
-                      <span className="block font-medium">{formatMoney(venue.extraFittingFee)}</span>
+                      <span className="block font-medium whitespace-nowrap">{formatMoneyCompact(venue.extraFittingFee)}</span>
                     </div>
                   )}
                   {venue.weddingRobeFee > 0 && (
                     <div className="bg-stone-50 p-2 rounded-lg text-sm">
                       <span className="text-stone-500">예도</span>
-                      <span className="block font-medium">{formatMoney(venue.weddingRobeFee)}</span>
+                      <span className="block font-medium whitespace-nowrap">{formatMoneyCompact(venue.weddingRobeFee)}</span>
                     </div>
                   )}
                   {venue.outdoorVenueFee > 0 && (
                     <div className="bg-stone-50 p-2 rounded-lg text-sm">
                       <span className="text-stone-500">야외식장</span>
-                      <span className="block font-medium">{formatMoney(venue.outdoorVenueFee)}</span>
+                      <span className="block font-medium whitespace-nowrap">{formatMoneyCompact(venue.outdoorVenueFee)}</span>
                     </div>
                   )}
                   {venue.freshFlowerFee > 0 && (
                     <div className="bg-stone-50 p-2 rounded-lg text-sm">
                       <span className="text-stone-500">생화</span>
-                      <span className="block font-medium">{formatMoney(venue.freshFlowerFee)}</span>
+                      <span className="block font-medium whitespace-nowrap">{formatMoneyCompact(venue.freshFlowerFee)}</span>
                     </div>
                   )}
                 </div>

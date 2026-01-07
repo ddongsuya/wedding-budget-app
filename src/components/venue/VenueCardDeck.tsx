@@ -5,6 +5,7 @@ import { Venue } from '../../types';
 import { MapPin, Star, Minus, Check, Edit2, Trash2, Image as ImageIcon, Plus, MoreVertical, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { EmptyState } from '@/components/common/EmptyState';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 interface VenueCalculated extends Venue {
   totalEstimate: number;
@@ -106,6 +107,9 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
 
   const formatMoney = (amount: number) => 
     new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(amount);
+
+  // 모바일용 축약 금액 포맷
+  const formatMoneyCompact = (amount: number) => formatMoneyShort(amount);
 
   return (
     <div className="relative w-full h-[calc(100vh-200px)] min-h-[520px] max-h-[700px] flex flex-col items-center justify-start overflow-hidden">
@@ -292,11 +296,11 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                    <div className="grid grid-cols-2 gap-2 mb-3">
                       <div className="bg-stone-50 p-2.5 rounded-xl">
                          <span className="text-[10px] text-stone-400 block mb-0.5">대관료</span>
-                         <span className="text-xs font-bold text-stone-700">{formatMoney(currentVenue.rentalFee)}</span>
+                         <span className="text-xs font-bold text-stone-700 whitespace-nowrap">{formatMoneyCompact(currentVenue.rentalFee)}</span>
                       </div>
                       <div className="bg-stone-50 p-2.5 rounded-xl">
                          <span className="text-[10px] text-stone-400 block mb-0.5">1인 식대</span>
-                         <span className="text-xs font-bold text-stone-700">{formatMoney(currentVenue.mealCostPerPerson)}</span>
+                         <span className="text-xs font-bold text-stone-700 whitespace-nowrap">{formatMoneyCompact(currentVenue.mealCostPerPerson)}</span>
                       </div>
                       <div className="bg-stone-50 p-2.5 rounded-xl">
                          <span className="text-[10px] text-stone-400 block mb-0.5">스드메</span>
@@ -317,7 +321,7 @@ export const VenueCardDeck: React.FC<VenueCardDeckProps> = ({
                       <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wide">예상 총비용</p>
                       <p className="text-[9px] text-rose-300 mt-0.5">({currentVenue.minimumGuests}명 기준)</p>
                   </div>
-                  <p className="text-xl font-bold text-rose-600">{formatMoney(currentVenue.totalEstimate)}</p>
+                  <p className="text-lg font-bold text-rose-600 whitespace-nowrap">{formatMoneyCompact(currentVenue.totalEstimate)}</p>
                 </div>
               </div>
 

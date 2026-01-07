@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Check, Calendar, Users, Utensils, Building, Gift, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { ContractInput, venueContractAPI } from '@/api/venueContracts';
 import { useToast } from '@/hooks/useToast';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 interface VenueContractFormProps {
   venueId: string;
@@ -424,7 +425,10 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
       {/* 총 계약 금액 요약 */}
       <div className="bg-gradient-to-r from-rose-500 to-pink-500 rounded-2xl p-5 text-white">
         <p className="text-sm text-white/80 mb-1">총 계약 금액</p>
-        <p className="text-3xl font-bold">{formatMoney(totalAmount)}</p>
+        <p className="text-3xl font-bold whitespace-nowrap">
+          <span className="md:hidden">{formatMoneyShort(totalAmount)}</span>
+          <span className="hidden md:inline">{formatMoney(totalAmount)}</span>
+        </p>
       </div>
 
       {/* 계약금 */}

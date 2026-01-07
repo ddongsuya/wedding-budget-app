@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Heart, CheckSquare, AlertTriangle, TrendingUp, Sparkles } from 'lucide-react';
+import { formatMoneyShort } from '@/utils/formatMoney';
 
 interface KPIGridProps {
   dDay: number;
@@ -25,6 +26,9 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
 }) => {
   const formatMoney = (n: number) => 
     new Intl.NumberFormat('ko-KR').format(n);
+  
+  // 모바일용 축약 금액 포맷
+  const formatMoneyCompact = (n: number) => formatMoneyShort(n);
   
   const remaining = totalBudget - spent;
   const dDayDisplay = dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day' : `D+${Math.abs(dDay)}`;
@@ -124,26 +128,32 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
         className="bg-white rounded-2xl border border-stone-200/60 p-5 shadow-sm"
       >
         {/* 예산 요약 - 3열 */}
-        <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5">
           <div>
             <p className="text-xs text-stone-500 mb-1">총 예산</p>
-            <p className="text-sm text-stone-400">설정된 총 예산</p>
+            <p className="text-sm text-stone-400 hidden md:block">설정된 총 예산</p>
           </div>
           <div className="text-center">
             <p className="text-xs text-stone-500 mb-1">배정됨</p>
-            <p className="text-2xl md:text-3xl font-bold text-rose-600">₩{formatMoney(totalBudget)}</p>
+            <p className="text-lg md:text-3xl font-bold text-rose-600 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(totalBudget)}</span>
+              <span className="hidden md:inline">₩{formatMoney(totalBudget)}</span>
+            </p>
           </div>
           <div className="text-right">
             <p className="text-xs text-stone-500 mb-1">지출액</p>
-            <p className="text-xl md:text-2xl font-semibold text-stone-600">₩{formatMoney(spent)}</p>
+            <p className="text-base md:text-2xl font-semibold text-stone-600 whitespace-nowrap">
+              <span className="md:hidden">{formatMoneyCompact(spent)}</span>
+              <span className="hidden md:inline">₩{formatMoney(spent)}</span>
+            </p>
           </div>
         </div>
 
         {/* 남은 예산 안내 */}
         <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-emerald-50">
-          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
           <span className="text-sm text-emerald-700">
-            아직 <span className="font-bold">₩{formatMoney(Math.max(0, remaining))}</span> 배정 가능합니다
+            아직 <span className="font-bold">{formatMoneyCompact(Math.max(0, remaining))}</span> 배정 가능
           </span>
         </div>
 
@@ -172,8 +182,10 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
           </div>
           
           <div className="flex items-center justify-between text-xs text-stone-500">
-            <span>₩{formatMoney(groomBudget)}</span>
-            <span>₩{formatMoney(brideBudget)}</span>
+            <span className="md:hidden">{formatMoneyCompact(groomBudget)}</span>
+            <span className="hidden md:inline">₩{formatMoney(groomBudget)}</span>
+            <span className="md:hidden">{formatMoneyCompact(brideBudget)}</span>
+            <span className="hidden md:inline">₩{formatMoney(brideBudget)}</span>
           </div>
         </div>
       </motion.div>
