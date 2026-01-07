@@ -15,7 +15,6 @@ interface ExpenseFormProps {
 
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categories, onSubmit, onCancel }) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
@@ -34,12 +33,15 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
     paidBy: 'shared',
     vendorName: '',
     paymentType: 'full',
-    status: 'completed',
-    dueDate: null,
+    status: initialData?.status || 'completed',
+    dueDate: initialData?.dueDate || null,
     memo: '',
     receiptUrl: null,
     ...initialData
   });
+
+  // 결제 예정 상태면 고급 옵션 자동 펼침
+  const [showAdvanced, setShowAdvanced] = useState(initialData?.status === 'planned' || false);
 
   // handleCancel을 useCallback으로 먼저 정의
   const handleCancelAction = useCallback(() => {

@@ -87,7 +87,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
     (formData.meal_total_price || 0) +
     (formData.alcohol_service_included ? 0 : (formData.alcohol_service_price || 0));
 
-  // Input Components
+  // Input Components - Enter 키 방지 추가
   const InputField: React.FC<{
     label: string; value: string | number | undefined; onChange: (v: string) => void;
     type?: string; placeholder?: string; className?: string;
@@ -98,6 +98,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
         type={type}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
         placeholder={placeholder}
         className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 outline-none text-base"
       />
@@ -179,6 +180,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               type="text"
               value={formData.groom_name || ''}
               onChange={(e) => updateField('groom_name', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               placeholder="이름"
               className="w-full px-3 py-2.5 border border-blue-200 rounded-xl text-sm"
             />
@@ -186,6 +188,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               type="tel"
               value={formData.groom_contact || ''}
               onChange={(e) => updateField('groom_contact', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               placeholder="연락처"
               className="w-full px-3 py-2.5 border border-blue-200 rounded-xl text-sm"
             />
@@ -196,6 +199,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               type="text"
               value={formData.bride_name || ''}
               onChange={(e) => updateField('bride_name', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               placeholder="이름"
               className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm"
             />
@@ -203,6 +207,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               type="tel"
               value={formData.bride_contact || ''}
               onChange={(e) => updateField('bride_contact', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               placeholder="연락처"
               className="w-full px-3 py-2.5 border border-pink-200 rounded-xl text-sm"
             />
@@ -316,6 +321,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
                   type="number"
                   value={(formData as any)[`equipment_${item.key}_fee`] || ''}
                   onChange={(e) => updateField(`equipment_${item.key}_fee` as keyof ContractInput, parseInt(e.target.value) || 0)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                   placeholder="비용 (원)"
                   className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm"
                 />
@@ -439,6 +445,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               type="date"
               value={formData.deposit_paid_date || ''}
               onChange={(e) => updateField('deposit_paid_date', e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
               className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 outline-none"
             />
           </div>
