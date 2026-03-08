@@ -1,33 +1,48 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Venue } from '@/types/types';
+import { Venue, Expense } from '@/types/types';
 import { 
   Check, MapPin, Calendar, Star, 
   Wallet, Users, Car, Sparkles, FileText, Camera,
-  Edit2, X
+  Edit2, X, Link2, Clock
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { formatMoneyShort } from '@/utils/formatMoney';
+
+/** 관련 일정 타입 (간소화) */
+interface RelatedEvent {
+  id: string;
+  title: string;
+  date: string;
+  time?: string;
+}
 
 interface SelectedVenueDetailProps {
   venue: Venue;
   onEdit: (venue: Venue) => void;
   onDeselect: () => void;
+  /** 해당 식장 관련 지출 내역 (Requirements 2.3, 2.4) */
+  relatedExpenses?: Expense[];
+  /** 해당 식장 관련 일정 (Requirements 2.4) */
+  relatedEvents?: RelatedEvent[];
 }
 
-type Step = 'basic' | 'cost' | 'options' | 'memo';
+type Step = 'basic' | 'cost' | 'options' | 'memo' | 'linked';
 
 const steps: { id: Step; label: string; icon: React.ReactNode }[] = [
   { id: 'basic', label: '기본 정보', icon: <MapPin size={16} /> },
   { id: 'cost', label: '비용', icon: <Wallet size={16} /> },
   { id: 'options', label: '옵션', icon: <Sparkles size={16} /> },
   { id: 'memo', label: '메모', icon: <FileText size={16} /> },
+  { id: 'linked', label: '연관', icon: <Link2 size={16} /> },
 ];
 
 export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
   venue,
   onEdit,
   onDeselect,
+  relatedExpenses = [],
+  relatedEvents = [],
 }) => {
   const [activeStep, setActiveStep] = useState<Step>('basic');
 
@@ -259,6 +274,75 @@ export const SelectedVenueDetail: React.FC<SelectedVenueDetailProps> = ({
                 <p>등록된 메모가 없습니다</p>
               </div>
             )}
+          </motion.div>
+        );
+
+      case 'linked':
+        return (
+          <motion.div
+            key="linked"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-4"
+          >
+            {/* 관련 지출 내역 (Requirements 2.3) */}
+            <div>
+              <p className="text-xs font-bold text-stone-500 mb-2 flex items-center gap-1">
+                <Wallet size={14} className="text-rose-500" /> 관련 지출
+              </p>
+              {relatedExpenses.length > 0 ? (
+                <div className="space-y-2">
+                  {relatedExpenses.map((expense) => (
+                    <div key={expense.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl">
+                      <div>
+                        <p className="text-sm font-medium text-stone-800">{expense.title}</p>
+                        <p className="text-xs text-stone-500">{expense.paymentDate}</p>
+                      </div>
+                      <span className="text-sm font-bold text-rose-600 whitespace-nowrap">
+                        {formatMoneyCompact(expense.amount)}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center p-3 bg-rose-50 rounded-xl border border-rose-100">
+                    <span className="text-sm font-medium text-rose-700">합계</span>
+                    <span className="text-sm font-bold text-rose-600 whitespace-nowrap">
+                      {formatMoneyCompact(relatedExpenses.reduce((sum, e) => sum + e.amount, 0))}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-stone-400 bg-stone-50 rounded-xl">
+                  <Wallet size={20} className="mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">관련 지출 내역이 없습니다</p>
+                </div>
+              )}
+            </div>
+
+            {/* 관련 일정 (Requirements 2.4) */}
+            <div>
+              <p className="text-xs font-bold text-stone-500 mb-2 flex items-center gap-1">
+                <Clock size={14} className="text-rose-500" /> 관련 일정
+              </p>
+              {relatedEvents.length > 0 ? (
+                <div className="space-y-2">
+                  {relatedEvents.map((event) => (
+                    <div key={event.id} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl">
+                      <div>
+                        <p className="text-sm font-medium text-stone-800">{event.title}</p>
+                        <p className="text-xs text-stone-500">{event.date}{event.time ? ` ${event.time}` : ''}</p>
+                      </div>
+                      <Calendar size={16} className="text-stone-400" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-stone-400 bg-stone-50 rounded-xl">
+                  <Calendar size={20} className="mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">관련 일정이 없습니다</p>
+                </div>
+              )}
+            </div>
           </motion.div>
         );
     }

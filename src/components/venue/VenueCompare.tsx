@@ -3,6 +3,7 @@ import { Venue } from '@/types/types';
 import { X, Calculator, Star, Check, Minus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { formatMoneyShort } from '@/utils/formatMoney';
+import { getHighlightType } from './venueCompareHighlight';
 
 interface VenueCompareProps {
   venues: Venue[];
@@ -50,6 +51,19 @@ export const VenueCompare: React.FC<VenueCompareProps> = ({ venues, onClose }) =
 
   const totals = venues.map(v => calculateTotal(v));
   const minTotal = Math.min(...totals);
+
+  // 항목별 최저가/최고가 하이라이트 (Requirements 6.2)
+  const rentalFees = venues.map(v => v.rentalFee);
+  const mealCosts = venues.map(v => v.mealCostPerPerson);
+  const minGuests = venues.map(v => v.minimumGuests);
+
+  /** 하이라이트 CSS 클래스 반환 */
+  const highlightClass = (values: number[], index: number): string => {
+    const hl = getHighlightType(values, index);
+    if (hl === 'min') return 'text-blue-600 bg-blue-50 px-1 rounded';
+    if (hl === 'max') return 'text-red-600 bg-red-50 px-1 rounded';
+    return '';
+  };
 
   // 탭 네비게이션
   const currentTabIndex = MOBILE_TABS.findIndex(t => t.key === activeTab);
@@ -128,17 +142,25 @@ export const VenueCompare: React.FC<VenueCompareProps> = ({ venues, onClose }) =
       case 'cost':
         return (
           <div className="space-y-3">
-            {venues.map(venue => (
+            {venues.map((venue, venueIdx) => (
               <div key={venue.id} className="p-4 rounded-2xl bg-white border border-stone-200">
                 <h3 className="font-bold text-stone-800 mb-3">{venue.name}</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center py-2 border-b border-stone-100">
                     <span className="text-sm text-stone-500">대관료</span>
-                    <span className="text-sm font-bold text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.rentalFee)}</span>
+                    <span className={`text-sm font-bold text-stone-800 whitespace-nowrap ${highlightClass(rentalFees, venueIdx)}`}>
+                      {formatMoneyCompact(venue.rentalFee)}
+                      {getHighlightType(rentalFees, venueIdx) === 'min' && <span className="text-[10px] ml-1">최저</span>}
+                      {getHighlightType(rentalFees, venueIdx) === 'max' && <span className="text-[10px] ml-1">최고</span>}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-stone-100">
                     <span className="text-sm text-stone-500">1인 식대</span>
-                    <span className="text-sm font-bold text-stone-800 whitespace-nowrap">{formatMoneyCompact(venue.mealCostPerPerson)}</span>
+                    <span className={`text-sm font-bold text-stone-800 whitespace-nowrap ${highlightClass(mealCosts, venueIdx)}`}>
+                      {formatMoneyCompact(venue.mealCostPerPerson)}
+                      {getHighlightType(mealCosts, venueIdx) === 'min' && <span className="text-[10px] ml-1">최저</span>}
+                      {getHighlightType(mealCosts, venueIdx) === 'max' && <span className="text-[10px] ml-1">최고</span>}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b border-stone-100">
                     <span className="text-sm text-stone-500">보증 인원</span>
@@ -314,15 +336,23 @@ export const VenueCompare: React.FC<VenueCompareProps> = ({ venues, onClose }) =
           {/* Rental & Meal */}
           <tr>
             <td className="p-4 sticky left-0 bg-white border-r border-stone-200 font-medium text-stone-600 z-10">대관료 / 식대</td>
-            {venues.map(venue => (
+            {venues.map((venue, venueIdx) => (
               <td key={venue.id} className="p-4 border-r border-stone-100 last:border-0 align-top space-y-2">
                 <div className="flex justify-between items-center text-xs">
                    <span className="text-stone-500">대관료</span>
-                   <span className="font-bold text-stone-800">{formatMoney(venue.rentalFee)}</span>
+                   <span className={`font-bold text-stone-800 ${highlightClass(rentalFees, venueIdx)}`}>
+                     {formatMoney(venue.rentalFee)}
+                     {getHighlightType(rentalFees, venueIdx) === 'min' && <span className="text-[10px] ml-1">최저</span>}
+                     {getHighlightType(rentalFees, venueIdx) === 'max' && <span className="text-[10px] ml-1">최고</span>}
+                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                    <span className="text-stone-500">1인 식대</span>
-                   <span className="font-bold text-stone-800">{formatMoney(venue.mealCostPerPerson)}</span>
+                   <span className={`font-bold text-stone-800 ${highlightClass(mealCosts, venueIdx)}`}>
+                     {formatMoney(venue.mealCostPerPerson)}
+                     {getHighlightType(mealCosts, venueIdx) === 'min' && <span className="text-[10px] ml-1">최저</span>}
+                     {getHighlightType(mealCosts, venueIdx) === 'max' && <span className="text-[10px] ml-1">최고</span>}
+                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                    <span className="text-stone-500">보증 인원</span>

@@ -25,4 +25,7 @@ router.post('/leave', coupleController.leaveCouple);
 // 파트너 정보 조회
 router.get('/partner', coupleController.getPartnerInfo);
 
+// 파트너 최근 활동 조회 (커플 동기화용)
+router.get('/last-activity', coupleController.getLastActivity);
+
 export default router;

@@ -8,7 +8,8 @@ import {
   getMe, 
   changePassword,
   forgotPassword,
-  resetPassword 
+  resetPassword,
+  deleteAccount
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import {
@@ -18,6 +19,7 @@ import {
   changePasswordValidation,
   forgotPasswordValidation,
   resetPasswordValidation,
+  deleteAccountValidation,
 } from '../middleware/validation';
 import { 
   loginRateLimiter, 
@@ -76,6 +78,15 @@ router.post(
   resetPasswordValidation,
   validate,
   resetPassword
+);
+
+// 계정 삭제 (회원 탈퇴)
+router.delete(
+  '/account',
+  authenticate,
+  deleteAccountValidation,
+  validate,
+  deleteAccount
 );
 
 export default router;

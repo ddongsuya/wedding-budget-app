@@ -119,7 +119,8 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        // 갱신 실패 시 안내 메시지와 함께 로그인 페이지로 리다이렉트 (Requirements 12.3)
+        window.location.href = '/login?expired=true';
         return Promise.reject(refreshError);
       }
     }

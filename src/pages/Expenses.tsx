@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Filter, CreditCard, Wallet, Trash2, Edit2, ChevronDown, Calendar, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, Search, Filter, CreditCard, Wallet, Trash2, Edit2, ChevronDown, Calendar, Clock, CheckCircle2, Download } from 'lucide-react';
 import { useExpenses } from '@/hooks/useExpenses';
 import { useBudget } from '@/hooks/useBudget';
 import { expenseAPI, ExpenseCreateInput, ExpenseUpdateInput } from '@/api/expenses';
@@ -12,12 +13,18 @@ import { ExpensesSkeleton } from '@/components/skeleton/ExpensesSkeleton';
 import { PullToRefresh } from '@/components/common/PullToRefresh';
 import { SwipeToDelete } from '@/components/common/SwipeToDelete';
 import { ExpenseForm } from '../components/expense/ExpenseForm';
+import { CategoryBudgetProgress } from '../components/expense/CategoryBudgetProgress';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
 import { Expense, BudgetCategory } from '@/types/types';
 import { invalidateQueries } from '@/lib/queryClient';
 import { getIconByName } from '@/utils/iconMap';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 import { formatMoneyShort } from '@/utils/formatMoney';
+import { exportToCSV } from '@/utils/exportData';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 type FilterPayer = 'all' | 'groom' | 'bride' | 'shared';
+type ExpenseTab = 'all' | 'completed' | 'planned';
 type SortBy = 'date' | 'amount';
 
 const Expenses: React.FC = () => {
@@ -25,6 +32,7 @@ const Expenses: React.FC = () => {
   const { haptic } = useHaptic();
   const { expenses: apiExpenses, loading, fetchExpenses } = useExpenses();
   const { categories: apiCategories } = useBudget();
+  const [searchParams] = useSearchParams();
 
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -34,6 +42,19 @@ const Expenses: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [activeTab, setActiveTab] = useState<ExpenseTab>('all');
+  const [statusChangeExpense, setStatusChangeExpense] = useState<Expense | null>(null);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  // URL 파라미터에서 category_id 읽어 자동 필터 적용
+  useEffect(() => {
+    const categoryId = searchParams.get('category_id');
+    if (categoryId) {
+      setFilterCategory(categoryId);
+      setShowFilters(true);
+    }
+  }, [searchParams]);
 
   // Pull-to-Refresh 핸들러
   const handleRefresh = async () => {
@@ -84,6 +105,9 @@ const Expenses: React.FC = () => {
     if (filterCategory !== 'all') {
       result = result.filter(e => e.categoryId === filterCategory);
     }
+    if (activeTab !== 'all') {
+      result = result.filter(e => e.status === activeTab);
+    }
     result.sort((a, b) => {
       if (sortBy === 'date') {
         return new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime();
@@ -91,7 +115,22 @@ const Expenses: React.FC = () => {
       return b.amount - a.amount;
     });
     return result;
-  }, [expenses, searchQuery, filterPayer, filterCategory, sortBy]);
+  }, [expenses, searchQuery, filterPayer, filterCategory, sortBy, activeTab]);
+
+  // 무한 스크롤: 표시할 항목 제한 (Requirements 10.2)
+  const visibleExpenses = useMemo(() => filteredExpenses.slice(0, visibleCount), [filteredExpenses, visibleCount]);
+  const hasMoreExpenses = visibleCount < filteredExpenses.length;
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: () => setVisibleCount(prev => prev + 20),
+    hasMore: hasMoreExpenses,
+    isLoading: false,
+  });
+
+  // 필터 변경 시 visibleCount 리셋
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchQuery, filterPayer, filterCategory, sortBy, activeTab]);
 
   const stats = useMemo(() => {
     const total = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -111,6 +150,19 @@ const Expenses: React.FC = () => {
   const getCategoryColor = (categoryId: string) => budgetCategories.find(c => c.id === categoryId)?.color || '#f43f5e';
 
   const handleSaveExpense = async (expense: Expense) => {
+    // 결제 예정 → 결제 완료 변경 감지: 결제일 자동 설정 확인
+    if (
+      editingExpense &&
+      editingExpense.status === 'planned' &&
+      expense.status === 'completed'
+    ) {
+      setStatusChangeExpense(expense);
+      return;
+    }
+    await saveExpense(expense);
+  };
+
+  const saveExpense = async (expense: Expense) => {
     try {
       const categoryId = expense.categoryId ? parseInt(expense.categoryId) : null;
       const validCategoryId = categoryId && !isNaN(categoryId) ? categoryId : undefined;
@@ -145,12 +197,19 @@ const Expenses: React.FC = () => {
       fetchExpenses();
     } catch (error) {
       console.error('지출 저장 실패:', error);
-      toast.error('지출 저장에 실패했습니다');
+      toast.error((error as any)?.userMessage || '지출 저장에 실패했습니다');
     }
   };
 
   const handleDeleteExpense = async (id: string, skipConfirm = false) => {
-    if (!skipConfirm && !confirm('정말 삭제하시겠습니까?')) return;
+    if (!skipConfirm) {
+      setDeletingExpenseId(id);
+      return;
+    }
+    await performDeleteExpense(id);
+  };
+
+  const performDeleteExpense = async (id: string) => {
     haptic('warning');
     try {
       await expenseAPI.delete(id);
@@ -162,13 +221,38 @@ const Expenses: React.FC = () => {
       fetchExpenses();
     } catch (error) {
       console.error('지출 삭제 실패:', error);
-      toast.error('지출 삭제에 실패했습니다');
+      toast.error((error as any)?.userMessage || '지출 삭제에 실패했습니다');
     }
   };
 
   const handleEditExpense = (expense: Expense) => {
     setEditingExpense(expense);
     setShowExpenseForm(true);
+  };
+
+  const handleConfirmStatusChange = async (autoSetDate: boolean) => {
+    if (!statusChangeExpense) return;
+    const expense = autoSetDate
+      ? { ...statusChangeExpense, paymentDate: new Date().toISOString().split('T')[0] }
+      : statusChangeExpense;
+    setStatusChangeExpense(null);
+    await saveExpense(expense);
+  };
+
+  const handleExportCSV = () => {
+    const data = filteredExpenses.map(e => ({
+      제목: e.title,
+      금액: e.amount,
+      카테고리: getCategoryName(e.categoryId),
+      결제일: e.paymentDate,
+      결제자: getPayerLabel(e.paidBy),
+      상태: e.status === 'completed' ? '결제 완료' : '결제 예정',
+      결제수단: e.paymentMethod === 'card' ? '카드' : e.paymentMethod === 'cash' ? '현금' : '이체',
+      업체: e.vendorName || '',
+      메모: e.memo || '',
+    }));
+    exportToCSV(data, `지출내역_${new Date().toISOString().split('T')[0]}.csv`);
+    toast.success('CSV 파일이 다운로드되었습니다');
   };
 
   const getPayerLabel = (payer: string) => {
@@ -186,18 +270,29 @@ const Expenses: React.FC = () => {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-6">
+      <PageTip pageKey="expenses" />
       {/* 헤더 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-stone-800">지출 목록</h1>
           <p className="text-sm text-stone-500 mt-1">총 {stats.count}건의 지출 내역</p>
         </div>
-        <button
-          onClick={() => { setEditingExpense(null); setShowExpenseForm(true); }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-colors font-medium"
-        >
-          <Plus size={18} />지출 추가
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 px-3 py-2.5 border border-stone-200 text-stone-600 rounded-xl hover:bg-stone-50 transition-colors text-sm font-medium"
+            title="CSV 내보내기"
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline">내보내기</span>
+          </button>
+          <button
+            onClick={() => { setEditingExpense(null); setShowExpenseForm(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-colors font-medium"
+          >
+            <Plus size={18} />지출 추가
+          </button>
+        </div>
       </div>
 
       {/* 통계 카드 - 합계 표시 */}
@@ -237,6 +332,40 @@ const Expenses: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 상태별 탭 */}
+      <div className="bg-white rounded-xl border border-stone-100 p-1 flex gap-1">
+        {([
+          { key: 'all' as const, label: '전체' },
+          { key: 'completed' as const, label: '결제 완료' },
+          { key: 'planned' as const, label: '결제 예정' },
+        ]).map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+              activeTab === tab.key
+                ? 'bg-rose-500 text-white shadow-sm'
+                : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 카테고리 예산 진행률 바 (카테고리 필터 활성 시) */}
+      {filterCategory !== 'all' && (() => {
+        const cat = budgetCategories.find(c => c.id === filterCategory);
+        if (!cat) return null;
+        return (
+          <CategoryBudgetProgress
+            categoryName={cat.name}
+            budgetAmount={cat.budgetAmount}
+            spentAmount={cat.spentAmount}
+          />
+        );
+      })()}
 
       {/* 검색 및 필터 */}
       <div className="bg-white rounded-xl p-4 border border-stone-100 space-y-3">
@@ -295,7 +424,7 @@ const Expenses: React.FC = () => {
         />
       ) : (
         <div className="space-y-3">
-          {filteredExpenses.map((expense) => (
+          {visibleExpenses.map((expense) => (
             <SwipeToDelete key={expense.id} onDelete={() => handleDeleteExpense(expense.id, true)}>
             <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-xl p-4 border border-stone-100 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between gap-3">
@@ -353,6 +482,8 @@ const Expenses: React.FC = () => {
             </motion.div>
             </SwipeToDelete>
           ))}
+          {/* 무한 스크롤 센티넬 */}
+          {hasMoreExpenses && <div ref={sentinelRef} className="h-4" />}
         </div>
       )}
 
@@ -365,6 +496,33 @@ const Expenses: React.FC = () => {
           onCancel={() => { setShowExpenseForm(false); setEditingExpense(null); }}
         />
       )}
+
+      {/* 결제 상태 변경 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={!!statusChangeExpense}
+        onClose={() => handleConfirmStatusChange(false)}
+        onConfirm={() => handleConfirmStatusChange(true)}
+        title="결제일 자동 설정"
+        message="결제 완료로 변경합니다. 결제일을 오늘 날짜로 자동 설정할까요?"
+        confirmLabel="오늘로 설정"
+        cancelLabel="기존 날짜 유지"
+        variant="info"
+      />
+
+      {/* 지출 삭제 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={!!deletingExpenseId}
+        onClose={() => setDeletingExpenseId(null)}
+        onConfirm={() => {
+          if (deletingExpenseId) performDeleteExpense(deletingExpenseId);
+          setDeletingExpenseId(null);
+        }}
+        title="지출 삭제"
+        message="정말 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        variant="danger"
+      />
     </div>
     </PullToRefresh>
   );

@@ -110,6 +110,7 @@ export interface Venue {
   rating: number;
   visitDate: string | null;
   status: 'pending' | 'visited' | 'contracted' | 'excluded';
+  exclusionReason?: string;  // 제외 사유 (status === 'excluded' 일 때)
   images: VenueImage[];          // Array of venue images
   thumbnailImage: string | null; // ID of the thumbnail image
   // 계약 정보 (계약 완료 시)

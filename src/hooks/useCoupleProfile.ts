@@ -148,9 +148,16 @@ export const useCoupleProfile = () => {
       fetchProfile();
     };
     
+    // 결혼 예정일 변경 이벤트 수신 - D-day 등 갱신
+    const handleWeddingDateChanged = () => {
+      fetchProfile();
+    };
+    
     window.addEventListener('profile-updated', handleProfileUpdate);
+    window.addEventListener('wedding-date-changed', handleWeddingDateChanged);
     return () => {
       window.removeEventListener('profile-updated', handleProfileUpdate);
+      window.removeEventListener('wedding-date-changed', handleWeddingDateChanged);
     };
   }, [fetchProfile, fetchCouple]);
 

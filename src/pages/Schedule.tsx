@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, MapPin, Clock, Edit2, Trash2, X, Search, Calendar as CalendarIcon } from 'lucide-react';
 import { eventAPI } from '@/api/events';
 import { CalendarEvent, EVENT_CATEGORIES, EventCategory, EventFormData } from '@/types/event';
 import { useToast } from '@/hooks/useToast';
 import { EmptyState } from '@/components/common/EmptyState/EmptyState';
 import { ScheduleSkeleton } from '@/components/skeleton/ScheduleSkeleton';
 import { WeekView } from '../components/schedule/WeekView';
+import { checklistAPI } from '@/api/checklist';
+import { ChecklistItem } from '@/types/checklist';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, addWeeks, subWeeks } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
+import DatePicker from '@/components/common/DatePicker/DatePicker';
+import { useKeyboardAvoid } from '@/hooks/useKeyboardAvoid';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 
 const Schedule: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -17,6 +24,9 @@ const Schedule: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [deletingEventId, setDeletingEventId] = useState<string | number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [visibleEventCount, setVisibleEventCount] = useState(20);
   const { toast } = useToast();
 
   const year = currentDate.getFullYear();
@@ -33,7 +43,7 @@ const Schedule: React.FC = () => {
       const response = await eventAPI.getEventsByMonth(year, month);
       setEvents(response.data.data);
     } catch (error) {
-      toast.error('일정을 불러오는데 실패했습니다');
+      toast.error((error as any)?.userMessage || '일정을 불러오는데 실패했습니다');
     } finally {
       setIsLoading(false);
     }
@@ -73,15 +83,19 @@ const Schedule: React.FC = () => {
 
   // 일정 삭제
   const handleDeleteEvent = async (eventId: string | number) => {
-    if (!confirm('이 일정을 삭제하시겠습니까?')) return;
+    setDeletingEventId(eventId);
+  };
 
+  const confirmDeleteEvent = async () => {
+    if (deletingEventId === null) return;
     try {
-      await eventAPI.deleteEvent(eventId.toString());
+      await eventAPI.deleteEvent(deletingEventId.toString());
       toast.success('일정이 삭제되었습니다');
       loadEvents();
     } catch (error) {
-      toast.error('삭제에 실패했습니다');
+      toast.error((error as any)?.userMessage || '삭제에 실패했습니다');
     }
+    setDeletingEventId(null);
   };
 
   // 일정 저장 (추가/수정)
@@ -98,7 +112,7 @@ const Schedule: React.FC = () => {
       setEditingEvent(null);
       loadEvents();
     } catch (error) {
-      toast.error(editingEvent ? '수정에 실패했습니다' : '추가에 실패했습니다');
+      toast.error((error as any)?.userMessage || (editingEvent ? '수정에 실패했습니다' : '추가에 실패했습니다'));
     }
   };
 
@@ -115,10 +129,22 @@ const Schedule: React.FC = () => {
     return [...prefixDays, ...days];
   }, [currentDate]);
 
+  // 검색 필터링
+  const filteredEvents = useMemo(() => {
+    if (!searchQuery.trim()) return events;
+    const query = searchQuery.toLowerCase();
+    return events.filter((event) => {
+      const titleMatch = event.title.toLowerCase().includes(query);
+      const categoryInfo = event.category ? EVENT_CATEGORIES[event.category] : null;
+      const categoryMatch = categoryInfo ? categoryInfo.label.toLowerCase().includes(query) : false;
+      return titleMatch || categoryMatch;
+    });
+  }, [events, searchQuery]);
+
   // 날짜별 이벤트 매핑
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
-    events.forEach(event => {
+    filteredEvents.forEach(event => {
       // API에서 오는 날짜 형식을 yyyy-MM-dd로 정규화
       const eventDate = new Date(event.start_date);
       const dateKey = format(eventDate, 'yyyy-MM-dd');
@@ -126,12 +152,22 @@ const Schedule: React.FC = () => {
       map[dateKey].push(event);
     });
     return map;
-  }, [events]);
+  }, [filteredEvents]);
 
   // 선택된 날짜의 이벤트
   const selectedDateEvents = selectedDate
     ? eventsByDate[format(selectedDate, 'yyyy-MM-dd')] || []
     : [];
+
+  // 무한 스크롤: 이벤트 목록 페이지네이션 (Requirements 10.2)
+  const visibleEvents = filteredEvents.slice(0, visibleEventCount);
+  const hasMoreEvents = visibleEventCount < filteredEvents.length;
+
+  const eventSentinelRef = useInfiniteScroll({
+    onLoadMore: () => setVisibleEventCount(prev => prev + 20),
+    hasMore: hasMoreEvents,
+    isLoading: false,
+  });
 
   if (isLoading) {
     return <ScheduleSkeleton />;
@@ -139,6 +175,7 @@ const Schedule: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
+      <PageTip pageKey="schedule" />
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
@@ -215,6 +252,27 @@ const Schedule: React.FC = () => {
           <Plus size={20} />
           일정 추가
         </button>
+
+        {/* 검색 입력 필드 */}
+        <div className="relative mt-3">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="일정 검색 (제목, 카테고리)..."
+            className="w-full pl-9 pr-9 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-stone-200 rounded-full transition-colors"
+              aria-label="검색어 초기화"
+            >
+              <X size={14} className="text-stone-500" />
+            </button>
+          )}
+        </div>
 
         {/* 요일 헤더 - 월간 뷰에서만 */}
         {viewMode === 'month' && (
@@ -395,21 +453,21 @@ const Schedule: React.FC = () => {
       )}
 
       {/* 다가오는 일정 (날짜 미선택 시) */}
-      {!selectedDate && events.length === 0 && (
+      {!selectedDate && filteredEvents.length === 0 && (
         <div className="mx-4 mt-4">
           <EmptyState
             illustration="calendar"
-            title="등록된 일정이 없어요"
-            description="식장 방문, 피팅 등 일정을 추가해보세요"
-            actionLabel="일정 추가하기"
-            onAction={() => openAddEventModal()}
+            title={searchQuery ? '검색 결과가 없어요' : '등록된 일정이 없어요'}
+            description={searchQuery ? '다른 검색어로 시도해보세요' : '식장 방문, 피팅 등 일정을 추가해보세요'}
+            actionLabel={searchQuery ? undefined : '일정 추가하기'}
+            onAction={searchQuery ? undefined : () => openAddEventModal()}
           />
         </div>
       )}
 
-      {!selectedDate && events.length > 0 && (
+      {!selectedDate && filteredEvents.length > 0 && (
         <UpcomingEvents 
-          events={events} 
+          events={filteredEvents} 
           onEventClick={(event) => setSelectedDate(new Date(event.start_date))}
           onEditEvent={openEditEventModal}
           onDeleteEvent={handleDeleteEvent}
@@ -428,6 +486,18 @@ const Schedule: React.FC = () => {
           onSave={handleSaveEvent}
         />
       )}
+
+      {/* 일정 삭제 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={deletingEventId !== null}
+        onClose={() => setDeletingEventId(null)}
+        onConfirm={confirmDeleteEvent}
+        title="일정 삭제"
+        message="이 일정을 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        variant="danger"
+      />
     </div>
   );
 };
@@ -581,6 +651,8 @@ interface EventModalProps {
 }
 
 const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, onSave }) => {
+  const modalRef = React.useRef<HTMLDivElement>(null);
+  useKeyboardAvoid(modalRef);
   const [formData, setFormData] = useState({
     title: event?.title || '',
     description: event?.description || '',
@@ -593,20 +665,32 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
     location: event?.location || '',
     location_url: event?.location_url || '',
     reminder_minutes: event?.reminder_minutes || 30,
+    linked_checklist_id: event?.linked_checklist_id || '',
   });
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+  const [titleError, setTitleError] = useState('');
+
+  // 체크리스트 항목 로드
+  useEffect(() => {
+    checklistAPI.getItems()
+      .then((res) => setChecklistItems(res.data.data || []))
+      .catch(() => { /* 로드 실패 시 무시 */ });
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요');
+      setTitleError('제목을 입력해주세요');
       return;
     }
+    setTitleError('');
 
     const categoryInfo = EVENT_CATEGORIES[formData.category];
     
     onSave({
       ...formData,
+      linked_checklist_id: formData.linked_checklist_id || undefined,
       color: categoryInfo.color,
       icon: categoryInfo.icon,
     });
@@ -614,11 +698,12 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'title') setTitleError('');
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pb-20 md:pb-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
+      <div ref={modalRef} className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
         {/* 헤더 */}
         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-bold text-stone-800">
@@ -644,9 +729,10 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               placeholder="예: 웨딩홀 방문"
-              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              className={`w-full px-4 py-2.5 border ${titleError ? 'border-red-400 focus:ring-red-500' : 'border-stone-300 focus:ring-rose-500'} rounded-xl focus:ring-2 focus:border-transparent`}
               required
             />
+            {titleError && <p className="text-red-500 text-xs mt-1">{titleError}</p>}
           </div>
 
           {/* 카테고리 */}
@@ -679,23 +765,20 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
               <label className="block text-sm font-medium text-stone-700 mb-2">
                 시작 날짜 *
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={formData.start_date}
-                onChange={(e) => handleChange('start_date', e.target.value)}
-                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-                required
+                onChange={(date) => handleChange('start_date', date)}
+                placeholder="시작 날짜 선택"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-stone-700 mb-2">
                 종료 날짜
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={formData.end_date}
-                onChange={(e) => handleChange('end_date', e.target.value)}
-                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                onChange={(date) => handleChange('end_date', date)}
+                placeholder="종료 날짜 선택"
               />
             </div>
           </div>
@@ -783,6 +866,28 @@ const EventModal: React.FC<EventModalProps> = ({ event, selectedDate, onClose, o
               className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none"
             />
           </div>
+
+          {/* 체크리스트 항목 연결 */}
+          {checklistItems.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-stone-700 mb-2">
+                연결할 체크리스트 항목
+              </label>
+              <select
+                value={formData.linked_checklist_id}
+                onChange={(e) => handleChange('linked_checklist_id', e.target.value)}
+                className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              >
+                <option value="">선택 안함</option>
+                {checklistItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.category_icon ? `${item.category_icon} ` : ''}{item.title}
+                    {item.is_completed ? ' ✓' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* 알림 */}
           <div>

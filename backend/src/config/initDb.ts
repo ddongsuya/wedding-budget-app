@@ -47,7 +47,10 @@ export async function runMigrations(): Promise<void> {
     // 10. Venue Contracts 테이블
     await migrateVenueContractsTable();
     
-    // 11. 정리 작업
+    // 11. 베타 배포 준비 업데이트
+    await migrateBetaReadinessUpdates();
+    
+    // 12. 정리 작업
     await cleanupOldData();
     
     console.log('Migrations completed successfully!');
@@ -413,6 +416,36 @@ async function migrateVenueContractsTable(): Promise<void> {
     )
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_venue_contract_expenses_contract ON venue_contract_expenses(contract_id)`);
+}
+
+/**
+ * 베타 배포 준비 업데이트 마이그레이션
+ */
+async function migrateBetaReadinessUpdates(): Promise<void> {
+  // venues 테이블에 제외 사유 컬럼 추가
+  await pool.query(`ALTER TABLE venues ADD COLUMN IF NOT EXISTS exclusion_reason TEXT`);
+
+  // photo_references 테이블에 정렬 순서 컬럼 추가
+  await pool.query(`ALTER TABLE photo_references ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0`);
+
+  // notifications 테이블에 재시도 관련 컬럼 추가
+  await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS retry_count INTEGER DEFAULT 0`);
+  await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS last_retry_at TIMESTAMP`);
+  await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS delivery_status VARCHAR(20) DEFAULT 'sent'`);
+
+  // expenses 테이블에 연관 체크리스트 항목 ID 추가
+  await pool.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS checklist_item_id INTEGER REFERENCES checklist_items(id) ON DELETE SET NULL`);
+
+  // events 테이블에 연관 체크리스트 항목 ID, 식장 ID 추가
+  await pool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS checklist_item_id INTEGER REFERENCES checklist_items(id) ON DELETE SET NULL`);
+  await pool.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS venue_id INTEGER REFERENCES venues(id) ON DELETE SET NULL`);
+
+  // 인덱스 추가
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_expenses_checklist_item ON expenses(checklist_item_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_events_checklist_item ON events(checklist_item_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_events_venue ON events(venue_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_photo_references_sort ON photo_references(couple_id, sort_order)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_notifications_retry ON notifications(delivery_status, retry_count)`);
 }
 
 /**

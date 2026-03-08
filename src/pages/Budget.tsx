@@ -1,23 +1,29 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BudgetSettings, BudgetCategory } from '@/types/types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { BudgetSettingModal } from '../components/budget/BudgetSettingModal';
 import { CategoryModal } from '../components/budget/CategoryModal';
 import { BudgetListView } from '../components/budget/BudgetListView';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { BudgetSkeleton } from '@/components/skeleton/BudgetSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useBudget } from '@/hooks/useBudget';
 import { formatMoneyShort } from '@/utils/formatMoney';
+import { navigateCrossLink } from '@/utils/crossLink';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 
 const Budget: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { settings, categories, loading, fetchCategories, updateSettings, addCategory, updateCategory, deleteCategory } = useBudget();
   const [isSettingModalOpen, setIsSettingModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
   // API 데이터를 기존 형식으로 변환
   const budget: BudgetSettings = {
@@ -64,7 +70,7 @@ const Budget: React.FC = () => {
       });
       toast.success('예산 설정이 저장되었습니다');
     } catch (_error) {
-      toast.error('설정 저장에 실패했습니다');
+      toast.error((_error as any)?.userMessage || '설정 저장에 실패했습니다');
     }
   };
 
@@ -90,23 +96,28 @@ const Budget: React.FC = () => {
       await fetchCategories();
       setEditingCategory(null);
     } catch (_error) {
-      toast.error('저장에 실패했습니다');
+      toast.error((_error as any)?.userMessage || '저장에 실패했습니다');
     }
   };
 
   const handleDeleteCategory = async (id: string) => {
-    if (confirm('이 카테고리를 삭제하시겠습니까? 관련 지출 내역은 유지되지만 예산 정보는 사라집니다.')) {
-      try {
-        await deleteCategory(id);
-        toast.success('카테고리가 삭제되었습니다');
-      } catch (_error) {
-        toast.error('삭제에 실패했습니다');
-      }
+    setDeletingCategoryId(id);
+  };
+
+  const confirmDeleteCategory = async () => {
+    if (!deletingCategoryId) return;
+    try {
+      await deleteCategory(deletingCategoryId);
+      toast.success('카테고리가 삭제되었습니다');
+    } catch (_error) {
+      toast.error((_error as any)?.userMessage || '삭제에 실패했습니다');
     }
+    setDeletingCategoryId(null);
   };
 
   return (
     <div className="space-y-6 pb-20 md:pb-0">
+      <PageTip pageKey="budget" />
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-stone-800">예산 관리</h2>
@@ -121,6 +132,20 @@ const Budget: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* 예산 미설정 안내 배너 */}
+      {budget.totalBudget === 0 && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">총 예산을 설정해주세요</p>
+            <p className="text-xs text-amber-600 mt-1">총 예산을 설정하면 카테고리별 예산 관리가 가능합니다</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsSettingModalOpen(true)}>
+            설정하기
+          </Button>
+        </div>
+      )}
 
       {/* Main Budget Status - 밝은 테마 */}
       <Card className="bg-white border border-stone-200 relative overflow-hidden">
@@ -195,7 +220,12 @@ const Budget: React.FC = () => {
       ) : (
         <BudgetListView
           categories={budget.categories}
-          onCategoryClick={(category: BudgetCategory) => { setEditingCategory(category); setIsCategoryModalOpen(true); }}
+          onCategoryClick={(category: BudgetCategory) => {
+            navigateCrossLink(navigate, {
+              target: '/expenses',
+              filter: { category_id: category.id },
+            });
+          }}
         />
       )}
 
@@ -215,6 +245,17 @@ const Budget: React.FC = () => {
           onClose={() => { setIsCategoryModalOpen(false); setEditingCategory(null); }}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={!!deletingCategoryId}
+        onClose={() => setDeletingCategoryId(null)}
+        onConfirm={confirmDeleteCategory}
+        title="카테고리 삭제"
+        message="이 카테고리를 삭제하시겠습니까? 관련 지출 내역은 유지되지만 예산 정보는 사라집니다."
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        variant="danger"
+      />
     </div>
   );
 };

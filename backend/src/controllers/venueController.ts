@@ -166,9 +166,9 @@ export const createVenue = async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyVenueChange(String(req.user!.id), String(coupleId), 'add', name);
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'add', name, String(result.rows[0].id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -323,9 +323,9 @@ export const updateVenue = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Venue not found' });
     }
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyVenueChange(String(req.user!.id), String(coupleId), 'update', name || result.rows[0].name);
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'update', name || result.rows[0].name, String(id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -361,9 +361,9 @@ export const deleteVenue = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Venue not found' });
     }
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (삭제 시 ID는 딥링크에 사용되지 않음)
     try {
-      await notifyVenueChange(String(req.user!.id), String(coupleId), 'delete', venueResult.rows[0]?.name);
+      await notifyVenueChange(String(req.user!.id), String(coupleId), 'delete', venueResult.rows[0]?.name, String(id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }

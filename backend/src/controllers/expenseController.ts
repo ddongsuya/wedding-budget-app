@@ -146,9 +146,9 @@ export const createExpense = async (req: AuthRequest, res: Response) => {
       ]
     );
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'add', title);
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'add', title, String(result.rows[0].id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -245,9 +245,9 @@ export const updateExpense = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'update', title || result.rows[0].title);
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'update', title || result.rows[0].title, String(id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -283,9 +283,9 @@ export const deleteExpense = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (삭제 시 ID는 딥링크에 사용되지 않음)
     try {
-      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'delete', expenseResult.rows[0]?.title);
+      await notifyExpenseChange(String(req.user!.id), String(coupleId), 'delete', expenseResult.rows[0]?.title, String(id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -293,6 +293,88 @@ export const deleteExpense = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'Expense deleted successfully' });
   } catch (error) {
     console.error('Delete expense error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getMonthlySummary = async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = req.user!.coupleId;
+
+    if (!coupleId) {
+      return res.status(404).json({ error: 'No couple found' });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         TO_CHAR(date_trunc('month', e.date), 'YYYY-MM') AS month,
+         COALESCE(SUM(e.amount), 0)::numeric AS total
+       FROM expenses e
+       WHERE e.couple_id = $1
+         AND e.date >= date_trunc('month', CURRENT_DATE) - INTERVAL '5 months'
+       GROUP BY date_trunc('month', e.date)
+       ORDER BY date_trunc('month', e.date) ASC`,
+      [coupleId]
+    );
+
+    res.json({ summary: result.rows });
+  } catch (error) {
+    console.error('Get monthly summary error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const exportExpenses = async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = req.user!.coupleId;
+
+    if (!coupleId) {
+      return res.status(404).json({ error: 'No couple found' });
+    }
+
+    const result = await pool.query(
+      `SELECT e.title, e.amount, e.date, c.name AS category_name,
+              e.payment_method, e.status, e.notes
+       FROM expenses e
+       LEFT JOIN budget_categories c ON e.category_id = c.id
+       WHERE e.couple_id = $1
+       ORDER BY e.date DESC`,
+      [coupleId]
+    );
+
+    const BOM = '\uFEFF';
+    const header = '제목,금액,날짜,카테고리,결제방법,상태,메모';
+    const rows = result.rows.map((row) => {
+      const escapeCsv = (val: any) => {
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      const statusLabel = row.status === 'planned' ? '결제예정' : '결제완료';
+      const dateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : '';
+
+      return [
+        escapeCsv(row.title),
+        escapeCsv(row.amount),
+        escapeCsv(dateStr),
+        escapeCsv(row.category_name),
+        escapeCsv(row.payment_method),
+        escapeCsv(statusLabel),
+        escapeCsv(row.notes),
+      ].join(',');
+    });
+
+    const csv = BOM + header + '\n' + rows.join('\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=expenses.csv');
+    res.send(csv);
+  } catch (error) {
+    console.error('Export expenses error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -334,3 +416,4 @@ export const uploadReceipt = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+

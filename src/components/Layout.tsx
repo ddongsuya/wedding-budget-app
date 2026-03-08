@@ -182,6 +182,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Use a small timeout to allow the menu close animation to start and prevent event conflicts
     setTimeout(() => {
       switch (action) {
+        case 'checklist':
+          navigate('/checklist', { state: { openAdd: true } });
+          break;
         case 'schedule':
           navigate('/schedule', { state: { openAdd: true } });
           break;
@@ -371,6 +374,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
          <AnimatePresence>
             {isFabOpen && (
                <>
+                  <motion.button
+                     initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                     animate={{ opacity: 1, y: 0, scale: 1 }}
+                     exit={{ opacity: 0, y: 20, scale: 0.8 }}
+                     transition={{ delay: 0.15 }}
+                     onClick={(e) => handleFabAction(e, 'checklist')}
+                     className="flex items-center gap-2 bg-white text-stone-600 px-4 py-3 min-h-[44px] rounded-full shadow-lg border border-stone-100 font-medium text-sm z-50 pointer-events-auto touch-feedback"
+                     aria-label="체크리스트 추가"
+                  >
+                     체크리스트 추가 <FileText size={18} className="text-amber-500" aria-hidden="true" />
+                  </motion.button>
+
                   <motion.button
                      initial={{ opacity: 0, y: 20, scale: 0.8 }}
                      animate={{ opacity: 1, y: 0, scale: 1 }}

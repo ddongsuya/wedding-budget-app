@@ -210,9 +210,9 @@ export const createItem = async (req: Request, res: Response) => {
       [coupleId, category_id, title, description, due_date, due_period, assigned_to || 'both', priority || 'medium']
     );
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyChecklistChange(String(userId), String(coupleId), 'add', title);
+      await notifyChecklistChange(String(userId), String(coupleId), 'add', title, String(result.rows[0].id));
     } catch (notifyError) {
       console.error('Notification error:', notifyError);
     }
@@ -319,10 +319,10 @@ export const toggleComplete = async (req: Request, res: Response) => {
       [newCompleted, newCompleted ? new Date() : null, newCompleted ? userId : null, id, coupleId]
     );
 
-    // 완료 시 파트너에게 알림 전송
+    // 완료 시 파트너에게 알림 전송 (딥링크용 ID 포함)
     if (newCompleted) {
       try {
-        await notifyChecklistChange(String(userId), String(coupleId), 'update', current.rows[0].title);
+        await notifyChecklistChange(String(userId), String(coupleId), 'update', current.rows[0].title, String(id));
       } catch (notifyError) {
         console.error('Notification error:', notifyError);
       }

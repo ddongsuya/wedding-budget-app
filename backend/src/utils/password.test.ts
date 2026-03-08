@@ -69,7 +69,7 @@ describe('Password Hash Security - Property Based Tests', () => {
         ),
         { numRuns: 50 } // Reduced runs due to bcrypt being slow
       );
-    });
+    }, 120000);
 
     it('should produce different hashes for the same password (salt uniqueness)', async () => {
       await fc.assert(

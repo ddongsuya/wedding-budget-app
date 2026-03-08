@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Settings as SettingsIcon, Info, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield } from 'lucide-react';
+import { User, Settings as SettingsIcon, Info, Moon, Bell, Globe, DollarSign, Camera, Heart, Check, Users, Lock, Megaphone, Shield, Download, Upload, Trash2, Unlink } from 'lucide-react';
 import { useToastContext } from '@/contexts/ToastContext';
 import { coupleAPI } from '@/api/couple';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useCoupleSync } from '@/hooks/useCoupleSync';
+import { backupAPI } from '@/api/backup';
+import { authAPI } from '@/api/auth';
 import DatePicker from '@/components/common/DatePicker/DatePicker';
 import { compressImage } from '@/utils/imageCompression';
 import { SettingsSkeleton } from '@/components/skeleton/SettingsSkeleton';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
 
 type Tab = 'profile' | 'app' | 'account' | 'info';
 
@@ -27,15 +32,31 @@ interface CoupleProfile {
 
 const SettingsNew: React.FC = () => {
   const { showToast } = useToastContext();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { isConnected: coupleConnected, partnerName: couplePartnerName } = useCoupleSync();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [profile, setProfile] = useState<CoupleProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const originalWeddingDateRef = useRef<string>('');
+
+  // 백업/복원 상태
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  // 계정 삭제 상태
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // 커플 연결 해제 상태
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // 앱 설정 (LocalStorage - 개인 설정)
-  const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [currency, setCurrency] = useState('KRW');
   const [language, setLanguage] = useState('ko');
@@ -51,6 +72,7 @@ const SettingsNew: React.FC = () => {
       const response = await coupleAPI.getProfile();
       if (response.data.profile) {
         setProfile(response.data.profile);
+        originalWeddingDateRef.current = response.data.profile.wedding_date || '';
       } else {
         // 프로필이 없으면 초기값 설정
         setProfile({
@@ -99,7 +121,6 @@ const SettingsNew: React.FC = () => {
     const saved = localStorage.getItem('appSettings');
     if (saved) {
       const settings = JSON.parse(saved);
-      setDarkMode(settings.darkMode || false);
       setNotifications(settings.notifications !== false);
       setCurrency(settings.currency || 'KRW');
       setLanguage(settings.language || 'ko');
@@ -108,7 +129,6 @@ const SettingsNew: React.FC = () => {
 
   const saveAppSettings = (key: string, value: any) => {
     const settings = {
-      darkMode,
       notifications,
       currency,
       language,
@@ -134,6 +154,13 @@ const SettingsNew: React.FC = () => {
       await coupleAPI.updateProfile(profile);
       // 프로필 변경 이벤트 발생 - 다른 컴포넌트들이 새 데이터를 가져오도록
       window.dispatchEvent(new CustomEvent('profile-updated'));
+      // 결혼 예정일이 변경된 경우 별도 이벤트 발생
+      if (originalWeddingDateRef.current !== profile.wedding_date) {
+        window.dispatchEvent(new CustomEvent('wedding-date-changed', {
+          detail: { weddingDate: profile.wedding_date }
+        }));
+        originalWeddingDateRef.current = profile.wedding_date;
+      }
       showToast('success', '프로필이 저장되었습니다! 💕');
     } catch (error) {
       console.error('Save profile error:', error);
@@ -207,9 +234,105 @@ const SettingsNew: React.FC = () => {
     return isFuture ? days : Math.abs(days) + 1;
   };
 
+  // 데이터 백업 (내보내기)
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      const data = await backupAPI.exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `wedding-planner-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('success', '데이터가 성공적으로 내보내기되었습니다');
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast('error', '데이터 내보내기에 실패했습니다');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 데이터 복원 (가져오기)
+  const handleImportData = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await backupAPI.importData(data);
+      showToast('success', '데이터가 성공적으로 복원되었습니다');
+      // 프로필 다시 로드
+      await loadProfile();
+      window.dispatchEvent(new CustomEvent('profile-updated'));
+    } catch (error) {
+      console.error('Import error:', error);
+      showToast('error', '데이터 복원에 실패했습니다. 올바른 백업 파일인지 확인해주세요.');
+    } finally {
+      setIsImporting(false);
+      // 파일 입력 초기화
+      e.target.value = '';
+    }
+  };
+
+  // 계정 삭제 - 1단계 확인 후 2단계 비밀번호 입력
+  const handleDeleteStep1Confirm = () => {
+    setShowDeleteConfirm(false);
+    setShowPasswordConfirm(true);
+    setDeletePassword('');
+  };
+
+  // 계정 삭제 - 2단계 비밀번호 확인 후 삭제
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      showToast('error', '비밀번호를 입력해주세요');
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await authAPI.deleteAccount(deletePassword);
+      showToast('success', '계정이 삭제되었습니다. 이용해주셔서 감사합니다.');
+      setShowPasswordConfirm(false);
+      logout();
+      navigate('/login');
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      if (error.response?.status === 401) {
+        showToast('error', '비밀번호가 올바르지 않습니다');
+      } else {
+        showToast('error', '계정 삭제에 실패했습니다');
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return <SettingsSkeleton />;
   }
+
+  // 커플 연결 해제 핸들러
+  const handleDisconnectCouple = async () => {
+    try {
+      setIsDisconnecting(true);
+      await coupleAPI.leaveCouple();
+      showToast('success', '커플 연결이 해제되었습니다. 기존 데이터는 보존됩니다.');
+      setShowDisconnectConfirm(false);
+      window.dispatchEvent(new CustomEvent('profile-updated'));
+    } catch (error: any) {
+      console.error('Disconnect couple error:', error);
+      showToast('error', error.response?.data?.message || '커플 연결 해제에 실패했습니다');
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
 
   if (!profile) return null;
 
@@ -418,18 +541,15 @@ const SettingsNew: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-bold text-stone-800">다크 모드</p>
-                  <p className="text-xs text-stone-500">어두운 테마를 사용합니다 (준비중)</p>
+                  <p className="text-xs text-stone-500">어두운 테마를 사용합니다</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   className="sr-only peer"
-                  checked={darkMode}
-                  onChange={(e) => {
-                    setDarkMode(e.target.checked);
-                    saveAppSettings('darkMode', e.target.checked);
-                  }}
+                  checked={theme === 'dark'}
+                  onChange={() => toggleTheme()}
                 />
                 <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
               </label>
@@ -539,7 +659,69 @@ const SettingsNew: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-stone-800 mb-4">데이터 관리</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={handleExportData}
+                  disabled={isExporting}
+                  className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Download size={20} className="text-blue-500" />
+                    <div className="text-left">
+                      <span className="text-gray-800 block">데이터 백업 (내보내기)</span>
+                      <span className="text-xs text-gray-500">전체 데이터를 JSON 파일로 저장합니다</span>
+                    </div>
+                  </div>
+                  {isExporting ? (
+                    <span className="w-5 h-5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-gray-400">→</span>
+                  )}
+                </button>
+                <label className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <Upload size={20} className="text-green-500" />
+                    <div className="text-left">
+                      <span className="text-gray-800 block">데이터 복원 (가져오기)</span>
+                      <span className="text-xs text-gray-500">백업 파일에서 데이터를 복원합니다</span>
+                    </div>
+                  </div>
+                  {isImporting ? (
+                    <span className="w-5 h-5 border-2 border-green-300 border-t-green-600 rounded-full animate-spin" />
+                  ) : (
+                    <span className="text-gray-400">→</span>
+                  )}
+                  <input
+                    type="file"
+                    accept=".json"
+                    className="hidden"
+                    onChange={handleImportData}
+                    disabled={isImporting}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm">
               <h3 className="text-lg font-bold text-stone-800 mb-4">커플 관리</h3>
+              {/* 커플 연결 상태 뱃지 */}
+              <div className="flex items-center justify-between p-4 mb-2 bg-stone-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Users size={20} className={coupleConnected ? 'text-emerald-500' : 'text-stone-400'} />
+                  <div>
+                    <span className="text-gray-800 block font-medium">커플 연결 상태</span>
+                    {coupleConnected ? (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                        연결됨{couplePartnerName ? `: ${couplePartnerName}` : ''}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-stone-400">미연결</span>
+                    )}
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={() => navigate('/couple/connect')}
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors"
@@ -550,6 +732,18 @@ const SettingsNew: React.FC = () => {
                 </div>
                 <span className="text-gray-400">→</span>
               </button>
+              {coupleConnected && (
+                <button
+                  onClick={() => setShowDisconnectConfirm(true)}
+                  className="w-full flex items-center justify-between p-4 hover:bg-red-50 rounded-lg transition-colors mt-1"
+                >
+                  <div className="flex items-center gap-3">
+                    <Unlink size={20} className="text-red-400" />
+                    <span className="text-red-600">커플 연결 해제</span>
+                  </div>
+                  <span className="text-red-300">→</span>
+                </button>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -601,6 +795,91 @@ const SettingsNew: React.FC = () => {
                 </button>
               </div>
             )}
+
+            {/* 계정 삭제 (위험 영역) */}
+            <div className="bg-red-50 rounded-xl p-6 shadow-sm border border-red-100">
+              <h3 className="text-lg font-bold text-red-600 mb-2">위험 영역</h3>
+              <p className="text-sm text-red-500 mb-4">계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다.</p>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full flex items-center justify-center gap-2 p-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
+              >
+                <Trash2 size={18} />
+                계정 삭제 (회원 탈퇴)
+              </button>
+            </div>
+
+            {/* 1단계: 삭제 확인 다이얼로그 */}
+            <ConfirmDialog
+              isOpen={showDeleteConfirm}
+              onClose={() => setShowDeleteConfirm(false)}
+              onConfirm={handleDeleteStep1Confirm}
+              title="정말 탈퇴하시겠습니까?"
+              message="계정을 삭제하면 모든 데이터(예산, 지출, 체크리스트, 일정, 사진 등)가 영구적으로 삭제되며 복구할 수 없습니다."
+              confirmLabel="탈퇴 진행"
+              cancelLabel="취소"
+              variant="danger"
+            />
+
+            {/* 2단계: 비밀번호 재입력 모달 */}
+            {showPasswordConfirm && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setShowPasswordConfirm(false)} />
+                <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                  <div className="p-6">
+                    <h3 className="text-lg font-bold text-stone-800 mb-2">비밀번호 확인</h3>
+                    <p className="text-sm text-stone-500 mb-4">본인 확인을 위해 비밀번호를 입력해주세요.</p>
+                    <input
+                      type="password"
+                      value={deletePassword}
+                      onChange={(e) => setDeletePassword(e.target.value)}
+                      placeholder="비밀번호 입력"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-200 text-sm"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleDeleteAccount();
+                      }}
+                    />
+                  </div>
+                  <div className="flex gap-3 p-4 bg-stone-50 border-t border-stone-100">
+                    <button
+                      onClick={() => setShowPasswordConfirm(false)}
+                      disabled={isDeleting}
+                      className="flex-1 px-4 py-2.5 bg-white border border-stone-200 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors disabled:opacity-50"
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting || !deletePassword.trim()}
+                      className="flex-1 px-4 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          삭제 중...
+                        </>
+                      ) : (
+                        '계정 삭제'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* 커플 연결 해제 확인 다이얼로그 */}
+            <ConfirmDialog
+              isOpen={showDisconnectConfirm}
+              onClose={() => setShowDisconnectConfirm(false)}
+              onConfirm={handleDisconnectCouple}
+              title="커플 연결을 해제하시겠습니까?"
+              message="연결을 해제해도 기존 데이터(예산, 지출, 체크리스트 등)는 보존됩니다. 파트너와의 실시간 동기화만 중단됩니다."
+              confirmLabel="연결 해제"
+              cancelLabel="취소"
+              variant="warning"
+              isLoading={isDisconnecting}
+            />
           </div>
         )}
 

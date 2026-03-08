@@ -29,4 +29,8 @@ export const authAPI = {
   // 비밀번호 재설정
   resetPassword: (data: { email: string; token: string; newPassword: string }) =>
     apiClient.post('/auth/reset-password', data),
+
+  // 계정 삭제 (회원 탈퇴)
+  deleteAccount: (password: string) =>
+    apiClient.delete('/auth/account', { data: { password } }),
 };

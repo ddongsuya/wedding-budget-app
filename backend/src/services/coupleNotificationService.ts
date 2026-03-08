@@ -27,7 +27,8 @@ export const notifyPartnerOfActivity = async (
   coupleId: string,
   activityType: 'venue' | 'expense' | 'checklist' | 'schedule',
   action: 'add' | 'update' | 'delete',
-  itemName?: string
+  itemName?: string,
+  itemId?: string
 ): Promise<boolean> => {
   // 파트너 정보 조회
   const partner = await getPartnerInfo(actorUserId, coupleId);
@@ -39,13 +40,14 @@ export const notifyPartnerOfActivity = async (
   // 행위자 이름 조회
   const actorName = await getUserName(actorUserId);
 
-  // 알림 생성
+  // 알림 생성 (딥링크용 itemId 포함)
   const notification = await createCoupleActivityNotification(
     partner.id,
     actorName,
     activityType,
     action,
-    itemName
+    itemName,
+    itemId
   );
 
   return !!notification;
@@ -56,9 +58,10 @@ export const notifyVenueChange = async (
   userId: string,
   coupleId: string,
   action: 'add' | 'update' | 'delete',
-  venueName?: string
+  venueName?: string,
+  venueId?: string
 ): Promise<boolean> => {
-  return notifyPartnerOfActivity(userId, coupleId, 'venue', action, venueName);
+  return notifyPartnerOfActivity(userId, coupleId, 'venue', action, venueName, venueId);
 };
 
 // 지출 변경 알림
@@ -66,9 +69,10 @@ export const notifyExpenseChange = async (
   userId: string,
   coupleId: string,
   action: 'add' | 'update' | 'delete',
-  expenseDescription?: string
+  expenseDescription?: string,
+  expenseId?: string
 ): Promise<boolean> => {
-  return notifyPartnerOfActivity(userId, coupleId, 'expense', action, expenseDescription);
+  return notifyPartnerOfActivity(userId, coupleId, 'expense', action, expenseDescription, expenseId);
 };
 
 // 체크리스트 변경 알림
@@ -76,9 +80,10 @@ export const notifyChecklistChange = async (
   userId: string,
   coupleId: string,
   action: 'add' | 'update' | 'delete',
-  itemTitle?: string
+  itemTitle?: string,
+  itemId?: string
 ): Promise<boolean> => {
-  return notifyPartnerOfActivity(userId, coupleId, 'checklist', action, itemTitle);
+  return notifyPartnerOfActivity(userId, coupleId, 'checklist', action, itemTitle, itemId);
 };
 
 // 일정 변경 알림
@@ -86,7 +91,8 @@ export const notifyScheduleChange = async (
   userId: string,
   coupleId: string,
   action: 'add' | 'update' | 'delete',
-  eventTitle?: string
+  eventTitle?: string,
+  eventId?: string
 ): Promise<boolean> => {
-  return notifyPartnerOfActivity(userId, coupleId, 'schedule', action, eventTitle);
+  return notifyPartnerOfActivity(userId, coupleId, 'schedule', action, eventTitle, eventId);
 };

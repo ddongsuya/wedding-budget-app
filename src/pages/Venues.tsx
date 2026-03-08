@@ -14,8 +14,9 @@ import { useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import { Skeleton } from '@/components/common/Skeleton/Skeleton';
 import { EmptyState, NoSearchResults } from '@/components/common/EmptyState';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 
-type SortKey = 'rating' | 'price' | 'createdAt' | 'minGuests';
+type SortKey = 'rating' | 'price' | 'createdAt' | 'minGuests' | 'visitDate';
 type FilterStatus = 'all' | 'visited' | 'pending' | 'contracted';
 type SdmFilter = 'all' | 'included' | 'excluded';
 
@@ -85,6 +86,7 @@ const Venues: React.FC = () => {
         outdoorVenueFee: Number(v.outdoor_venue_fee) || 0,
         freshFlowerFee: Number(v.fresh_flower_fee) || 0,
         // 기타
+        exclusionReason: v.exclusion_reason || '',
         additionalBenefits: v.pros || '',
         memo: v.notes || '',
         rating: Number(v.rating) || 0,
@@ -189,6 +191,7 @@ const Venues: React.FC = () => {
         wedding_robe_fee: venue.weddingRobeFee || 0,
         outdoor_venue_fee: venue.outdoorVenueFee || 0,
         fresh_flower_fee: venue.freshFlowerFee || 0,
+        exclusion_reason: venue.exclusionReason || '',
       };
 
       if (editingVenue) {
@@ -273,12 +276,18 @@ const Venues: React.FC = () => {
       return matchesSearch && matchesStatus && matchesSdm && matchesLocation;
     })
     .sort((a, b) => {
-      let valA = a[sortBy];
-      let valB = b[sortBy];
+      let valA: any = a[sortBy];
+      let valB: any = b[sortBy];
 
       if (sortBy === 'price') {
         valA = a.totalEstimate;
         valB = b.totalEstimate;
+      }
+
+      if (sortBy === 'visitDate') {
+        // 방문일이 없는 항목은 뒤로 보냄
+        valA = a.visitDate || '9999-12-31';
+        valB = b.visitDate || '9999-12-31';
       }
 
       if (sortOrder === 'asc') {
@@ -323,6 +332,7 @@ const Venues: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24 md:pb-0 h-full flex flex-col">
+      <PageTip pageKey="venues" />
       {/* 선택된 예식장 (계약 완료) */}
       {contractedVenue && (
         <SelectedVenueDetail
@@ -401,6 +411,13 @@ const Venues: React.FC = () => {
             >
               별점순
               {sortBy === 'rating' && <ArrowUpDown size={14} />}
+            </button>
+            <button 
+              onClick={() => toggleSort('visitDate')}
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all font-medium ${sortBy === 'visitDate' ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button' : 'bg-stone-50/50 border border-stone-200 text-stone-600 hover:bg-stone-100'}`}
+            >
+              방문일순
+              {sortBy === 'visitDate' && <ArrowUpDown size={14} />}
             </button>
 
             <div className="h-6 w-px bg-stone-200 mx-1"></div>
@@ -717,6 +734,7 @@ const Venues: React.FC = () => {
               <button onClick={() => setSortBy('rating')} className={`p-3 rounded-xl border text-sm font-medium transition-colors ${sortBy === 'rating' ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-stone-200 text-stone-600'}`}>별점순</button>
               <button onClick={() => setSortBy('minGuests')} className={`p-3 rounded-xl border text-sm font-medium transition-colors ${sortBy === 'minGuests' ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-stone-200 text-stone-600'}`}>보증인원순</button>
               <button onClick={() => setSortBy('createdAt')} className={`p-3 rounded-xl border text-sm font-medium transition-colors ${sortBy === 'createdAt' ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-stone-200 text-stone-600'}`}>최근 등록순</button>
+              <button onClick={() => setSortBy('visitDate')} className={`p-3 rounded-xl border text-sm font-medium transition-colors ${sortBy === 'visitDate' ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-stone-200 text-stone-600'}`}>방문일순</button>
             </div>
           </div>
 

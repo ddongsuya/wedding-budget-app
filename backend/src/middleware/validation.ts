@@ -203,6 +203,10 @@ export const resetPasswordValidation = [
   validateNewPassword,
 ];
 
+export const deleteAccountValidation = [
+  body('password').notEmpty().withMessage('비밀번호를 입력해주세요'),
+];
+
 // Venue validators
 export const createVenueValidation = [
   validateRequiredString('name', 200),

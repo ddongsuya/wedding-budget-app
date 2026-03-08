@@ -6,6 +6,8 @@ import {
   updateExpense,
   deleteExpense,
   uploadReceipt,
+  getMonthlySummary,
+  exportExpenses,
 } from '../controllers/expenseController';
 import { authenticate } from '../middleware/auth';
 import {
@@ -19,6 +21,10 @@ import { upload } from '../utils/upload';
 const router = Router();
 
 router.get('/', authenticate, getExpenses);
+
+router.get('/monthly-summary', authenticate, getMonthlySummary);
+
+router.get('/export', authenticate, exportExpenses);
 
 router.post(
   '/',

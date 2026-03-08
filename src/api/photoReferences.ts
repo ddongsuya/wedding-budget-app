@@ -53,4 +53,7 @@ export const photoReferenceAPI = {
   
   toggleFavorite: (id: number) => 
     apiClient.patch(`/photo-references/${id}/favorite`),
+
+  reorder: (orders: { id: number; sort_order: number }[]) =>
+    apiClient.patch('/photo-references/reorder', { orders }),
 };

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Circle, Plus, Calendar, AlertCircle, Edit2, Trash2, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, Circle, Plus, Calendar, AlertCircle, Edit2, Trash2, X, Search, Eye, EyeOff } from 'lucide-react';
 import { checklistAPI } from '@/api/checklist';
 import { ChecklistItem, ChecklistCategory, ChecklistStats, DuePeriod } from '@/types/checklist';
 import { useToast } from '@/hooks/useToast';
@@ -9,6 +10,15 @@ import { ChecklistSkeleton } from '@/components/skeleton/ChecklistSkeleton';
 import { SwipeToDelete } from '@/components/common/SwipeToDelete';
 import { CategoryDropdown } from '../components/checklist/CategoryDropdown';
 import { CircularProgress } from '../components/checklist/CircularProgress';
+import { ChecklistActionLinks } from '../components/checklist/ChecklistActionLinks';
+import { navigateCrossLink } from '@/utils/crossLink';
+import { computeAllChecklistRelatedSummaries, ChecklistRelatedSummary } from '@/utils/checklistRelatedData';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
+import { useKeyboardAvoid } from '@/hooks/useKeyboardAvoid';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { eventAPI } from '@/api/events';
+import { expenseAPI } from '@/api/expenses';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 
 const DUE_PERIODS: { value: DuePeriod; label: string }[] = [
   { value: 'D-180', label: 'D-180 (6개월 전)' },
@@ -31,15 +41,48 @@ const Checklist: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [relatedSummaries, setRelatedSummaries] = useState<Record<string, ChecklistRelatedSummary>>({});
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(20);
   const { toast } = useToast();
   const { haptic } = useHaptic();
+  const navigate = useNavigate();
+
+  // 체크리스트 항목 완료 시 바로가기 핸들러
+  const handleAddExpenseForItem = (item: ChecklistItem) => {
+    navigateCrossLink(navigate, {
+      target: '/expenses',
+      action: 'add',
+      filter: { checklist_item_id: item.id, checklist_title: item.title },
+    });
+  };
+
+  const handleAddEventForItem = (item: ChecklistItem) => {
+    navigateCrossLink(navigate, {
+      target: '/schedule',
+      action: 'add',
+      filter: { checklist_item_id: item.id, checklist_title: item.title },
+    });
+  };
 
   // 데이터 로드
   useEffect(() => {
     loadData();
   }, [selectedCategory, showCompleted]);
+
+  // 결혼 예정일 변경 시 체크리스트 데이터 갱신 (시기 계산 갱신)
+  useEffect(() => {
+    const handleWeddingDateChanged = () => {
+      loadData();
+    };
+    window.addEventListener('wedding-date-changed', handleWeddingDateChanged);
+    return () => {
+      window.removeEventListener('wedding-date-changed', handleWeddingDateChanged);
+    };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -57,8 +100,31 @@ const Checklist: React.FC = () => {
       setItems(itemsRes.data.data);
       setCategories(categoriesRes.data.data);
       setStats(statsRes.data.data);
+
+      // 연관 데이터 요약 로드
+      try {
+        const itemIds = itemsRes.data.data.map((i: ChecklistItem) => i.id);
+        if (itemIds.length > 0) {
+          const [eventsRes, expensesRes] = await Promise.all([
+            eventAPI.getEvents(),
+            expenseAPI.getList(),
+          ]);
+          const events = (eventsRes.data.data || []).map((e: any) => ({
+            id: String(e.id),
+            checklist_item_id: e.checklist_item_id ? String(e.checklist_item_id) : null,
+          }));
+          const expenses = (expensesRes.data.data || expensesRes.data.expenses || []).map((e: any) => ({
+            id: String(e.id),
+            checklist_item_id: e.checklist_item_id ? String(e.checklist_item_id) : null,
+            amount: Number(e.amount) || 0,
+          }));
+          setRelatedSummaries(computeAllChecklistRelatedSummaries(itemIds, events, expenses));
+        }
+      } catch {
+        // 연관 데이터 로드 실패 시 무시 (핵심 기능 아님)
+      }
     } catch (error) {
-      toast.error('데이터를 불러오는데 실패했습니다');
+      toast.error((error as any)?.userMessage || '데이터를 불러오는데 실패했습니다');
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +148,7 @@ const Checklist: React.FC = () => {
       const item = items.find(i => i.id === id);
       toast.success(item?.is_completed ? '완료 취소' : '완료! 🎉');
     } catch (error) {
-      toast.error('업데이트에 실패했습니다');
+      toast.error((error as any)?.userMessage || '업데이트에 실패했습니다');
     }
   };
 
@@ -105,15 +171,21 @@ const Checklist: React.FC = () => {
 
   // 아이템 삭제
   const handleDelete = async (id: string, skipConfirm = false) => {
-    if (!skipConfirm && !confirm('이 항목을 삭제하시겠습니까?')) return;
-    haptic('warning');
+    if (!skipConfirm) {
+      setDeletingItemId(id);
+      return;
+    }
+    await performDelete(id);
+  };
 
+  const performDelete = async (id: string) => {
+    haptic('warning');
     try {
       await checklistAPI.deleteItem(id);
       toast.success('삭제되었습니다');
       loadData();
     } catch (error) {
-      toast.error('삭제에 실패했습니다');
+      toast.error((error as any)?.userMessage || '삭제에 실패했습니다');
     }
   };
 
@@ -131,12 +203,28 @@ const Checklist: React.FC = () => {
       setEditingItem(null);
       loadData();
     } catch (error) {
-      toast.error('저장에 실패했습니다');
+      toast.error((error as any)?.userMessage || '저장에 실패했습니다');
     }
   };
 
+  // 클라이언트 사이드 검색 필터링
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return items;
+    const query = searchQuery.toLowerCase();
+    return items.filter((item) => item.title.toLowerCase().includes(query));
+  }, [items, searchQuery]);
+
   // D-day 기준 그룹핑
-  const groupedItems = items.reduce((acc, item) => {
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const hasMoreItems = visibleCount < filteredItems.length;
+
+  const checklistSentinelRef = useInfiniteScroll({
+    onLoadMore: () => setVisibleCount(prev => prev + 20),
+    hasMore: hasMoreItems,
+    isLoading: false,
+  });
+
+  const groupedItems = visibleItems.reduce((acc, item) => {
     const period = item.due_period || 'NONE';
     if (!acc[period]) acc[period] = [];
     acc[period].push(item);
@@ -147,6 +235,7 @@ const Checklist: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
+      <PageTip pageKey="checklist" />
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-lg px-4 py-5 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
@@ -191,6 +280,51 @@ const Checklist: React.FC = () => {
           selectedCategory={selectedCategory}
           onSelect={setSelectedCategory}
         />
+
+        {/* 검색 입력 필드 */}
+        <div className="relative mt-3">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="체크리스트 검색..."
+            className="w-full pl-9 pr-9 py-2.5 bg-stone-100 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 hover:bg-stone-200 rounded-full transition-colors"
+              aria-label="검색어 초기화"
+            >
+              <X size={14} className="text-stone-500" />
+            </button>
+          )}
+        </div>
+
+        {/* 완료/미완료 필터 토글 */}
+        <div className="flex items-center justify-between mt-3">
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              showCompleted
+                ? 'bg-stone-100 text-stone-600'
+                : 'bg-rose-100 text-rose-600'
+            }`}
+          >
+            {showCompleted ? (
+              <>
+                <Eye size={14} />
+                완료 항목 표시 중
+              </>
+            ) : (
+              <>
+                <EyeOff size={14} />
+                미완료만 표시
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* 빈 상태 */}
@@ -231,11 +365,12 @@ const Checklist: React.FC = () => {
                   {periodItems.map((item, index) => (
                     <SwipeToDelete key={item.id} onDelete={() => handleDelete(item.id, true)}>
                     <div
-                      className={`bg-white rounded-2xl p-4 shadow-card border border-stone-100 flex items-center gap-3 transition-all hover:shadow-card-hover stagger-item touch-feedback active:scale-[0.99] ${
+                      className={`bg-white rounded-2xl p-4 shadow-card border border-stone-100 transition-all hover:shadow-card-hover stagger-item touch-feedback active:scale-[0.99] ${
                         item.is_completed ? 'opacity-60' : ''
                       }`}
                       style={{ animationDelay: `${index * 30}ms` }}
                     >
+                      <div className="flex items-center gap-3">
                       {/* 체크박스 */}
                       <button
                         onClick={() => handleToggle(item.id)}
@@ -258,6 +393,21 @@ const Checklist: React.FC = () => {
                             <span>{item.category_icon}</span>
                             {item.category_name}
                           </p>
+                        )}
+                        {/* 연관 데이터 요약 뱃지 */}
+                        {relatedSummaries[item.id] && (relatedSummaries[item.id].eventCount > 0 || relatedSummaries[item.id].expenseTotal > 0) && (
+                          <div className="flex gap-2 mt-1.5">
+                            {relatedSummaries[item.id].eventCount > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-600 rounded-full">
+                                📅 일정 {relatedSummaries[item.id].eventCount}건
+                              </span>
+                            )}
+                            {relatedSummaries[item.id].expenseTotal > 0 && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded-full">
+                                💰 {relatedSummaries[item.id].expenseTotal.toLocaleString()}원
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
 
@@ -283,6 +433,19 @@ const Checklist: React.FC = () => {
                       {item.priority === 'high' && !item.is_completed && (
                         <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
                       )}
+                      </div>
+
+                      {/* 완료 시 바로가기 버튼 */}
+                      {item.is_completed && (
+                        <div className="pl-9 mt-1">
+                          <ChecklistActionLinks
+                            itemId={item.id}
+                            itemTitle={item.title}
+                            onAddExpense={() => handleAddExpenseForItem(item)}
+                            onAddEvent={() => handleAddEventForItem(item)}
+                          />
+                        </div>
+                      )}
                     </div>
                     </SwipeToDelete>
                   ))}
@@ -290,6 +453,8 @@ const Checklist: React.FC = () => {
               </div>
             );
           })}
+          {/* 무한 스크롤 센티넬 */}
+          {hasMoreItems && <div ref={checklistSentinelRef} className="h-4" />}
         </div>
       )}
 
@@ -302,6 +467,21 @@ const Checklist: React.FC = () => {
           onSave={handleSave}
         />
       )}
+
+      {/* 삭제 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={!!deletingItemId}
+        onClose={() => setDeletingItemId(null)}
+        onConfirm={() => {
+          if (deletingItemId) performDelete(deletingItemId);
+          setDeletingItemId(null);
+        }}
+        title="항목 삭제"
+        message="이 항목을 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        variant="danger"
+      />
     </div>
   );
 };
@@ -315,6 +495,8 @@ interface ChecklistItemModalProps {
 }
 
 const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categories, onClose, onSave }) => {
+  const modalRef = React.useRef<HTMLDivElement>(null);
+  useKeyboardAvoid(modalRef);
   const [formData, setFormData] = useState({
     title: item?.title || '',
     description: item?.description || '',
@@ -322,14 +504,16 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categorie
     due_period: item?.due_period || 'D-90' as DuePeriod,
     priority: item?.priority || 'medium',
   });
+  const [titleError, setTitleError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요');
+      setTitleError('제목을 입력해주세요');
       return;
     }
+    setTitleError('');
 
     onSave({
       ...formData,
@@ -339,11 +523,12 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categorie
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'title') setTitleError('');
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 pb-20 md:pb-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
+      <div ref={modalRef} className="bg-white rounded-2xl w-full max-w-lg max-h-full flex flex-col">
         {/* 헤더 */}
         <div className="flex-shrink-0 bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-bold text-stone-800">
@@ -369,9 +554,10 @@ const ChecklistItemModal: React.FC<ChecklistItemModalProps> = ({ item, categorie
               value={formData.title}
               onChange={(e) => handleChange('title', e.target.value)}
               placeholder="예: 청첩장 발송하기"
-              className="w-full px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+              className={`w-full px-4 py-2.5 border ${titleError ? 'border-red-400 focus:ring-red-500' : 'border-stone-300 focus:ring-rose-500'} rounded-xl focus:ring-2 focus:border-transparent`}
               required
             />
+            {titleError && <p className="text-red-500 text-xs mt-1">{titleError}</p>}
           </div>
 
           {/* 카테고리 */}

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { pool } from '../config/database';
+import { pool, withTransaction } from '../config/database';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken, JWT_ACCESS_EXPIRES_MS, JWT_REFRESH_EXPIRES_MS } from '../utils/jwt';
 import { AuthRequest } from '../types';
 import { recordLoginFailure, clearLoginAttempts } from '../middleware/rateLimiter';
@@ -600,3 +600,71 @@ export const resetPassword = async (req: Request, res: Response) => {
     });
   }
 };
+
+// 계정 삭제 (회원 탈퇴)
+export const deleteAccount = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const coupleId = req.user!.coupleId;
+    const { password } = req.body;
+
+    if (!password) {
+      return sendBadRequest(res, '비밀번호를 입력해주세요', ErrorCodes.MISSING_REQUIRED_FIELD);
+    }
+
+    // 비밀번호 확인
+    const userResult = await pool.query(
+      'SELECT password FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return sendNotFound(res, '사용자를 찾을 수 없습니다', ErrorCodes.USER_NOT_FOUND);
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, userResult.rows[0].password);
+    if (!isPasswordValid) {
+      return sendUnauthorized(res, '비밀번호가 올바르지 않습니다', ErrorCodes.UNAUTHORIZED);
+    }
+
+    // 트랜잭션으로 계정 및 관련 데이터 삭제
+    await withTransaction(async (client) => {
+      // 커플 데이터 처리
+      if (coupleId) {
+        // 커플에 다른 사용자가 있는지 확인
+        const otherUser = await client.query(
+          'SELECT id FROM users WHERE couple_id = $1 AND id != $2',
+          [coupleId, userId]
+        );
+
+        if (otherUser.rows.length === 0) {
+          // 혼자인 커플이면 커플 삭제 (CASCADE로 관련 데이터 모두 삭제)
+          await client.query('DELETE FROM couple_profiles WHERE couple_id = $1', [coupleId]);
+          await client.query('DELETE FROM couples WHERE id = $1', [coupleId]);
+        } else {
+          // 파트너가 있으면 커플에서 본인만 분리
+          await client.query(
+            'UPDATE users SET couple_id = NULL WHERE id = $1',
+            [userId]
+          );
+        }
+      }
+
+      // 사용자 삭제 (CASCADE로 notifications, refresh_tokens, login_history 등 삭제)
+      await client.query('DELETE FROM users WHERE id = $1', [userId]);
+    });
+
+    // 쿠키 정리
+    res.clearCookie('accessToken', { path: '/' });
+    res.clearCookie('refreshToken', { path: '/api/auth' });
+
+    res.json({
+      success: true,
+      message: '계정이 성공적으로 삭제되었습니다',
+    });
+  } catch (error: any) {
+    console.error('Delete account error:', error);
+    return handleDatabaseError(res, error, '계정 삭제에 실패했습니다');
+  }
+};
+

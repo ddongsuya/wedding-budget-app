@@ -1,6 +1,7 @@
 import { pool } from '../config/database';
 import { CreateNotificationInput, NotificationType } from '../types';
 import { sendPushNotification, PushPayload } from './pushService';
+import { markNotificationFailed } from './notificationRetry';
 
 // 알림 생성
 export const createNotification = async (input: CreateNotificationInput): Promise<any> => {
@@ -51,9 +52,16 @@ export const createNotification = async (input: CreateNotificationInput): Promis
         body: message,
         data: { url: link || '/' },
       };
-      await sendPushNotification(user_id, pushPayload);
+      const pushResult = await sendPushNotification(user_id, pushPayload);
+
+      // 푸시 발송이 모두 실패한 경우 delivery_status를 'failed'로 설정
+      if (pushResult.failed > 0 && pushResult.success === 0) {
+        await markNotificationFailed(notification.id);
+      }
     } catch (error) {
       console.error('Push notification error:', error);
+      // 푸시 발송 예외 시 delivery_status를 'failed'로 설정하여 재시도 대상으로 등록
+      await markNotificationFailed(notification.id);
     }
   }
 
@@ -168,7 +176,8 @@ export const createCoupleActivityNotification = async (
   actorName: string,
   activityType: 'venue' | 'expense' | 'checklist' | 'schedule',
   action: 'add' | 'update' | 'delete',
-  itemName?: string
+  itemName?: string,
+  itemId?: string
 ): Promise<any> => {
   const activityMessages: Record<string, Record<string, string>> = {
     venue: {
@@ -193,20 +202,24 @@ export const createCoupleActivityNotification = async (
     },
   };
 
-  const linkMap: Record<string, string> = {
+  const baseLinkMap: Record<string, string> = {
     venue: '/venues',
-    expense: '/budget',
+    expense: '/expenses',
     checklist: '/checklist',
     schedule: '/schedule',
   };
+
+  // 딥링크: 항목 ID가 있으면 해당 항목으로 직접 이동하는 경로 생성
+  const baseLink = baseLinkMap[activityType];
+  const link = itemId && action !== 'delete' ? `${baseLink}?id=${itemId}` : baseLink;
 
   return createNotification({
     user_id: partnerId,
     type: 'couple_activity',
     title: '파트너 활동',
     message: activityMessages[activityType][action] + (itemName ? `: ${itemName}` : ''),
-    data: { actorName, activityType, action, itemName },
-    link: linkMap[activityType],
+    data: { actorName, activityType, action, itemName, itemId },
+    link,
   });
 };
 
@@ -228,3 +241,6 @@ export const createChecklistDueNotification = async (
     link: '/checklist',
   });
 };
+
+// 알림 트리거 통합 실행 (스케줄러에서 호출)
+export { runScheduledNotificationTriggers } from './notificationTriggers';

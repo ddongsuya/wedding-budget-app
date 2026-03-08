@@ -20,6 +20,7 @@ import notificationRoutes from './routes/notifications';
 import pushRoutes from './routes/push';
 import photoReferenceRoutes from './routes/photoReferences';
 import venueContractRoutes from './routes/venueContracts';
+import backupRoutes from './routes/backup';
 import { initSentry } from './lib/sentry';
 import { securityHeaders, validateRequestBody, corsOptions } from './middleware/security';
 import { apiRateLimiter } from './middleware/rateLimiter';
@@ -87,6 +88,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/push', pushRoutes);
 app.use('/api/photo-references', photoReferenceRoutes);
 app.use('/api/venue-contracts', venueContractRoutes);
+app.use('/api/backup', backupRoutes);
 
 // Health check
 app.get('/health', async (req, res) => {

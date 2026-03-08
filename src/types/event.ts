@@ -53,6 +53,7 @@ export interface EventFormData {
   location_url?: string;
   reminder_minutes?: number;
   linked_venue_id?: string;
+  linked_checklist_id?: string;
   assigned_to?: 'groom' | 'bride' | 'both';
 }
 

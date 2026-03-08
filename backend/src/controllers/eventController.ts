@@ -206,9 +206,9 @@ export const createEvent = async (req: Request, res: Response) => {
       ]
     );
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyScheduleChange(String(userId), String(coupleId), 'add', title);
+      await notifyScheduleChange(String(userId), String(coupleId), 'add', title, String(result.rows[0].id));
     } catch (error) {
       console.error('Schedule notification error:', error);
     }
@@ -267,9 +267,9 @@ export const updateEvent = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: '이벤트를 찾을 수 없습니다' });
     }
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (딥링크용 ID 포함)
     try {
-      await notifyScheduleChange(String(userId), String(coupleId), 'update', result.rows[0].title);
+      await notifyScheduleChange(String(userId), String(coupleId), 'update', result.rows[0].title, String(id));
     } catch (error) {
       console.error('Schedule notification error:', error);
     }
@@ -309,9 +309,9 @@ export const deleteEvent = async (req: Request, res: Response) => {
       [id, coupleId]
     );
 
-    // 파트너에게 알림 전송
+    // 파트너에게 알림 전송 (삭제 시 ID는 딥링크에 사용되지 않음)
     try {
-      await notifyScheduleChange(String(userId), String(coupleId), 'delete', eventTitle);
+      await notifyScheduleChange(String(userId), String(coupleId), 'delete', eventTitle, String(id));
     } catch (error) {
       console.error('Schedule notification error:', error);
     }

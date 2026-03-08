@@ -12,6 +12,9 @@ interface KPIGridProps {
   checklistLoading?: boolean;
   groomRatio?: number;
   brideRatio?: number;
+  onBudgetClick?: () => void;
+  onChecklistClick?: () => void;
+  onOverBudgetClick?: () => void;
 }
 
 export const KPIGrid: React.FC<KPIGridProps> = ({ 
@@ -23,6 +26,9 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
   checklistLoading = false,
   groomRatio = 50,
   brideRatio = 50,
+  onBudgetClick,
+  onChecklistClick,
+  onOverBudgetClick,
 }) => {
   const formatMoney = (n: number) => 
     new Intl.NumberFormat('ko-KR').format(n);
@@ -67,7 +73,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white rounded-2xl border border-stone-200/60 p-4 shadow-sm"
+          onClick={onChecklistClick}
+          className={`bg-white rounded-2xl border border-stone-200/60 p-4 shadow-sm ${onChecklistClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
         >
           <div className="flex items-center gap-1.5 mb-2">
             <CheckSquare className="w-4 h-4 text-emerald-600" />
@@ -94,9 +101,10 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          onClick={onOverBudgetClick}
           className={`rounded-2xl border p-4 shadow-sm ${
             overBudgetCount > 0 ? 'bg-red-50 border-red-100' : 'bg-white border-stone-200/60'
-          }`}
+          } ${onOverBudgetClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
         >
           <div className="flex items-center gap-1.5 mb-2">
             <AlertTriangle className={`w-4 h-4 ${overBudgetCount > 0 ? 'text-red-600' : 'text-stone-400'}`} />
@@ -125,7 +133,8 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="bg-white rounded-2xl border border-stone-200/60 p-5 shadow-sm"
+        onClick={onBudgetClick}
+        className={`bg-white rounded-2xl border border-stone-200/60 p-5 shadow-sm ${onBudgetClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
       >
         {/* 예산 요약 - 3열 */}
         <div className="grid grid-cols-3 gap-2 md:gap-4 mb-5">

@@ -1,9 +1,11 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Expense, BudgetCategory } from '@/types/types';
 import { Button } from '../ui/Button';
 import { DatePicker } from '../ui/DatePicker';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useKeyboardAvoid } from '@/hooks/useKeyboardAvoid';
+import { useFormValidation, ValidationRule } from '@/hooks/useFormValidation';
 import { X, DollarSign, Tag, CreditCard, User, FileText, Briefcase, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ExpenseFormProps {
@@ -17,7 +19,21 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const modalContainerRef = useRef<HTMLDivElement>(null);
   const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  
+  // 모바일 키보드 회피 (Requirements 10.1)
+  useKeyboardAvoid(modalContainerRef);
+
+  // 인라인 에러 메시지 (Requirements 12.1)
+  const validationRules = useMemo(() => ({
+    title: [{ required: true, message: '항목명을 입력해주세요' }] as ValidationRule[],
+    amount: [
+      { required: true, message: '금액을 입력해주세요' },
+      { min: 1, message: '금액은 0보다 커야 합니다' },
+    ] as ValidationRule[],
+  }), []);
+  const { errors: formErrors, validate, validateField, clearErrors } = useFormValidation(validationRules);
   
   // ref 동기화
   useEffect(() => {
@@ -96,11 +112,9 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 필수 필드 검증
-    if (!formData.title?.trim()) {
-      return;
-    }
-    if (!formData.amount || formData.amount <= 0) {
+    // 인라인 유효성 검사 (Requirements 12.1)
+    const isFormValid = validate({ title: formData.title?.trim(), amount: formData.amount });
+    if (!isFormValid) {
       return;
     }
     
@@ -139,7 +153,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center p-0 md:p-4 bg-white md:bg-stone-900/60 md:backdrop-blur-sm animate-fade-in safe-area-inset">
-      <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl shadow-none md:shadow-2xl flex flex-col overflow-hidden">
+      <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl shadow-none md:shadow-2xl flex flex-col overflow-hidden" ref={modalContainerRef}>
         <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-white shrink-0 safe-area-pt-min">
           <h3 className="text-xl font-bold text-stone-800">
             {initialData ? '지출 내역 수정' : '지출 내역 추가'}
@@ -163,9 +177,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
                 autoCapitalize="sentences"
                 value={formData.title} 
                 onChange={handleChange} 
-                className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none text-base" 
+                onBlur={() => validateField('title', formData.title?.trim())}
+                className={`w-full px-4 py-3 min-h-[48px] rounded-xl border ${formErrors.title ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-stone-200 focus:ring-rose-500/20 focus:border-rose-500'} outline-none text-base`}
                 placeholder="예: 웨딩홀 계약금" 
               />
+              {formErrors.title && <p className="text-red-500 text-xs mt-1">{formErrors.title}</p>}
             </div>
 
             <div className="space-y-1.5 col-span-2 md:col-span-1">
@@ -179,9 +195,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ initialData, categorie
                 name="amount" 
                 value={formData.amount && formData.amount > 0 ? formData.amount.toLocaleString() : ''} 
                 onChange={handleAmountChange} 
-                className="w-full px-4 py-3 min-h-[48px] rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none text-base" 
+                onBlur={() => validateField('amount', formData.amount)}
+                className={`w-full px-4 py-3 min-h-[48px] rounded-xl border ${formErrors.amount ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-stone-200 focus:ring-rose-500/20 focus:border-rose-500'} outline-none text-base`}
                 placeholder="0" 
               />
+              {formErrors.amount && <p className="text-red-500 text-xs mt-1">{formErrors.amount}</p>}
             </div>
 
             <div className="space-y-1.5 col-span-2 md:col-span-1">

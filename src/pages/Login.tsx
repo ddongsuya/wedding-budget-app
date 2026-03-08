@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { Eye, EyeOff, AlertTriangle, Heart, Sparkles } from 'lucide-react';
@@ -14,6 +14,14 @@ export default function Login() {
   const { login } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // 세션 만료 시 안내 메시지 (Requirements 12.3)
+  useEffect(() => {
+    if (searchParams.get('expired') === 'true') {
+      toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

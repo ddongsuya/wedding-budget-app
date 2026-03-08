@@ -4,6 +4,10 @@ import { X, ChevronLeft, ChevronRight, Check, Calendar, Users, Utensils, Buildin
 import { ContractInput, venueContractAPI } from '@/api/venueContracts';
 import { useToast } from '@/hooks/useToast';
 import { formatMoneyShort } from '@/utils/formatMoney';
+import { useFormDraft } from '@/hooks/useFormDraft';
+import { useKeyboardAvoid } from '@/hooks/useKeyboardAvoid';
+import { useFormValidation, ValidationRule } from '@/hooks/useFormValidation';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
 
 interface VenueContractFormProps {
   venueId: string;
@@ -32,10 +36,63 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
   const [saving, setSaving] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [formData, setFormData] = useState<ContractInput>({});
+  const modalRef = React.useRef<HTMLDivElement>(null);
+
+  // 모바일 키보드 회피 (Requirements 10.1)
+  useKeyboardAvoid(modalRef);
+
+  // 인라인 에러 메시지 (Requirements 12.1)
+  const validationRules = React.useMemo(() => ({
+    deposit_amount: [{ min: 0, message: '계약금은 0 이상이어야 합니다' }] as ValidationRule[],
+  }), []);
+  const { errors: formErrors, validateField: validateContractField } = useFormValidation(validationRules);
+
+  // 임시 저장 훅 (Requirements 6.5)
+  const draftKey = `venue_contract_${venueId}`;
+  const { draft, setDraft, clearDraft, hasDraft } = useFormDraft<ContractInput>(draftKey);
+  const [showDraftRestore, setShowDraftRestore] = useState(false);
 
   useEffect(() => {
     loadContract();
   }, [venueId]);
+
+  // 임시 저장 데이터 복원 확인 (Requirements 6.5)
+  useEffect(() => {
+    if (!loading && hasDraft) {
+      setShowDraftRestore(true);
+    }
+  }, [loading, hasDraft]);
+
+  // 폼 데이터 변경 시 자동 임시 저장
+  useEffect(() => {
+    if (!loading && Object.keys(formData).length > 0) {
+      setDraft(formData);
+    }
+  }, [formData, loading]);
+
+  // 앱 이탈 시 임시 저장 (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (Object.keys(formData).length > 0) {
+        setDraft(formData);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, setDraft]);
+
+  const handleRestoreDraft = () => {
+    if (draft) {
+      setFormData(draft);
+      toast.success('임시 저장된 데이터를 복원했습니다');
+    }
+    setShowDraftRestore(false);
+  };
+
+  const handleDiscardDraft = () => {
+    clearDraft();
+    setShowDraftRestore(false);
+  };
 
   const loadContract = async () => {
     try {
@@ -55,11 +112,12 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
     try {
       setSaving(true);
       await venueContractAPI.upsert(venueId, formData);
+      clearDraft(); // 저장 성공 시 임시 저장 삭제
       toast.success('계약 정보가 저장되었습니다');
       onSaved();
     } catch (error) {
       console.error('Save contract error:', error);
-      toast.error('저장에 실패했습니다');
+      toast.error((error as any)?.userMessage || '저장에 실패했습니다');
     } finally {
       setSaving(false);
     }
@@ -88,7 +146,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
     (formData.meal_total_price || 0) +
     (formData.alcohol_service_included ? 0 : (formData.alcohol_service_price || 0));
 
-  // Input Components - Enter 키 방지 추가
+  // Input Components - Enter 키 방지 + 음수 방지 (Requirements 12.4)
   const InputField: React.FC<{
     label: string; value: string | number | undefined; onChange: (v: string) => void;
     type?: string; placeholder?: string; className?: string;
@@ -100,6 +158,7 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+        {...(type === 'number' ? { min: 0, onInput: (e: React.FormEvent<HTMLInputElement>) => { const input = e.currentTarget; if (Number(input.value) < 0) input.value = '0'; } } : {})}
         placeholder={placeholder}
         className="w-full px-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 outline-none text-base"
       />
@@ -320,9 +379,11 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
               {(formData as any)[`equipment_${item.key}`] && (
                 <input
                   type="number"
+                  min={0}
                   value={(formData as any)[`equipment_${item.key}_fee`] || ''}
                   onChange={(e) => updateField(`equipment_${item.key}_fee` as keyof ContractInput, parseInt(e.target.value) || 0)}
                   onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+                  onInput={(e: React.FormEvent<HTMLInputElement>) => { if (Number(e.currentTarget.value) < 0) e.currentTarget.value = '0'; }}
                   placeholder="비용 (원)"
                   className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm"
                 />
@@ -525,7 +586,18 @@ export const VenueContractForm: React.FC<VenueContractFormProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex flex-col md:items-center md:justify-center">
-      <div className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      {/* 임시 저장 복원 확인 다이얼로그 (Requirements 6.5) */}
+      <ConfirmDialog
+        isOpen={showDraftRestore}
+        onClose={handleDiscardDraft}
+        onConfirm={handleRestoreDraft}
+        title="임시 저장 데이터 발견"
+        message="이전에 작성 중이던 계약 정보가 있습니다. 복원하시겠습니까?"
+        confirmLabel="복원하기"
+        cancelLabel="새로 작성"
+        variant="info"
+      />
+      <div ref={modalRef} className="bg-white w-full h-full md:h-auto md:max-h-[90vh] md:max-w-xl md:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
         <div className="shrink-0 p-4 border-b border-stone-200 bg-white safe-area-pt">
           <div className="flex items-center justify-between mb-4">

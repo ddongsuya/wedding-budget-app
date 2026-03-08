@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Heart, Trash2, X, Grid, List, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, Heart, Trash2, X, Grid, List, ExternalLink, Edit3, Link, Upload, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, rectSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { photoReferenceAPI, PhotoReference, PhotoCategory } from '@/api/photoReferences';
 import { compressImage } from '@/utils/imageCompression';
 import { useToast } from '@/hooks/useToast';
 import { EmptyState } from '@/components/common/EmptyState/EmptyState';
 import { PhotoReferencesGridSkeleton } from '@/components/skeleton/PhotoReferencesSkeleton';
 import { Skeleton } from '@/components/common/Skeleton/Skeleton';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog/ConfirmDialog';
+import PhotoEditModal from '@/components/photo/PhotoEditModal';
+import { PageTip } from '@/components/common/PageTip/PageTip';
 
 const CATEGORIES: PhotoCategory[] = [
   { id: 'outdoor', name: '야외', icon: '🌳' },
@@ -17,6 +23,75 @@ const CATEGORIES: PhotoCategory[] = [
   { id: 'makeup', name: '메이크업', icon: '💄' },
   { id: 'etc', name: '기타', icon: '📷' },
 ];
+
+// Sortable photo card for drag-and-drop
+interface SortablePhotoCardProps {
+  photo: PhotoReference;
+  index: number;
+  getCategoryInfo: (id: string) => PhotoCategory;
+  onSelect: (photo: PhotoReference) => void;
+  onToggleFavorite: (photo: PhotoReference, e: React.MouseEvent) => void;
+}
+
+const SortablePhotoCard: React.FC<SortablePhotoCardProps> = ({ photo, index, getCategoryInfo, onSelect, onToggleFavorite }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: photo.id });
+  const category = getCategoryInfo(photo.category);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    animationDelay: `${index * 30}ms`,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative group cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.98]"
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 left-2 z-10 p-1 bg-white/80 rounded-full hover:bg-white transition-colors cursor-grab active:cursor-grabbing"
+        onClick={e => e.stopPropagation()}
+      >
+        <GripVertical size={14} className="text-stone-400" />
+      </button>
+
+      <div className="aspect-square" onClick={() => onSelect(photo)}>
+        <img
+          src={photo.image_url}
+          alt={photo.title || '레퍼런스 사진'}
+          loading="lazy"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      
+      <button
+        onClick={(e) => onToggleFavorite(photo, e)}
+        className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors z-10"
+      >
+        <Heart
+          size={16}
+          className={photo.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-stone-400'}
+        />
+      </button>
+      
+      <span className="absolute top-10 left-2 px-2 py-0.5 bg-white/80 rounded-full text-xs font-medium">
+        {category.icon} {category.name}
+      </span>
+      
+      {photo.title && (
+        <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <p className="text-white text-sm font-medium truncate">{photo.title}</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const PhotoReferences: React.FC = () => {
   const { toast } = useToast();
@@ -40,6 +115,11 @@ const PhotoReferences: React.FC = () => {
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState('');
+  const [deletingPhoto, setDeletingPhoto] = useState<PhotoReference | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<PhotoReference | null>(null);
+  const [uploadTab, setUploadTab] = useState<'file' | 'url'>('file');
+  const [urlInput, setUrlInput] = useState('');
+  const [urlPreviewError, setUrlPreviewError] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -121,12 +201,16 @@ const PhotoReferences: React.FC = () => {
         title: uploadData.title?.trim() || undefined,
         memo: uploadData.memo?.trim() || undefined,
         tags: uploadData.tags && uploadData.tags.length > 0 ? uploadData.tags : undefined,
+        source_url: uploadTab === 'url' ? urlInput.trim() || undefined : undefined,
       };
       
       await photoReferenceAPI.create(cleanData);
       toast.success('사진이 추가되었습니다');
       setShowUploadModal(false);
       setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
+      setUrlInput('');
+      setUrlPreviewError(false);
+      setUploadTab('file');
       loadPhotos();
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -135,6 +219,31 @@ const PhotoReferences: React.FC = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleUrlPreview = () => {
+    const url = urlInput.trim();
+    if (!url) {
+      toast.error('URL을 입력해주세요');
+      return;
+    }
+    try {
+      new URL(url);
+    } catch {
+      toast.error('올바른 URL을 입력해주세요');
+      return;
+    }
+    setUrlPreviewError(false);
+    setUploadData(prev => ({ ...prev, image_url: url }));
+    setShowUploadModal(true);
+  };
+
+  const openUploadModalForUrl = () => {
+    setUploadTab('url');
+    setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
+    setUrlInput('');
+    setUrlPreviewError(false);
+    setShowUploadModal(true);
   };
 
   const handleToggleFavorite = async (photo: PhotoReference, e: React.MouseEvent) => {
@@ -150,16 +259,20 @@ const PhotoReferences: React.FC = () => {
   };
 
   const handleDelete = async (photo: PhotoReference) => {
-    if (!confirm('이 사진을 삭제하시겠습니까?')) return;
-    
+    setDeletingPhoto(photo);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPhoto) return;
     try {
-      await photoReferenceAPI.delete(photo.id);
+      await photoReferenceAPI.delete(deletingPhoto.id);
       toast.success('사진이 삭제되었습니다');
       setSelectedPhoto(null);
       loadPhotos();
     } catch (error) {
       toast.error('삭제에 실패했습니다');
     }
+    setDeletingPhoto(null);
   };
 
   const addTag = () => {
@@ -173,6 +286,44 @@ const PhotoReferences: React.FC = () => {
     setUploadData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
   };
 
+  const handlePhotoUpdated = (updated: PhotoReference) => {
+    setPhotos(prev => prev.map(p => p.id === updated.id ? updated : p));
+    if (selectedPhoto?.id === updated.id) {
+      setSelectedPhoto(updated);
+    }
+    toast.success('사진이 수정되었습니다');
+  };
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filteredPhotos.findIndex(p => p.id === active.id);
+    const newIndex = filteredPhotos.findIndex(p => p.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(filteredPhotos, oldIndex, newIndex);
+    
+    // Optimistic update
+    const reorderedIds = new Set(reordered.map(p => p.id));
+    const otherPhotos = photos.filter(p => !reorderedIds.has(p.id));
+    setPhotos([...reordered, ...otherPhotos]);
+
+    // Send reorder to backend
+    const orders = reordered.map((p, i) => ({ id: p.id, sort_order: i }));
+    try {
+      await photoReferenceAPI.reorder(orders);
+    } catch {
+      toast.error('순서 변경에 실패했습니다');
+      loadPhotos();
+    }
+  };
+
   // 필터링된 사진
   const filteredPhotos = photos.filter(photo => {
     if (selectedCategory !== 'all' && photo.category !== selectedCategory) return false;
@@ -180,11 +331,65 @@ const PhotoReferences: React.FC = () => {
     return true;
   });
 
+  // 카테고리별 사진 개수
+  const categoryCounts = photos.reduce<Record<string, number>>((acc, photo) => {
+    acc[photo.category] = (acc[photo.category] || 0) + 1;
+    return acc;
+  }, {});
+
   const getCategoryInfo = (categoryId: string) => 
     CATEGORIES.find(c => c.id === categoryId) || CATEGORIES[CATEGORIES.length - 1];
 
+  // 사진 갤러리 네비게이션
+  const currentPhotoIndex = selectedPhoto ? filteredPhotos.findIndex(p => p.id === selectedPhoto.id) : -1;
+  const canGoPrev = currentPhotoIndex > 0;
+  const canGoNext = currentPhotoIndex >= 0 && currentPhotoIndex < filteredPhotos.length - 1;
+
+  const goToPrevPhoto = useCallback(() => {
+    if (canGoPrev) {
+      setSelectedPhoto(filteredPhotos[currentPhotoIndex - 1]);
+    }
+  }, [canGoPrev, currentPhotoIndex, filteredPhotos]);
+
+  const goToNextPhoto = useCallback(() => {
+    if (canGoNext) {
+      setSelectedPhoto(filteredPhotos[currentPhotoIndex + 1]);
+    }
+  }, [canGoNext, currentPhotoIndex, filteredPhotos]);
+
+  // 키보드 좌우 화살표 네비게이션
+  useEffect(() => {
+    if (!selectedPhoto) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') goToPrevPhoto();
+      if (e.key === 'ArrowRight') goToNextPhoto();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedPhoto, goToPrevPhoto, goToNextPhoto]);
+
+  // 터치 스와이프 핸들러
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    const threshold = 50;
+    if (diff > threshold) goToNextPhoto();
+    else if (diff < -threshold) goToPrevPhoto();
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 pb-24 md:pb-0">
+      <PageTip pageKey="photos" />
       {/* 헤더 */}
       <div className="bg-white/80 backdrop-blur-lg px-4 py-4 shadow-soft sticky top-[60px] md:top-0 z-10 border-b border-stone-100">
         <div className="flex items-center justify-between mb-4">
@@ -192,18 +397,27 @@ const PhotoReferences: React.FC = () => {
             <h1 className="text-xl font-bold text-stone-800">📸 포토 레퍼런스</h1>
             <p className="text-sm text-stone-500">스냅 촬영 참고 사진을 모아보세요</p>
           </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-[0.98]"
-          >
-            {uploading ? (
-              <span className="animate-spin">⏳</span>
-            ) : (
-              <Plus size={18} />
-            )}
-            사진 추가
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openUploadModalForUrl}
+              className="bg-stone-100 text-stone-700 px-3 py-2.5 rounded-xl font-semibold hover:bg-stone-200 transition-all flex items-center gap-1.5 active:scale-[0.98]"
+            >
+              <Link size={16} />
+              <span className="hidden sm:inline">URL</span>
+            </button>
+            <button
+              onClick={() => { setUploadTab('file'); fileInputRef.current?.click(); }}
+              disabled={uploading}
+              className="bg-gradient-to-r from-rose-500 to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-button hover:shadow-button-hover hover:from-rose-600 hover:to-rose-700 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-[0.98]"
+            >
+              {uploading ? (
+                <span className="animate-spin">⏳</span>
+              ) : (
+                <Plus size={18} />
+              )}
+              사진 추가
+            </button>
+          </div>
           <input
             ref={fileInputRef}
             type="file"
@@ -217,28 +431,43 @@ const PhotoReferences: React.FC = () => {
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+            className={`px-4 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 flex items-center gap-1.5 ${
               selectedCategory === 'all'
                 ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
                 : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
             }`}
           >
             전체
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+              selectedCategory === 'all' ? 'bg-white/20' : 'bg-stone-200'
+            }`}>
+              {photos.length}
+            </span>
           </button>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                selectedCategory === cat.id
-                  ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
-                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              <span className="text-sm">{cat.icon}</span>
-              <span className="hidden sm:inline">{cat.name}</span>
-            </button>
-          ))}
+          {CATEGORIES.map(cat => {
+            const count = categoryCounts[cat.id] || 0;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-2 rounded-xl text-xs md:text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                  selectedCategory === cat.id
+                    ? 'bg-gradient-to-r from-rose-500 to-rose-600 text-white shadow-button'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                }`}
+              >
+                <span className="text-sm">{cat.icon}</span>
+                <span className="hidden sm:inline">{cat.name}</span>
+                {count > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    selectedCategory === cat.id ? 'bg-white/20' : 'bg-stone-200'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* 필터 옵션 */}
@@ -301,55 +530,23 @@ const PhotoReferences: React.FC = () => {
             onAction={() => fileInputRef.current?.click()}
           />
         ) : viewMode === 'grid' ? (
-          /* 그리드 뷰 */
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {filteredPhotos.map((photo, index) => {
-              const category = getCategoryInfo(photo.category);
-              return (
-                <div
-                  key={photo.id}
-                  onClick={() => setSelectedPhoto(photo)}
-                  className="relative group cursor-pointer rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-all stagger-item touch-feedback active:scale-[0.98]"
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <div className="aspect-square">
-                    <img
-                      src={photo.image_url}
-                      alt={photo.title || '레퍼런스 사진'}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  
-                  {/* 오버레이 */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  
-                  {/* 즐겨찾기 버튼 */}
-                  <button
-                    onClick={(e) => handleToggleFavorite(photo, e)}
-                    className="absolute top-2 right-2 p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors"
-                  >
-                    <Heart
-                      size={16}
-                      className={photo.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-stone-400'}
-                    />
-                  </button>
-                  
-                  {/* 카테고리 뱃지 */}
-                  <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/80 rounded-full text-xs font-medium">
-                    {category.icon} {category.name}
-                  </span>
-                  
-                  {/* 제목 */}
-                  {photo.title && (
-                    <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <p className="text-white text-sm font-medium truncate">{photo.title}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          /* 그리드 뷰 with drag-and-drop */
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={filteredPhotos.map(p => p.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {filteredPhotos.map((photo, index) => (
+                  <SortablePhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    index={index}
+                    getCategoryInfo={getCategoryInfo}
+                    onSelect={setSelectedPhoto}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         ) : (
           /* 리스트 뷰 */
           <div className="space-y-3">
@@ -424,6 +621,12 @@ const PhotoReferences: React.FC = () => {
             </button>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setEditingPhoto(selectedPhoto)}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <Edit3 size={24} />
+              </button>
+              <button
                 onClick={(e) => handleToggleFavorite(selectedPhoto, e)}
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
@@ -441,13 +644,45 @@ const PhotoReferences: React.FC = () => {
             </div>
           </div>
 
-          {/* 이미지 */}
-          <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+          {/* 이미지 with navigation */}
+          <div
+            className="flex-1 flex items-center justify-center p-4 overflow-hidden relative"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* 이전 버튼 */}
+            {canGoPrev && (
+              <button
+                onClick={goToPrevPhoto}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors z-10"
+              >
+                <ChevronLeft size={28} className="text-white" />
+              </button>
+            )}
+
             <img
               src={selectedPhoto.image_url}
               alt={selectedPhoto.title || '레퍼런스 사진'}
               className="max-w-full max-h-full object-contain"
             />
+
+            {/* 다음 버튼 */}
+            {canGoNext && (
+              <button
+                onClick={goToNextPhoto}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors z-10"
+              >
+                <ChevronRight size={28} className="text-white" />
+              </button>
+            )}
+
+            {/* 인디케이터 */}
+            {filteredPhotos.length > 1 && (
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-3 py-1 rounded-full">
+                {currentPhotoIndex + 1} / {filteredPhotos.length}
+              </div>
+            )}
           </div>
 
           {/* 정보 */}
@@ -502,6 +737,8 @@ const PhotoReferences: React.FC = () => {
                 onClick={() => {
                   setShowUploadModal(false);
                   setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
+                  setUrlInput('');
+                  setUrlPreviewError(false);
                 }}
                 className="p-2 hover:bg-stone-100 rounded-full transition-colors"
               >
@@ -509,7 +746,56 @@ const PhotoReferences: React.FC = () => {
               </button>
             </div>
 
+            {/* 탭 */}
+            <div className="flex border-b border-stone-200">
+              <button
+                onClick={() => setUploadTab('file')}
+                className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                  uploadTab === 'file'
+                    ? 'text-rose-600 border-b-2 border-rose-500'
+                    : 'text-stone-500 hover:text-stone-700'
+                }`}
+              >
+                <Upload size={16} />
+                파일 업로드
+              </button>
+              <button
+                onClick={() => setUploadTab('url')}
+                className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                  uploadTab === 'url'
+                    ? 'text-rose-600 border-b-2 border-rose-500'
+                    : 'text-stone-500 hover:text-stone-700'
+                }`}
+              >
+                <Link size={16} />
+                URL로 추가
+              </button>
+            </div>
+
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {/* URL 입력 (URL 탭일 때) */}
+              {uploadTab === 'url' && (
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-2">이미지 URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={e => { setUrlInput(e.target.value); setUrlPreviewError(false); }}
+                      placeholder="https://example.com/photo.jpg"
+                      className="flex-1 px-4 py-2.5 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUrlPreview}
+                      className="px-3 py-2.5 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-colors text-sm whitespace-nowrap"
+                    >
+                      미리보기
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 미리보기 */}
               {uploadData.image_url && (
                 <div className="aspect-video rounded-xl overflow-hidden bg-stone-100">
@@ -517,8 +803,17 @@ const PhotoReferences: React.FC = () => {
                     src={uploadData.image_url}
                     alt="미리보기"
                     className="w-full h-full object-contain"
+                    onError={() => {
+                      if (uploadTab === 'url') {
+                        setUrlPreviewError(true);
+                        toast.error('이미지를 불러올 수 없습니다. URL을 확인해주세요.');
+                      }
+                    }}
                   />
                 </div>
+              )}
+              {uploadTab === 'url' && urlPreviewError && (
+                <p className="text-sm text-red-500">이미지를 불러올 수 없습니다. URL을 확인해주세요.</p>
               )}
 
               {/* 카테고리 */}
@@ -575,7 +870,7 @@ const PhotoReferences: React.FC = () => {
                     type="text"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
                     placeholder="태그 입력 후 Enter"
                     className="flex-1 px-4 py-2 border border-stone-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:border-transparent"
                   />
@@ -612,6 +907,8 @@ const PhotoReferences: React.FC = () => {
                 onClick={() => {
                   setShowUploadModal(false);
                   setUploadData({ image_url: '', category: 'etc', title: '', memo: '', tags: [] });
+                  setUrlInput('');
+                  setUrlPreviewError(false);
                 }}
                 className="flex-1 px-4 py-3 border border-stone-300 text-stone-700 rounded-xl font-medium hover:bg-stone-50 transition-colors"
               >
@@ -619,7 +916,7 @@ const PhotoReferences: React.FC = () => {
               </button>
               <button
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={uploading || !uploadData.image_url}
                 className="flex-1 px-4 py-3 bg-rose-500 text-white rounded-xl font-medium hover:bg-rose-600 transition-colors disabled:opacity-50"
               >
                 {uploading ? '업로드 중...' : '저장'}
@@ -627,6 +924,28 @@ const PhotoReferences: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 사진 삭제 확인 다이얼로그 */}
+      <ConfirmDialog
+        isOpen={!!deletingPhoto}
+        onClose={() => setDeletingPhoto(null)}
+        onConfirm={confirmDelete}
+        title="사진 삭제"
+        message="이 사진을 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        cancelLabel="취소"
+        variant="danger"
+      />
+
+      {/* 사진 수정 모달 */}
+      {editingPhoto && (
+        <PhotoEditModal
+          photo={editingPhoto}
+          isOpen={!!editingPhoto}
+          onClose={() => setEditingPhoto(null)}
+          onUpdated={handlePhotoUpdated}
+        />
       )}
     </div>
   );

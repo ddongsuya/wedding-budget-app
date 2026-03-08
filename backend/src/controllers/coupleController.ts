@@ -388,6 +388,91 @@ export const leaveCouple = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// 파트너 최근 활동 조회 (커플 동기화용)
+export const getLastActivity = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+
+    // 사용자의 couple_id 조회
+    const userResult = await pool.query(
+      'SELECT couple_id FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const coupleId = userResult.rows[0]?.couple_id;
+
+    if (!coupleId) {
+      return res.json({
+        success: true,
+        data: null,
+        message: '커플 연결이 필요합니다',
+      });
+    }
+
+    // 파트너 ID 조회
+    const partnerResult = await pool.query(
+      'SELECT id, name FROM users WHERE couple_id = $1 AND id != $2',
+      [coupleId, userId]
+    );
+
+    if (partnerResult.rows.length === 0) {
+      return res.json({
+        success: true,
+        data: null,
+        message: '파트너가 아직 연결되지 않았습니다',
+      });
+    }
+
+    const partner = partnerResult.rows[0];
+
+    // 각 테이블에서 커플의 가장 최근 updated_at 조회
+    const lastActivityResult = await pool.query(
+      `SELECT GREATEST(
+        (SELECT MAX(updated_at) FROM expenses WHERE couple_id = $1),
+        (SELECT MAX(updated_at) FROM checklist_items WHERE couple_id = $1),
+        (SELECT MAX(updated_at) FROM events WHERE couple_id = $1),
+        (SELECT MAX(updated_at) FROM venues WHERE couple_id = $1)
+      ) as last_activity_at`,
+      [coupleId]
+    );
+
+    const lastActivityAt = lastActivityResult.rows[0]?.last_activity_at;
+
+    // 최근 파트너 활동 요약 (최근 10개)
+    const recentActivitiesResult = await pool.query(
+      `(
+        SELECT 'expense' as type, title as description, updated_at, 'add' as action
+        FROM expenses
+        WHERE couple_id = $1
+        ORDER BY updated_at DESC LIMIT 5
+      )
+      UNION ALL
+      (
+        SELECT 'checklist' as type, title as description, updated_at,
+          CASE WHEN is_completed THEN 'complete' ELSE 'update' END as action
+        FROM checklist_items
+        WHERE couple_id = $1
+        ORDER BY updated_at DESC LIMIT 5
+      )
+      ORDER BY updated_at DESC
+      LIMIT 10`,
+      [coupleId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        lastActivityAt,
+        partnerName: partner.name,
+        recentActivities: recentActivitiesResult.rows,
+      },
+    });
+  } catch (error) {
+    console.error('Get last activity error:', error);
+    res.status(500).json({ success: false, message: '활동 조회 실패' });
+  }
+};
+
 // 파트너 정보 조회
 export const getPartnerInfo = async (req: AuthRequest, res: Response) => {
   try {

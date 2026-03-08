@@ -32,7 +32,7 @@ export const getPhotoReferences = async (req: AuthRequest, res: Response) => {
       params.push(category);
     }
 
-    query += ' ORDER BY created_at DESC';
+    query += ' ORDER BY sort_order ASC, created_at DESC';
 
     const result = await pool.query(query, params);
 
@@ -188,6 +188,49 @@ export const toggleFavorite = async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error('Toggle favorite error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// 사진 순서 변경
+export const reorderPhotoReferences = async (req: AuthRequest, res: Response) => {
+  try {
+    const coupleId = req.user!.coupleId;
+    if (!coupleId) {
+      return res.status(404).json({ error: 'No couple found' });
+    }
+
+    const { orders } = req.body; // [{ id, sort_order }]
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return res.status(400).json({ error: 'orders array is required' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      for (const order of orders) {
+        await client.query(
+          'UPDATE photo_references SET sort_order = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 AND couple_id = $3',
+          [order.sort_order, order.id, coupleId]
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    res.json({
+      success: true,
+      message: 'Photo order updated successfully',
+    });
+  } catch (error) {
+    console.error('Reorder photo references error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

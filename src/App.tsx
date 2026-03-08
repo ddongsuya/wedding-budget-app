@@ -4,6 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { QueryProvider } from '@/contexts/QueryProvider';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ToastContainer } from '@/components/common/Toast';
 import { InstallPrompt } from '@/components/common/InstallPrompt';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -13,12 +14,14 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { OfflinePage } from '@/pages/Offline';
 import { LoadingScreen } from '@/components/common/LoadingScreen/LoadingScreen';
 import { SplashScreen } from '@/components/common/SplashScreen';
+import { PageTransition } from '@/components/common/PageTransition';
 import { WelcomeOnboarding } from '@/components/onboarding/WelcomeOnboarding';
 import { SetupWizard } from '@/components/onboarding/SetupWizard';
 import { FeatureHints } from '@/components/onboarding/FeatureHints';
 import { MilestoneCelebration } from '@/components/celebration/MilestoneCelebration';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { useMilestone } from '@/hooks/useMilestone';
+import { coupleAPI } from '@/api/couple';
 
 // 페이지 지연 로딩 (Lazy Loading)
 const Login = lazy(() => import('@/pages/Login'));
@@ -45,10 +48,25 @@ const AppContent: React.FC = () => {
   const { currentStep, completeWelcome, completeSetup, completeHints } = useOnboarding();
   const { currentMilestone, dismissMilestone } = useMilestone(null, 0, 0);
 
+  const handleSetupComplete = async (data?: any) => {
+    if (data && (data.groomName || data.brideName || data.weddingDate)) {
+      try {
+        await coupleAPI.updateProfile({
+          groom_name: data.groomName || undefined,
+          bride_name: data.brideName || undefined,
+          wedding_date: data.weddingDate || undefined,
+        });
+      } catch {
+        // 프로필 저장 실패해도 온보딩은 계속 진행
+      }
+    }
+    completeSetup(data);
+  };
+
   return (
     <>
       {currentStep === 'welcome' && <WelcomeOnboarding onComplete={completeWelcome} />}
-      {currentStep === 'setup' && <SetupWizard onComplete={completeSetup} onSkip={() => completeSetup()} />}
+      {currentStep === 'setup' && <SetupWizard onComplete={handleSetupComplete} onSkip={() => handleSetupComplete()} />}
       {currentStep === 'hints' && <FeatureHints onComplete={completeHints} />}
       {currentMilestone && currentStep === 'complete' && (
         <MilestoneCelebration type={currentMilestone} onClose={dismissMilestone} />
@@ -74,6 +92,7 @@ function App() {
 
   return (
     <ErrorBoundary>
+      <ThemeProvider>
       <QueryProvider>
         <ToastProvider>
           <AuthProvider>
@@ -82,26 +101,26 @@ function App() {
                 <Suspense fallback={<LoadingScreen />}>
                   <Routes>
                     {/* 공개 라우트 */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                    <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+                    <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
 
                     {/* 보호된 라우트 */}
-                    <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-                    <Route path="/venues" element={<ProtectedRoute><Layout><Venues /></Layout></ProtectedRoute>} />
-                    <Route path="/budget" element={<ProtectedRoute><Layout><Budget /></Layout></ProtectedRoute>} />
-                    <Route path="/checklist" element={<ProtectedRoute><Layout><Checklist /></Layout></ProtectedRoute>} />
-                    <Route path="/schedule" element={<ProtectedRoute><Layout><Schedule /></Layout></ProtectedRoute>} />
-                    <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
-                    <Route path="/settings/password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
-                    <Route path="/couple/connect" element={<ProtectedRoute><CoupleConnect /></ProtectedRoute>} />
-                    <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                    <Route path="/admin/announcements" element={<ProtectedRoute><AdminAnnouncements /></ProtectedRoute>} />
-                    <Route path="/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
-                    <Route path="/notifications" element={<ProtectedRoute><NotificationCenter /></ProtectedRoute>} />
-                    <Route path="/notifications/settings" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
-                    <Route path="/photo-references" element={<ProtectedRoute><Layout><PhotoReferences /></Layout></ProtectedRoute>} />
-                    <Route path="/expenses" element={<ProtectedRoute><Layout><Expenses /></Layout></ProtectedRoute>} />
+                    <Route path="/" element={<ProtectedRoute><Layout><PageTransition><Dashboard /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/venues" element={<ProtectedRoute><Layout><PageTransition><Venues /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/budget" element={<ProtectedRoute><Layout><PageTransition><Budget /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/checklist" element={<ProtectedRoute><Layout><PageTransition><Checklist /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/schedule" element={<ProtectedRoute><Layout><PageTransition><Schedule /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/settings" element={<ProtectedRoute><Layout><PageTransition><Settings /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/settings/password" element={<ProtectedRoute><Layout><PageTransition><ChangePassword /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/couple/connect" element={<ProtectedRoute><Layout><PageTransition><CoupleConnect /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/admin" element={<ProtectedRoute><PageTransition><AdminDashboard /></PageTransition></ProtectedRoute>} />
+                    <Route path="/admin/announcements" element={<ProtectedRoute><PageTransition><AdminAnnouncements /></PageTransition></ProtectedRoute>} />
+                    <Route path="/announcements" element={<ProtectedRoute><Layout><PageTransition><Announcements /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/notifications" element={<ProtectedRoute><Layout><PageTransition><NotificationCenter /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/notifications/settings" element={<ProtectedRoute><Layout><PageTransition><NotificationSettings /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/photo-references" element={<ProtectedRoute><Layout><PageTransition><PhotoReferences /></PageTransition></Layout></ProtectedRoute>} />
+                    <Route path="/expenses" element={<ProtectedRoute><Layout><PageTransition><Expenses /></PageTransition></Layout></ProtectedRoute>} />
 
                     {/* 기본 리다이렉트 */}
                     <Route path="*" element={<Navigate to="/" replace />} />
@@ -116,6 +135,7 @@ function App() {
           </AuthProvider>
         </ToastProvider>
       </QueryProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

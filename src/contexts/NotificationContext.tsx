@@ -214,6 +214,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return () => clearInterval(interval);
   }, [isAuthenticated, fetchUnreadCount]);
 
+  // 결혼 예정일 변경 시 알림 데이터 갱신 (D-day 알림 갱신)
+  useEffect(() => {
+    const handleWeddingDateChanged = () => {
+      fetchUnreadCount();
+      fetchNotifications(1);
+    };
+    window.addEventListener('wedding-date-changed', handleWeddingDateChanged);
+    return () => {
+      window.removeEventListener('wedding-date-changed', handleWeddingDateChanged);
+    };
+  }, [fetchUnreadCount, fetchNotifications]);
+
   const value: NotificationContextType = {
     notifications,
     unreadCount,

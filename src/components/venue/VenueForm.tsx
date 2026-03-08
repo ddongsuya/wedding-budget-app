@@ -373,6 +373,20 @@ export const VenueForm: React.FC<VenueFormProps> = ({ initialData, onSubmit, onC
                         />
                       </div>
                     </div>
+                    {/* 제외 사유 입력 (Requirements 6.3) */}
+                    {formData.status === 'excluded' && (
+                      <div className="space-y-1.5 mt-3">
+                        <label className="text-sm font-medium text-stone-700">제외 사유</label>
+                        <textarea
+                          name="exclusionReason"
+                          value={formData.exclusionReason || ''}
+                          onChange={(e) => setFormData(prev => ({ ...prev, exclusionReason: e.target.value }))}
+                          placeholder="이 식장을 제외한 이유를 입력해주세요"
+                          rows={2}
+                          className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none resize-none text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 </section>
 
